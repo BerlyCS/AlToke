@@ -1,0 +1,58 @@
+@startuml
+!include style.puml
+package "Modules::Notification" {
+  class NotificationController <<controller>> {
+    + Elysia()
+    + get('/notifications', getHistoryHandler)
+    + patch('/settings', updateSettingsHandler)
+  }
+  
+  class NotificationModel <<schema>> {
+    + NotificationSettingsSchema : t.Object
+  }
+
+  class NotificationService <<service>> {
+    {static} + sendPushNotification(userId: UUID, title: String, body: String)
+    {static} + queueEmail(email: String, template: String, data: Map)
+    {static} + updateUserSettings(userId: UUID, settings: NotificationSettingsSchema)
+    {static} + checkAndSendExpirationAlerts()
+  }
+
+  class NotificationSettings <<domain>> {
+    - userId : UUID
+    + pushEnabled : boolean
+    + emailEnabled : boolean
+    + socialMuted : boolean
+    + academicAlertsEnabled : boolean
+  }
+  
+  class NotificationLog <<domain>> {
+    + id : UUID
+    + userId : UUID
+    + title : String
+    + body : String
+    + sentAt : DateTime
+    + type : NotificationType
+  }
+  
+  enum NotificationType {
+    EXPIRATION_ALERT
+    AI_SUGGESTION
+    SOCIAL
+    SYSTEM
+  }
+
+  class NotificationRepository <<infrastructure>> {
+    + saveSettings(settings: NotificationSettings) : void
+    + getSettingsByUserId(userId: UUID) : NotificationSettings
+    + saveLog(log: NotificationLog) : void
+    + getHistoryByUserId(userId: UUID) : List<NotificationLog>
+  }
+
+  NotificationController --> NotificationService : uses >
+  NotificationController --> NotificationModel : validates with >
+  NotificationService --> NotificationRepository : uses >
+  NotificationRepository ..> NotificationSettings : manages >
+  NotificationRepository ..> NotificationLog : manages >
+}
+@enduml
