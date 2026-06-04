@@ -1,0 +1,21 @@
+@startuml
+!include style.puml
+title <size:18><b>High-Level Architecture Overview</b></size>
+
+package "Modules::Auth" as Auth
+package "Modules::User" as User
+package "Modules::Task" as Task
+package "Modules::Gamification" as Gamification
+package "Modules::AI" as AI
+package "Modules::Admin" as Admin
+package "Modules::Notification" as Notification
+
+Auth ..> User : validates user existence
+Task ..> Gamification : awards XP
+Task ..> Notification : triggers alerts
+AI ..> Task : reads history / suggests
+Admin ..> User : moderates
+Admin ..> Task : delegates
+User ..> Gamification : tracks progress
+
+@enduml
