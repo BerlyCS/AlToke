@@ -1,0 +1,60 @@
+@startuml
+!include style.puml
+package "Modules::Admin" {
+  class AdminController <<controller>> {
+    + Elysia()
+    + get('/users', listUsersHandler)
+    + post('/users/:id/ban', banUserHandler)
+    + get('/metrics', getMetricsHandler)
+    + post('/tasks/assign', assignTaskHandler)
+  }
+  
+  class AdminModel <<schema>> {
+    + TaskAssignmentSchema : t.Object
+  }
+
+  class AdminService <<service>> {
+    {static} + banUser(adminId: UUID, targetUserId: UUID, reason: String)
+    {static} + getSystemMetrics()
+    {static} + delegateTaskToUser(adminId: UUID, targetUserId: UUID, taskData: TaskAssignmentSchema)
+    {static} + logAdminAction(adminId: UUID, action: String)
+  }
+  
+  class SystemMetrics <<domain>> {
+    + totalUsers : int
+    + activeUsersDaily : int
+    + tasksCompletedToday : int
+    + retentionRate : float
+  }
+  
+  class AuditLog <<domain>> {
+    + id : UUID
+    + adminId : UUID
+    + targetId : UUID
+    + action : String
+    + timestamp : DateTime
+  }
+
+  class AdminRepository <<infrastructure>> {
+    + saveAuditLog(log: AuditLog) : void
+    + getSystemMetrics(date: Date) : SystemMetrics
+    + getAuditLogs() : List<AuditLog>
+  }
+
+  AdminController --> AdminService : uses >
+  AdminController --> AdminModel : validates with >
+  AdminService --> AdminRepository : uses >
+  AdminRepository ..> AuditLog : manages >
+  AdminRepository ..> SystemMetrics : computes >
+}
+
+package "Modules::User" <<external>> {
+  class UserRepository <<external>>
+}
+package "Modules::Task" <<external>> {
+  class TaskService <<external>>
+}
+
+AdminService ..> UserRepository : moderates >
+AdminService ..> TaskService : assigns tasks >
+@enduml
