@@ -1,0 +1,55 @@
+@startuml
+!include style.puml
+package "Modules::User" {
+  class UserController <<controller>> {
+    + Elysia()
+    + get('/profile', getProfileHandler)
+    + patch('/profile', updateProfileHandler)
+    + get('/profile/:id', getPublicProfileHandler)
+  }
+  
+  class UserModel <<schema>> {
+    + ProfileUpdateSchema : t.Object
+    + PrivacyConfigSchema : t.Object
+  }
+
+  class UserService <<service>> {
+    {static} + updateProfile(userId: UUID, data: ProfileUpdateSchema)
+    {static} + updatePrivacySettings(userId: UUID, config: PrivacyConfigSchema)
+    {static} + getPublicProfile(userId: UUID)
+  }
+
+  class User <<domain>> {
+    - id : UUID
+    - email : String
+    - passwordHash : String
+    + nickname : String
+    + avatar : String
+    + xp : int
+  }
+  
+  class PrivacyConfig <<domain>> {
+    + showLevel : boolean
+    + showStreak : boolean
+    + showAchievements : boolean
+  }
+
+  class UserRepository <<infrastructure>> {
+    + findById(id: UUID) : User
+    + findByEmail(email: String) : User
+    + update(user: User) : void
+    + save(user: User) : void
+  }
+
+  UserController --> UserService : uses >
+  UserController --> UserModel : validates with >
+  UserService -l-> UserRepository : uses >
+  User "1" *-r- "1" PrivacyConfig : owns >
+  UserRepository ..> User : manages >
+}
+
+package "Modules::Gamification" <<external>> {
+  class UserStats <<external>>
+}
+User "1" -- "1" UserStats : progress >
+@enduml
