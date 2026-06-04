@@ -1,0 +1,58 @@
+@startuml
+!include style.puml
+package "Modules::AI" {
+  class AIController <<controller>> {
+    + Elysia()
+    + get('/suggestions', getSuggestionsHandler)
+    + post('/suggestions/:id/feedback', submitFeedbackHandler)
+  }
+  
+  class AIModel <<schema>> {
+    + FeedbackSchema : t.Object
+  }
+
+  class AIService <<service>> {
+    {static} + generateRecommendations(userId: UUID)
+    {static} + predictTaskOverload(userId: UUID, date: Date)
+    {static} + processFeedback(suggestionId: UUID, accepted: boolean)
+  }
+
+  class HabitAnalysis <<domain>> {
+    - userId : UUID
+    + frequentTimeSlots : List<TimeSlot>
+    + categoryAffinity : Map<String, Float>
+  }
+  
+  class TaskSuggestion <<domain>> {
+    + id : UUID
+    + suggestedTitle : String
+    + suggestedTime : DateTime
+    + explanation : String
+    + status : SuggestionStatus
+  }
+  
+  enum SuggestionStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+  }
+
+  class AIRepository <<infrastructure>> {
+    + saveSuggestion(suggestion: TaskSuggestion) : void
+    + updateHabitAnalysis(analysis: HabitAnalysis) : void
+    + getSuggestionsHistory(userId: UUID) : List<TaskSuggestion>
+  }
+
+  AIController --> AIService : uses >
+  AIController --> AIModel : validates with >
+  AIService --> AIRepository : uses >
+  AIService ..> HabitAnalysis : analyzes >
+  AIService ..> TaskSuggestion : generates >
+  AIRepository ..> HabitAnalysis : manages >
+}
+
+package "Modules::Task" <<external>> {
+  class TaskRepository <<external>>
+}
+AIService ..> TaskRepository : reads history >
+@enduml
