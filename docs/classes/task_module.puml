@@ -1,0 +1,93 @@
+@startuml
+!include style.puml
+package "Modules::Task" {
+  class TaskController <<controller>> {
+    + Elysia()
+    + post('/tasks', createTaskHandler)
+    + patch('/tasks/:id/complete', completeTaskHandler)
+    + delete('/tasks/:id', deleteTaskHandler)
+    + get('/tasks', listTasksHandler)
+  }
+  
+  class TaskModel <<schema>> {
+    + CreateTaskSchema : t.Object
+    + UpdateTaskSchema : t.Object
+    + TaskFilterSchema : t.Object
+  }
+
+  class TaskService <<service>> {
+    {static} + createTask(userId: UUID, data: CreateTaskSchema)
+    {static} + completeTask(taskId: UUID)
+    {static} + moveToTrash(taskId: UUID)
+    {static} + restoreFromTrash(taskId: UUID)
+    {static} + getPendingTasks(userId: UUID, filters: TaskFilterSchema)
+  }
+
+  class Task <<domain>> {
+    - id : UUID
+    - userId : UUID
+    + title : String
+    + description : String
+    + type : TaskType
+    + estimatedTimeMinutes : int
+    + startTime : DateTime
+    + dueDate : DateTime
+    + completionDate : DateTime
+    + deletionDate : DateTime
+    + priority : Priority
+    + status : TaskStatus
+    + tags : List<String>
+  }
+  
+  class Recurrence <<domain>> {
+    + frequency : RecurrenceFrequency
+    + interval : int
+  }
+  
+  class TaskRepository <<infrastructure>> {
+    + save(task: Task) : void
+    + update(task: Task) : void
+    + findById(id: UUID) : Task
+    + findByUserId(uid: UUID) : List<Task>
+    + findTrashedTasks(uid: UUID) : List<Task>
+  }
+  
+  enum Priority {
+    HIGH
+    MEDIUM
+    LOW
+  }
+  enum TaskType {
+    TASK
+    MEETING
+    EVENT
+  }
+  enum TaskStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    DELETED
+  }
+  enum RecurrenceFrequency {
+    DAILY
+    WEEKLY
+    MONTHLY
+  }
+
+  TaskController --> TaskService : uses >
+  TaskController --> TaskModel : validates with >
+  TaskService --> TaskRepository : uses >
+  Task "1" *-l- "0..1" Recurrence : recurring >
+  TaskRepository .l.> Task : manages >
+}
+
+package "Modules::Gamification" <<external>> {
+  class GamificationService <<external>>
+}
+package "Modules::Notification" <<external>> {
+  class NotificationService <<external>>
+}
+
+TaskService ..> GamificationService : awards XP >
+TaskService ..> NotificationService : sends alerts >
+@enduml
