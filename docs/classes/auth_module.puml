@@ -1,0 +1,39 @@
+@startuml
+!include style.puml
+package "Modules::Auth" {
+  class AuthController <<controller>> {
+    + Elysia()
+    + post('/register', registerHandler)
+    + post('/login', loginHandler)
+    + get('/sso/google', googleSSOHandler)
+  }
+  
+  class AuthModel <<schema>> {
+    + RegisterSchema : t.Object
+    + LoginSchema : t.Object
+  }
+
+  class AuthService <<service>> {
+    {static} + authenticate(credentials: LoginSchema)
+    {static} + validateGoogleToken(idToken: String)
+    {static} + createSession(userId: UUID)
+    {static} + resetPassword(email: String)
+  }
+
+  class Session <<domain>> {
+    - id : UUID
+    - userId : UUID
+    + token : String
+    + expiresAt : DateTime
+  }
+  
+  AuthController --> AuthService : uses >
+  AuthController --> AuthModel : validates with >
+  AuthService ..> Session : manages >
+}
+
+package "Modules::User" <<external>> {
+  class UserRepository <<external>>
+}
+AuthService ..> UserRepository : validates existence >
+@enduml

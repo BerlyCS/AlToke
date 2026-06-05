@@ -1,0 +1,55 @@
+' === Modern Style ===
+hide empty members
+<style>
+classDiagram {
+  class {
+    BackgroundColor #FEFEFE
+    BorderColor #222222
+    FontColor #212121
+    RoundCorner 8
+    BorderThickness 1.5
+  }
+  .controller {
+    BackgroundColor #E1F5FE
+    BorderColor #01579B
+    FontColor #01579B
+  }
+  .schema {
+    BackgroundColor #FFF9C4
+    BorderColor #F57F17
+    FontColor #F57F17
+  }
+  .service {
+    BackgroundColor #FFF3E0
+    BorderColor #E65100
+    FontColor #E65100
+  }
+  .domain {
+    BackgroundColor #E8F5E9
+    BorderColor #1B5E20
+    FontColor #1B5E20
+  }
+  .infrastructure {
+    BackgroundColor #F3E5F5
+    BorderColor #4A148C
+    FontColor #4A148C
+  }
+  .external {
+    BackgroundColor #F5F5F5
+    BorderColor #9E9E9E
+    FontColor #757575
+    BorderStyle dashed
+  }
+  package {
+    BackgroundColor #FAFAFA
+    BorderColor #BDBDBD
+    FontColor #424242
+    FontSize 14
+    FontStyle bold
+  }
+  arrow {
+    LineColor #424242
+    LineThickness 1.5
+  }
+}
+</style>
