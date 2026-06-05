@@ -1,0 +1,180 @@
+@startuml
+<style>
+classDiagram {
+  class {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    FontColor #2C3E50
+    RoundCorner 6
+    BorderThickness 1.5
+    HeaderBackgroundColor #ECF0F1
+    HeaderFontColor #2980B9
+    HeaderFontStyle bold
+  }
+  arrow {
+    LineColor #FF9829
+    LineThickness 2.0
+  }
+}
+</style>
+
+hide circle
+skinparam dpi 600
+skinparam linetype ortho
+skinparam shadowing false
+
+!define PK <<PK>>
+!define FK <<FK>>
+!define UQ <<unique>>
+
+entity User {
+  *id : UUID PK
+  --
+  email : VARCHAR(255) UQ
+  password_hash : VARCHAR(255)
+  nickname : VARCHAR(50)
+  avatar_url : TEXT
+  xp : INTEGER
+  level : INTEGER
+  current_streak : INTEGER
+  max_streak : INTEGER
+  last_active_at : TIMESTAMP
+  created_at : TIMESTAMP
+}
+
+entity PrivacySettings {
+  *user_id : UUID PK, FK
+  --
+  show_level : BOOLEAN
+  show_streak : BOOLEAN
+  show_achievements : BOOLEAN
+}
+
+entity NotificationSettings {
+  *user_id : UUID PK, FK
+  --
+  push_enabled : BOOLEAN
+  email_enabled : BOOLEAN
+  social_muted : BOOLEAN
+  academic_alerts : BOOLEAN
+}
+
+entity Task {
+  *id : UUID PK
+  --
+  #user_id : UUID FK
+  title : VARCHAR(100)
+  description : TEXT
+  task_type : VARCHAR(20)
+  priority : VARCHAR(20)
+  status : VARCHAR(20)
+  estimated_time_mins : INTEGER
+  start_time : TIMESTAMP
+  due_date : TIMESTAMP
+  completion_date : TIMESTAMP
+  deleted_at : TIMESTAMP
+  tags : JSONB
+}
+
+entity Recurrence {
+  *id : UUID PK
+  --
+  #task_id : UUID FK UQ
+  frequency : VARCHAR(20)
+  interval : INTEGER
+}
+
+entity Achievement {
+  *id : UUID PK
+  --
+  code : VARCHAR(50) UQ
+  title : VARCHAR(100)
+  description : TEXT
+  is_secret : BOOLEAN
+  required_xp : INTEGER
+}
+
+entity UserAchievement {
+  *id : UUID PK
+  --
+  #user_id : UUID FK
+  #achievement_id : UUID FK
+  unlocked_at : TIMESTAMP
+}
+
+entity Item {
+  *id : UUID PK
+  --
+  code : VARCHAR(50) UQ
+  name : VARCHAR(100)
+  effect : VARCHAR(255)
+}
+
+entity UserInventory {
+  *id : UUID PK
+  --
+  #user_id : UUID FK
+  #item_id : UUID FK
+  quantity : INTEGER
+}
+
+entity AIHabitAnalysis {
+  *user_id : UUID PK, FK
+  --
+  frequent_time_slots : JSONB
+  category_affinity : JSONB
+  updated_at : TIMESTAMP
+}
+
+entity TaskSuggestion {
+  *id : UUID PK
+  --
+  #user_id : UUID FK
+  suggested_title : VARCHAR(100)
+  suggested_time : TIMESTAMP
+  explanation : TEXT
+  status : VARCHAR(20)
+  created_at : TIMESTAMP
+}
+
+entity AuditLog {
+  *id : UUID PK
+  --
+  #admin_id : UUID FK
+  #target_id : UUID FK
+  action : VARCHAR(255)
+  created_at : TIMESTAMP
+}
+
+entity NotificationLog {
+  *id : UUID PK
+  --
+  #user_id : UUID FK
+  title : VARCHAR(100)
+  body : TEXT
+  notification_type : VARCHAR(50)
+  sent_at : TIMESTAMP
+}
+
+' Relationships
+User ||-l-|| PrivacySettings : "has"
+User ||-r-|| NotificationSettings : "has"
+User ||-u-o{ Task : "creates"
+Task ||-u-o| Recurrence : "has"
+User ||-u-o{ UserAchievement : "unlocks"
+Achievement ||--o{ UserAchievement : "unlocked by"
+User ||-u-o{ UserInventory : "owns"
+Item ||--o{ UserInventory : "contains"
+User ||--|| AIHabitAnalysis : "has"
+User ||--o{ TaskSuggestion : "receives"
+User ||--o{ AuditLog : "target"
+User ||--o{ NotificationLog : "receives"
+
+
+' Hiden
+
+Item -[hidden]r-> Recurrence
+Task -[hidden]r-> UserAchievement
+PrivacySettings -[hidden]d-> NotificationSettings
+
+@enduml
