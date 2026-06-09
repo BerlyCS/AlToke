@@ -50,7 +50,7 @@ alt Google SSO
     AC --> FE : 302 redirect
 
     FE -> FE : Saves token from URL\nand stores it (localStorage / cookie)
-    FE --> User : Navega a /dashboard
+    FE --> User : Routes to /dashboard
 
 else Email / Password
 
@@ -63,7 +63,7 @@ else Email / Password
 
     alt Error de validación
         AC --> FE : 400 { errors: [...] }
-        FE --> User : Muestra errores en el formulario
+        FE --> User : Show errors in the form
     end
 
     AC -> AS : login({ email, password })
@@ -75,8 +75,8 @@ else Email / Password
 
     alt Credenciales inválidas
         AS --> AC : throw UnauthorizedException
-        AC --> FE : 401 { message: "Credenciales inválidas" }
-        FE --> User : Muestra mensaje de error
+        AC --> FE : 401 { message: "Invalid credentials" }
+        FE --> User : Show error message
     else Credenciales válidas
 
         AS -> UR : updateLastActiveAt(userId)
@@ -86,8 +86,8 @@ else Email / Password
 
         AS --> AC : { jwt, user }
         AC --> FE : 200 { token: jwt, user: {...} }
-        FE -> FE : Guarda token\n(localStorage / cookie)
-        FE --> User : Navega a /dashboard
+        FE -> FE : Saves token\n(localStorage / cookie)
+        FE --> User : Routes to /dashboard
     end
 
 end

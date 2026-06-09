@@ -1,0 +1,47 @@
+@startuml create_task
+title Sequence Diagram - Create Task
+
+actor User
+participant "Frontend" as FE
+participant "TaskController" as TC
+participant "TaskService" as TS
+participant "Task\n(Domain)" as TD
+participant "TaskRepository" as TR
+
+User -> FE : Fill task form and submit
+FE -> TC : POST /tasks
+
+TC -> TS : createTask(dto)
+
+TS -> TD : Task.create(data)
+note right of TD
+  Enforces business rules:
+  - title and dueDate are required
+  - estimatedTime >= 0 and <= 24h
+  - type in [task, meeting, event]
+  - priority in [low, medium, high]
+end note
+
+alt validation fails
+    TD --> TS : throw DomainException\n(missing fields / invalid values)
+    TS --> TC : throw
+    TC --> FE : 422 { errors: [...] }
+    FE --> User : Show validation errors in form
+end
+
+TD --> TS : task (valid entity, status = pending)
+
+alt Recurring task (recurrence field present)
+    TS -> TD : RecurrenceRule.create({ frequency })
+    TD --> TS : recurrenceRule
+    TS -> TS : task.attachRecurrence(recurrenceRule)
+end
+
+TS -> TR : save(task)
+TR --> TS : Task
+
+TS --> TC : Task
+TC --> FE : 201 { task }
+FE --> User : Task created,\nvisible in list and calendar
+
+@enduml
