@@ -32,7 +32,9 @@ entity User {
   --
   email : VARCHAR(255) UQ
   password_hash : VARCHAR(255)
+  role : VARCHAR(20) [ENUM: USER, ADMIN]
   nickname : VARCHAR(50)
+  bio : TEXT
   avatar_url : TEXT
   xp : INTEGER
   level : INTEGER
@@ -67,7 +69,7 @@ entity Task {
   description : TEXT
   task_type : VARCHAR(20)
   priority : VARCHAR(20)
-  status : VARCHAR(20)
+  status : VARCHAR(20) [ENUM: PENDING, IN_PROGRESS, COMPLETED, FAILED]
   estimated_time_mins : INTEGER
   start_time : TIMESTAMP
   due_date : TIMESTAMP
@@ -107,7 +109,17 @@ entity Item {
   --
   code : VARCHAR(50) UQ
   name : VARCHAR(100)
+  item_type : VARCHAR(20) [ENUM]
   effect : VARCHAR(255)
+  asset_url : TEXT
+}
+
+entity LevelReward {
+  *id : UUID PK
+  --
+  level : INTEGER UQ
+  #item_id : UUID FK
+  quantity : INTEGER
 }
 
 entity UserInventory {
@@ -116,6 +128,7 @@ entity UserInventory {
   #user_id : UUID FK
   #item_id : UUID FK
   quantity : INTEGER
+  is_equipped : BOOLEAN [DF false]
 }
 
 entity AIHabitAnalysis {
@@ -165,6 +178,7 @@ User ||-u-o{ UserAchievement : "unlocks"
 Achievement ||--o{ UserAchievement : "unlocked by"
 User ||-u-o{ UserInventory : "owns"
 Item ||--o{ UserInventory : "contains"
+Item ||--o{ LevelReward : "awarded at"
 User ||--|| AIHabitAnalysis : "has"
 User ||--o{ TaskSuggestion : "receives"
 User ||--o{ AuditLog : "target"
