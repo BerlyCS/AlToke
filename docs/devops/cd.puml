@@ -1,0 +1,75 @@
+@startuml
+title <size:18><b>CD de AlToke</b></size>\n<size:12>Selección de ambiente, despliegue, verificación y rollback</size>
+
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam ActivityBorderColor #334155
+skinparam ActivityBackgroundColor #F8FAFC
+skinparam ActivityDiamondBorderColor #334155
+skinparam ActivityDiamondBackgroundColor #E2E8F0
+skinparam PartitionBorderColor #CBD5E1
+skinparam PartitionBackgroundColor #FFFFFF
+skinparam NoteBackgroundColor #DBEAFE
+skinparam NoteBorderColor #2563EB
+
+start
+
+partition "GitHub Actions: CD" {
+  :consumir artefactos publicados;
+  :resolver tags backend/frontend;
+  if (¿Ambiente destino?) then (staging)
+    :seleccionar staging;
+  elseif (production)
+    :seleccionar production;
+  endif
+}
+
+note right
+  Contexto de disparo:
+  dev -> staging
+  main -> production
+  release-x.y solo llega a producción después de PR a main.
+end note
+
+if (¿Production?) then (sí)
+  partition "Aprobación" {
+    :esperar aprobación manual;
+  }
+else (no)
+endif
+
+partition "Despliegue" {
+  fork
+    :docker pull backend:<tag>;
+    :actualizar servicio backend;
+  fork again
+    :docker pull frontend:<tag>;
+    :actualizar servicio frontend;
+  end fork
+  :aplicar configuración del ambiente;
+  :docker compose up -d;
+}
+
+partition "Verificación" {
+  :ejecutar health checks;
+  :ejecutar smoke tests;
+  :revisar logs críticos;
+}
+
+if (¿Despliegue saludable?) then (sí)
+  partition "Cierre" {
+    :registrar tags desplegados;
+    :marcar versión como estable;
+  }
+else (no)
+  partition "Rollback" {
+    :identificar tags anteriores estables;
+    :restaurar backend/frontend anteriores;
+    :docker compose up -d;
+    :verificar recuperación;
+  }
+endif
+
+stop
+
+@enduml
