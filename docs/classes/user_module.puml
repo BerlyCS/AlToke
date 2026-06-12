@@ -23,7 +23,9 @@ package "Modules::User" {
     - id : UUID
     - email : String
     - passwordHash : String
+    + role : UserRole
     + nickname : String
+    + bio : String
     + avatar : String
     + xp : int
     + createTask()
@@ -33,6 +35,11 @@ package "Modules::User" {
     + showLevel : boolean
     + showStreak : boolean
     + showAchievements : boolean
+  }
+
+  enum UserRole {
+    USER
+    ADMIN
   }
 
   class UserRepository <<infrastructure>> {
