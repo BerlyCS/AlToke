@@ -1,31 +1,41 @@
-@startuml
+@startuml task_module
 !include style.puml
 package "Modules::Task" {
   class TaskController <<controller>> {
     + Elysia()
     + post('/tasks', createTaskHandler)
+    + get('/tasks', listTasksHandler)
+    + get('/tasks/:id', getTaskHandler)
+    + patch('/tasks/:id', updateTaskHandler)
     + patch('/tasks/:id/complete', completeTaskHandler)
     + delete('/tasks/:id', deleteTaskHandler)
-    + get('/tasks', listTasksHandler)
+    + get('/tasks/trash', listTrashHandler)
+    + post('/tasks/:id/restore', restoreTaskHandler)
   }
-  
+
   class TaskModel <<schema>> {
     + CreateTaskSchema : t.Object
     + UpdateTaskSchema : t.Object
     + TaskFilterSchema : t.Object
+    + RecurrenceSchema : t.Object
   }
 
   class TaskService <<service>> {
-    {static} + createTask(userId: UUID, data: CreateTaskSchema)
-    {static} + completeTask(taskId: UUID)
+    {static} + createTask(userId: UUID, data: CreateTaskSchema, assignedBy: UUID?)
+    {static} + updateTask(taskId: UUID, data: UpdateTaskSchema)
+    {static} + completeTask(taskId: UUID, completionDate: DateTime)
     {static} + moveToTrash(taskId: UUID)
     {static} + restoreFromTrash(taskId: UUID)
+    {static} + purgeExpiredTrash()
     {static} + getPendingTasks(userId: UUID, filters: TaskFilterSchema)
+    {static} + getTrashedTasks(userId: UUID)
+    {static} + generateRecurringInstances(recurrence: Recurrence, fromDate: Date)
   }
 
   class Task <<domain>> {
     - id : UUID
     - userId : UUID
+    - assignedBy : UUID
     + title : String
     + description : String
     + type : TaskType
@@ -33,25 +43,32 @@ package "Modules::Task" {
     + startTime : DateTime
     + dueDate : DateTime
     + completionDate : DateTime
-    + deletionDate : DateTime
+    + deletedAt : DateTime
     + priority : Priority
     + status : TaskStatus
     + tags : List<String>
   }
-  
+
   class Recurrence <<domain>> {
+    + id : UUID
+    + taskId : UUID
     + frequency : RecurrenceFrequency
     + interval : int
+    + daysOfWeek : List<int>
+    + endDate : DateTime
+    + nextOccurrence : DateTime
   }
-  
+
   class TaskRepository <<infrastructure>> {
     + save(task: Task) : void
     + update(task: Task) : void
     + findById(id: UUID) : Task
     + findByUserId(uid: UUID) : List<Task>
     + findTrashedTasks(uid: UUID) : List<Task>
+    + findExpiredTrash(beforeDate: DateTime) : List<Task>
+    + saveRecurrence(recurrence: Recurrence) : void
   }
-  
+
   enum Priority {
     HIGH
     MEDIUM
@@ -79,6 +96,10 @@ package "Modules::Task" {
   TaskService --> TaskRepository : uses >
   Task "1" *-l- "0..1" Recurrence : recurring >
   TaskRepository .l.> Task : manages >
+  Recurrence --> RecurrenceFrequency
+  Task --> Priority
+  Task --> TaskType
+  Task --> TaskStatus
 }
 
 package "Modules::Gamification" <<external>> {
@@ -88,7 +109,7 @@ package "Modules::Notification" <<external>> {
   class NotificationService <<external>>
 }
 
-TaskService ..> GamificationService : awards XP >
+TaskService ..> GamificationService : awards XP if completionDate <= dueDate >
 TaskService ..> NotificationService : sends alerts >
 
 package "Modules::User" <<external>> {
