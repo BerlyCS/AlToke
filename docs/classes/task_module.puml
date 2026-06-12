@@ -90,4 +90,10 @@ package "Modules::Notification" <<external>> {
 
 TaskService ..> GamificationService : awards XP >
 TaskService ..> NotificationService : sends alerts >
+
+package "Modules::User" <<external>> {
+  class User <<external>>
+}
+
+User "1" --> "0..*" Task : creates >
 @enduml

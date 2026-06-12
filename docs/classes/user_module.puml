@@ -26,6 +26,7 @@ package "Modules::User" {
     + nickname : String
     + avatar : String
     + xp : int
+    + createTask()
   }
   
   class PrivacyConfig <<domain>> {
