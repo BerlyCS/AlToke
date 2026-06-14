@@ -1,3 +1,7 @@
 .atl
 **/.env
+**/.env.local
+**/.env.*.local
 **/.vscode
+/node_modules
+/.husky/_

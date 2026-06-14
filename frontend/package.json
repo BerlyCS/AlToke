@@ -7,16 +7,23 @@
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "test:unit": "vitest",
+    "test": "vitest run",
+    "test:unit": "bun run test",
+    "test:unit:watch": "vitest",
     "prepare": "cypress install",
     "test:e2e": "start-server-and-test preview http://localhost:4173 'cypress run --e2e'",
     "test:e2e:dev": "start-server-and-test 'vite dev --port 4173' http://localhost:4173 'cypress open --e2e'",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "lint": "run-s lint:*",
-    "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache",
-    "format": "oxfmt src/"
+    "lint": "bun run lint:fix",
+    "lint:check": "run-s lint:oxlint lint:eslint",
+    "lint:fix": "run-s lint:oxlint:fix lint:eslint:fix",
+    "lint:oxlint": "oxlint .",
+    "lint:oxlint:fix": "oxlint . --fix",
+    "lint:eslint": "eslint . --cache",
+    "lint:eslint:fix": "eslint . --fix --cache",
+    "format": "oxfmt .",
+    "format:check": "oxfmt . --check"
   },
   "dependencies": {
     "pinia": "^3.0.4",
@@ -50,11 +57,8 @@
     "vitest": "^4.1.4",
     "vue-tsc": "^3.2.6"
   },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
   "overrides": {
-    "vue": "beta",
+    "@vue/compat": "beta",
     "@vue/compiler-core": "beta",
     "@vue/compiler-dom": "beta",
     "@vue/compiler-sfc": "beta",
@@ -66,6 +70,9 @@
     "@vue/runtime-vapor": "beta",
     "@vue/server-renderer": "beta",
     "@vue/shared": "beta",
-    "@vue/compat": "beta"
+    "vue": "beta"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }
