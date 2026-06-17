@@ -26,7 +26,7 @@ jobs:
       backend_affected: ${{ steps.detect.outputs.backend_affected }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -93,7 +93,7 @@ jobs:
     if: needs.detect-changes.outputs.frontend_affected == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -127,7 +127,7 @@ jobs:
     if: needs.detect-changes.outputs.backend_affected == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -159,7 +159,7 @@ jobs:
     if: needs.detect-changes.outputs.backend_affected == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare image coordinates
         id: prep
@@ -205,7 +205,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   build-nginx-image:
-    name: Build and push nginx image
+    name: Build and push frontend image
     runs-on: ubuntu-latest
     needs:
       - detect-changes
@@ -213,7 +213,7 @@ jobs:
     if: needs.detect-changes.outputs.frontend_affected == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare image coordinates
         id: prep
@@ -237,11 +237,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate nginx image metadata
+      - name: Generate frontend image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ steps.prep.outputs.owner }}/${{ steps.prep.outputs.repo }}-nginx
+          images: ghcr.io/${{ steps.prep.outputs.owner }}/${{ steps.prep.outputs.repo }}-frontend
           tags: |
             type=raw,value=${{ steps.prep.outputs.ref_slug }}
             type=sha,prefix=${{ steps.prep.outputs.ref_slug }}-
