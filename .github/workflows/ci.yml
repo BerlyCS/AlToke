@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches:
+      - main
+      - dev
       - feature/devops
   workflow_dispatch:
 
@@ -169,12 +171,36 @@ jobs:
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           repo="${GITHUB_REPOSITORY#*/}"
           repo="${repo,,}"
-          ref_slug="${GITHUB_REF_NAME//\//-}"
+
+          case "$GITHUB_REF_NAME" in
+            main)
+              channel_tag="production"
+              emit_latest="true"
+              ;;
+            dev)
+              channel_tag="staging"
+              emit_latest="false"
+              ;;
+            *)
+              channel_tag="${GITHUB_REF_NAME//\//-}"
+              emit_latest="false"
+              ;;
+          esac
 
           echo "owner=$owner" >> "$GITHUB_OUTPUT"
           echo "repo=$repo" >> "$GITHUB_OUTPUT"
-          echo "ref_slug=$ref_slug" >> "$GITHUB_OUTPUT"
+          echo "channel_tag=$channel_tag" >> "$GITHUB_OUTPUT"
           echo "source_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "tag_lines<<EOF"
+            echo "type=raw,value=${channel_tag}"
+            echo "type=sha,prefix=${channel_tag}-"
+            if [[ "$emit_latest" == "true" ]]; then
+              echo "type=raw,value=latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -188,9 +214,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ steps.prep.outputs.owner }}/${{ steps.prep.outputs.repo }}-backend
-          tags: |
-            type=raw,value=${{ steps.prep.outputs.ref_slug }}
-            type=sha,prefix=${{ steps.prep.outputs.ref_slug }}-
+          tags: ${{ steps.prep.outputs.tag_lines }}
           labels: |
             org.opencontainers.image.source=${{ steps.prep.outputs.source_url }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -223,12 +247,36 @@ jobs:
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           repo="${GITHUB_REPOSITORY#*/}"
           repo="${repo,,}"
-          ref_slug="${GITHUB_REF_NAME//\//-}"
+
+          case "$GITHUB_REF_NAME" in
+            main)
+              channel_tag="production"
+              emit_latest="true"
+              ;;
+            dev)
+              channel_tag="staging"
+              emit_latest="false"
+              ;;
+            *)
+              channel_tag="${GITHUB_REF_NAME//\//-}"
+              emit_latest="false"
+              ;;
+          esac
 
           echo "owner=$owner" >> "$GITHUB_OUTPUT"
           echo "repo=$repo" >> "$GITHUB_OUTPUT"
-          echo "ref_slug=$ref_slug" >> "$GITHUB_OUTPUT"
+          echo "channel_tag=$channel_tag" >> "$GITHUB_OUTPUT"
           echo "source_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "tag_lines<<EOF"
+            echo "type=raw,value=${channel_tag}"
+            echo "type=sha,prefix=${channel_tag}-"
+            if [[ "$emit_latest" == "true" ]]; then
+              echo "type=raw,value=latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -242,9 +290,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ steps.prep.outputs.owner }}/${{ steps.prep.outputs.repo }}-frontend
-          tags: |
-            type=raw,value=${{ steps.prep.outputs.ref_slug }}
-            type=sha,prefix=${{ steps.prep.outputs.ref_slug }}-
+          tags: ${{ steps.prep.outputs.tag_lines }}
           labels: |
             org.opencontainers.image.source=${{ steps.prep.outputs.source_url }}
             org.opencontainers.image.revision=${{ github.sha }}
