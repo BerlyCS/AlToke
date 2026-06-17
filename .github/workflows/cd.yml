@@ -7,9 +7,6 @@ on:
     types:
       - completed
   workflow_dispatch:
-  push:
-    branches:
-      - feature/devops
 
 permissions:
   contents: read
@@ -20,8 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'push'
+      github.event_name == 'workflow_dispatch'
     outputs:
       should_deploy: ${{ steps.resolve.outputs.should_deploy }}
       deploy_branch: ${{ steps.resolve.outputs.deploy_branch }}
@@ -89,19 +85,24 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
           command_timeout: 30m
+          envs: DEPLOY_PATH
+          request_pty: false
           script: |
-            set -euo pipefail
+            bash -lc '
+              set -euo pipefail
 
-            deploy_path='${{ needs.resolve-target.outputs.deploy_path }}'
+              deploy_path="$DEPLOY_PATH"
 
-            if [[ ! -d "$deploy_path" ]]; then
-              echo "Deploy path not found: $deploy_path" >&2
-              exit 1
-            fi
+              if [[ ! -d "$deploy_path" ]]; then
+                echo "Deploy path not found: $deploy_path" >&2
+                exit 1
+              fi
 
-            cd "$deploy_path"
-            docker compose pull
-            docker compose up -d
-            docker compose ps
+              cd "$deploy_path"
+              docker compose pull
+              docker compose up -d
+              docker compose ps
+            '
+        env:
+          DEPLOY_PATH: ${{ needs.resolve-target.outputs.deploy_path }}
