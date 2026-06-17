@@ -67,7 +67,7 @@ jobs:
                 backend/*)
                   backend=true
                   ;;
-                package.json|bun.lock|mise.toml|docker-compose.yml|.dockerignore|.github/workflows/ci.yml)
+                package.json|bun.lock|mise.toml|docker-compose.yml|.dockerignore|.github/workflows/*)
                   global=true
                   ;;
               esac
