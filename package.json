@@ -1,0 +1,33 @@
+{
+  "name": "altoke-tooling",
+  "private": true,
+  "scripts": {
+    "prepare": "bun run hooks:install",
+    "hooks:install": "husky",
+    "setup": "bun run hooks:install",
+    "frontend:lint": "bun run --cwd \"$PWD/frontend\" lint",
+    "frontend:lint:check": "bun run --cwd \"$PWD/frontend\" lint:check",
+    "frontend:format": "bun run --cwd \"$PWD/frontend\" format",
+    "frontend:format:check": "bun run --cwd \"$PWD/frontend\" format:check",
+    "frontend:test": "bun run --cwd \"$PWD/frontend\" test",
+    "frontend:type-check": "bun run --cwd \"$PWD/frontend\" type-check",
+    "backend:lint": "bun run --cwd \"$PWD/backend\" lint",
+    "backend:lint:check": "bun run --cwd \"$PWD/backend\" lint:check",
+    "backend:format": "bun run --cwd \"$PWD/backend\" format",
+    "backend:format:check": "bun run --cwd \"$PWD/backend\" format:check",
+    "backend:test": "bun run --cwd \"$PWD/backend\" test",
+    "backend:type-check": "bun run --cwd \"$PWD/backend\" type-check",
+    "lint": "bun run frontend:lint && bun run backend:lint",
+    "lint:check": "bun run frontend:lint:check && bun run backend:lint:check",
+    "format": "bun run frontend:format && bun run backend:format",
+    "format:check": "bun run frontend:format:check && bun run backend:format:check",
+    "test": "bun run frontend:test && bun run backend:test",
+    "type-check": "bun run frontend:type-check && bun run backend:type-check",
+    "ci": "bun run lint:check && bun run format:check && bun run type-check && bun run test",
+    "pre-commit": "bun run format:check && bun run lint:check",
+    "pre-commit:fix": "bun run format && bun run lint"
+  },
+  "devDependencies": {
+    "husky": "9.1.7"
+  }
+}

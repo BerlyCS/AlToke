@@ -1,15 +1,25 @@
 {
   "name": "backend",
   "version": "1.0.50",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "test": "bun test",
+    "type-check": "tsc --noEmit",
+    "lint": "bun run lint:fix",
+    "lint:check": "oxlint .",
+    "lint:fix": "oxlint . --fix",
+    "format": "oxfmt .",
+    "format:check": "oxfmt . --check"
   },
   "dependencies": {
     "elysia": "latest"
   },
   "devDependencies": {
-    "bun-types": "latest"
-  },
-  "module": "src/index.js"
+    "bun-types": "latest",
+    "oxfmt": "^0.45.0",
+    "oxlint": "~1.60.0",
+    "typescript": "~6.0.0"
+  }
 }
