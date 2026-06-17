@@ -2,9 +2,9 @@
   "name": "backend",
   "version": "1.0.50",
   "type": "module",
-  "module": "src/index.js",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
     "test": "bun test",
     "type-check": "tsc --noEmit",
     "lint": "bun run lint:fix",
