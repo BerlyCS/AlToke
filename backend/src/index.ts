@@ -1,7 +1,10 @@
-import { Elysia } from "elysia";
+import { Elysia } from 'elysia'
+import { serverConfig } from './config'
 
-const app = new Elysia().get("/", () => "Hello Elysia").listen(3000);
+export const app = new Elysia().get('/', () => 'Hello Elysia')
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+if (import.meta.main) {
+  const server = app.listen(serverConfig)
+
+  console.log(`🦊 Elysia is running at ${server.server?.hostname}:${server.server?.port}`)
+}
