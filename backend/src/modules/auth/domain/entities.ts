@@ -1,0 +1,2 @@
+// Auth Domain Entities
+export {}
