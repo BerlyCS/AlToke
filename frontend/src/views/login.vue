@@ -18,11 +18,7 @@
           <h2 class="text-5xl lg:text-6xl font-black leading-none bg-linear-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">tu juego.</h2>
         </div>
 
-        <p class="mt-3 text-md text-text-secondary leading-relaxed max-w-xl">
-          Completa tareas, gana experiencia, desbloquea logros y compite con tus amigos mientras mejoras cada día.
-        </p>
-
-        <div class="flex flex-wrap gap-4 mt-3">
+        <div class="flex flex-wrap gap-4 mt-8">
           <div class="flex items-center gap-2 bg-primary-50 text-primary-500 px-5 py-3 rounded-2xl font-semibold">
             <Trophy class="w-5 h-5"/> Logros
           </div>
@@ -34,13 +30,13 @@
           </div>
         </div>
       </div>
-      <div class="mt-auto flex items-end justify-center lg:justify-start gap-4 pb-2 translate-y-2">
+      <div class="mt-auto flex items-end justify-center lg:justify-start gap-4 pb-2">
         <img
           src="../assets/images/img1.webp"
           alt="mascota1"
           decoding="async"
           fetchpriority="high"
-          class="w-60 sm:w-60 h-auto max-w-full object-contain select-none"
+          class="w-70 h-auto max-w-full object-contain select-none"
         />
       </div>
     </div>
@@ -94,10 +90,6 @@
               </p>
             </div>
           </div>
-        </div>
-
-        <div class="mt-8 text-center">
-          <p class="text-sm text-slate-400">Al continuar aceptas nuestros términos y políticas.</p>
         </div>
       </div>
     </div>
