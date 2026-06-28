@@ -23,6 +23,7 @@ jobs:
       deploy_branch: ${{ steps.resolve.outputs.deploy_branch }}
       deploy_path: ${{ steps.resolve.outputs.deploy_path }}
       environment_name: ${{ steps.resolve.outputs.environment_name }}
+      deploy_secret_name: ${{ steps.resolve.outputs.deploy_secret_name }}
     steps:
       - name: Select branch deployment target
         id: resolve
@@ -38,27 +39,38 @@ jobs:
           should_deploy=false
           deploy_path=""
           environment_name=""
+          deploy_secret_name=""
 
           case "$HEAD_BRANCH" in
             feature/devops)
               should_deploy=true
               deploy_path="$DEVOPS_DEPLOY_PATH"
               environment_name="devops"
+              deploy_secret_name="DEVOPS_DEPLOY_PATH"
               ;;
             dev)
               should_deploy=true
               deploy_path="$STAGING_DEPLOY_PATH"
               environment_name="staging"
+              deploy_secret_name="STAGING_DEPLOY_PATH"
               ;;
             main)
               should_deploy=true
               deploy_path="$PROD_DEPLOY_PATH"
               environment_name="production"
+              deploy_secret_name="PROD_DEPLOY_PATH"
               ;;
           esac
 
+          path_configured=false
+          if [[ -n "$deploy_path" ]]; then
+            path_configured=true
+          fi
+
+          echo "Branch '$HEAD_BRANCH' resolved to should_deploy=$should_deploy environment='${environment_name:-n/a}' deploy_secret='${deploy_secret_name:-n/a}' path_configured=$path_configured"
+
           if [[ "$should_deploy" == "true" && -z "$deploy_path" ]]; then
-            echo "Deployment path secret is empty for branch $HEAD_BRANCH" >&2
+            echo "Deployment target resolution failed: branch '$HEAD_BRANCH' maps to environment '$environment_name', but secret '$deploy_secret_name' is empty or missing." >&2
             exit 1
           fi
 
@@ -66,6 +78,7 @@ jobs:
           echo "deploy_branch=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
           echo "deploy_path=$deploy_path" >> "$GITHUB_OUTPUT"
           echo "environment_name=$environment_name" >> "$GITHUB_OUTPUT"
+          echo "deploy_secret_name=$deploy_secret_name" >> "$GITHUB_OUTPUT"
 
   deploy:
     name: Deploy via SSH
@@ -79,6 +92,18 @@ jobs:
       group: cd-${{ needs.resolve-target.outputs.environment_name }}
       cancel-in-progress: false
     steps:
+      - name: Log deployment context
+        shell: bash
+        run: |
+          set -euo pipefail
+          path_configured=false
+          if [[ -n "${{ needs.resolve-target.outputs.deploy_path }}" ]]; then
+            path_configured=true
+          fi
+
+          echo "Deploying branch '${{ needs.resolve-target.outputs.deploy_branch }}' to environment '${{ needs.resolve-target.outputs.environment_name }}'."
+          echo "Using deploy path secret '${{ needs.resolve-target.outputs.deploy_secret_name }}'; path configured: $path_configured"
+
       - name: Run remote deployment commands
         uses: appleboy/ssh-action@v1.2.2
         with:
@@ -93,16 +118,33 @@ jobs:
               set -euo pipefail
 
               deploy_path="$DEPLOY_PATH"
+              compose_candidates=(docker-compose.yml docker-compose.yaml compose.yml compose.yaml)
+              compose_file=""
 
               if [[ ! -d "$deploy_path" ]]; then
-                echo "Deploy path not found: $deploy_path" >&2
+                echo "Remote deploy path validation failed: the directory configured by the deploy-path secret does not exist on host $(hostname)." >&2
+                echo "Verify the branch-to-environment mapping and confirm the secret value points to an existing directory on the server." >&2
                 exit 1
               fi
 
               cd "$deploy_path"
-              docker compose pull
-              docker compose up -d
-              docker compose ps
+              for candidate in "${compose_candidates[@]}"; do
+                if [[ -f "$candidate" ]]; then
+                  compose_file="$candidate"
+                  break
+                fi
+              done
+
+              if [[ -z "$compose_file" ]]; then
+                echo "Remote deploy path validation failed: no Docker Compose file was found in the deploy directory." >&2
+                echo "Expected one of: ${compose_candidates[*]}" >&2
+                exit 1
+              fi
+
+              echo "Validated remote deploy directory and compose file: $compose_file"
+              docker compose -f "$compose_file" pull
+              docker compose -f "$compose_file" up -d
+              docker compose -f "$compose_file" ps
             '
         env:
           DEPLOY_PATH: ${{ needs.resolve-target.outputs.deploy_path }}
