@@ -61,6 +61,15 @@ entity NotificationSettings {
   academic_alerts : BOOLEAN
 }
 
+entity Tag {
+  *id : UUID PK
+  --
+  #user_id : UUID FK
+  name : VARCHAR(50)
+  color : VARCHAR(20)
+  created_at : TIMESTAMP
+}
+
 entity Task {
   *id : UUID PK
   --
@@ -76,6 +85,13 @@ entity Task {
   completion_date : TIMESTAMP
   deleted_at : TIMESTAMP
   tags : JSONB
+}
+
+entity TagTask {
+  *id : UUID PK
+  --
+  #task_id : UUID FK
+  #tag_id : UUID FK
 }
 
 entity Recurrence {
@@ -172,8 +188,11 @@ entity NotificationLog {
 ' Relationships
 User ||-l-|| PrivacySettings : "has"
 User ||-r-|| NotificationSettings : "has"
+User ||-u-o{ Tag : "has"
 User ||-u-o{ Task : "creates"
 Task ||-u-o| Recurrence : "has"
+Task ||--o{ TagTask : "has"
+Tag ||--o{ TagTask : "contains"
 User ||-u-o{ UserAchievement : "unlocks"
 Achievement ||--o{ UserAchievement : "unlocked by"
 User ||-u-o{ UserInventory : "owns"
@@ -190,5 +209,6 @@ User ||--o{ NotificationLog : "receives"
 Item -[hidden]r-> Recurrence
 Task -[hidden]r-> UserAchievement
 PrivacySettings -[hidden]d-> NotificationSettings
+Tag -[hidden]d-> TagTask
 
 @enduml
