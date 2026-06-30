@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* Primary */
@@ -58,5 +58,5 @@
   --gradient-primary: linear-gradient(90deg, #5b5fee 0%, #4cc9f0 100%);
   --gradient-xp: linear-gradient(90deg, #43d9a3 0%, #4cc9f0 100%);
 
-  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
 }

@@ -1,21 +1,21 @@
-import { Elysia } from "elysia";
-import { AuthService } from "./service";
-import { AuthModel } from "./model";
-import { jwt } from "@elysiajs/jwt";
+import { Elysia } from 'elysia'
+import { AuthService } from './service'
+import { AuthModel } from './model'
+import { jwt } from '@elysiajs/jwt'
 
-export const authRoutes = new Elysia({ prefix: "/auth" })
+export const authRoutes = new Elysia({ prefix: '/auth' })
   .use(
     jwt({
-      name: "jwt",
-      secret: process.env.JWT_SECRET || "super-secret",
+      name: 'jwt',
+      secret: process.env.JWT_SECRET || 'super-secret',
     }),
   )
   .post(
-    "/register",
+    '/register',
     async ({ body, jwt }) => {
-      const user = await AuthService.register(body);
-      const token = await jwt.sign({ id: user.id });
-      return { user, token };
+      const user = await AuthService.register(body)
+      const token = await jwt.sign({ id: user.id })
+      return { user, token }
     },
     {
       body: AuthModel.registerBody,
@@ -26,11 +26,11 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     },
   )
   .post(
-    "/login",
+    '/login',
     async ({ body, jwt }) => {
-      const user = await AuthService.login(body);
-      const token = await jwt.sign({ id: user.id });
-      return { user, token };
+      const user = await AuthService.login(body)
+      const token = await jwt.sign({ id: user.id })
+      return { user, token }
     },
     {
       body: AuthModel.loginBody,
@@ -41,11 +41,11 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     },
   )
   .post(
-    "/google",
+    '/google',
     async ({ body, jwt }) => {
-      const user = await AuthService.googleLogin(body);
-      const token = await jwt.sign({ id: user.id });
-      return { user, token };
+      const user = await AuthService.googleLogin(body)
+      const token = await jwt.sign({ id: user.id })
+      return { user, token }
     },
     {
       body: AuthModel.googleLoginBody,
@@ -54,4 +54,4 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         401: AuthModel.authError,
       },
     },
-  );
+  )

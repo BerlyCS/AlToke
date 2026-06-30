@@ -1,4 +1,4 @@
-import { t, type UnwrapSchema } from "elysia";
+import { t, type UnwrapSchema } from 'elysia'
 
 export const UserModel = {
   updateProfileBody: t.Object({
@@ -25,10 +25,10 @@ export const UserModel = {
       t.Undefined(),
     ]),
   }),
-  userError: t.Literal("User not found"),
-  unauthorizedError: t.Literal("Unauthorized"),
-} as const;
+  userError: t.Literal('User not found'),
+  unauthorizedError: t.Literal('Unauthorized'),
+} as const
 
 export type UserModel = {
-  [k in keyof typeof UserModel]: UnwrapSchema<(typeof UserModel)[k]>;
-};
+  [k in keyof typeof UserModel]: UnwrapSchema<(typeof UserModel)[k]>
+}

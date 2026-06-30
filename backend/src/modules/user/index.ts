@@ -1,42 +1,40 @@
-import { Elysia, status } from "elysia";
-import { UserService } from "./service";
-import { UserModel } from "./model";
-import { jwt } from "@elysiajs/jwt";
+import { Elysia, status } from 'elysia'
+import { UserService } from './service'
+import { UserModel } from './model'
+import { jwt } from '@elysiajs/jwt'
 
-export const userRoutes = new Elysia({ prefix: "/users" })
+export const userRoutes = new Elysia({ prefix: '/users' })
   .use(
     jwt({
-      name: "jwt",
-      secret: process.env.JWT_SECRET || "super-secret",
+      name: 'jwt',
+      secret: process.env.JWT_SECRET || 'super-secret',
     }),
   )
   .derive(async ({ jwt, headers }) => {
-    const authHeader = headers.authorization;
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null;
+    const authHeader = headers.authorization
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
 
-    let userId: string | null = null;
+    let userId: string | null = null
     if (token) {
-      const payload = await jwt.verify(token);
+      const payload = await jwt.verify(token)
       if (payload && payload.id) {
-        userId = payload.id as string;
+        userId = payload.id as string
       }
     }
 
     return {
       userId,
       requireAuth() {
-        if (!userId) throw status(401, "Unauthorized");
-        return userId;
+        if (!userId) throw status(401, 'Unauthorized')
+        return userId
       },
-    };
+    }
   })
   .get(
-    "/me",
+    '/me',
     async ({ requireAuth }) => {
-      const userId = requireAuth();
-      return await UserService.getProfile(userId);
+      const userId = requireAuth()
+      return await UserService.getProfile(userId)
     },
     {
       response: {
@@ -47,10 +45,10 @@ export const userRoutes = new Elysia({ prefix: "/users" })
     },
   )
   .patch(
-    "/me",
+    '/me',
     async ({ requireAuth, body }) => {
-      const userId = requireAuth();
-      return await UserService.updateProfile(userId, body);
+      const userId = requireAuth()
+      return await UserService.updateProfile(userId, body)
     },
     {
       body: UserModel.updateProfileBody,
@@ -60,4 +58,4 @@ export const userRoutes = new Elysia({ prefix: "/users" })
         404: UserModel.userError,
       },
     },
-  );
+  )
