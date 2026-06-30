@@ -5,16 +5,16 @@
  */
 
 // Domain
-export * from './domain'
+export * from "./domain";
 
 // DTOs
-export * from './dto'
+export * from "./dto";
 
 // Services
-export * from './services'
+export * from "./services";
 
 // Repositories
-export * from './repositories'
+export * from "./repositories";
 
 // Controllers
-export * from './controllers'
+export * from "./controllers";

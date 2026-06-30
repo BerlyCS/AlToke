@@ -1,20 +1,63 @@
-/**
- * User Module
- * Manages identity and personal data within the platform.
- * Features: Profiles, privacy preferences, avatar, nickname
- */
+import { Elysia, status } from "elysia";
+import { UserService } from "./service";
+import { UserModel } from "./model";
+import { jwt } from "@elysiajs/jwt";
 
-// Domain
-export * from './domain'
+export const userRoutes = new Elysia({ prefix: "/users" })
+  .use(
+    jwt({
+      name: "jwt",
+      secret: process.env.JWT_SECRET || "super-secret",
+    }),
+  )
+  .derive(async ({ jwt, headers }) => {
+    const authHeader = headers.authorization;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null;
 
-// DTOs
-export * from './dto'
+    let userId: string | null = null;
+    if (token) {
+      const payload = await jwt.verify(token);
+      if (payload && payload.id) {
+        userId = payload.id as string;
+      }
+    }
 
-// Services
-export * from './services'
-
-// Repositories
-export * from './repositories'
-
-// Controllers
-export * from './controllers'
+    return {
+      userId,
+      requireAuth() {
+        if (!userId) throw status(401, "Unauthorized");
+        return userId;
+      },
+    };
+  })
+  .get(
+    "/me",
+    async ({ requireAuth }) => {
+      const userId = requireAuth();
+      return await UserService.getProfile(userId);
+    },
+    {
+      response: {
+        200: UserModel.profileResponse,
+        401: UserModel.unauthorizedError,
+        404: UserModel.userError,
+      },
+    },
+  )
+  .patch(
+    "/me",
+    async ({ requireAuth, body }) => {
+      const userId = requireAuth();
+      return await UserService.updateProfile(userId, body);
+    },
+    {
+      body: UserModel.updateProfileBody,
+      response: {
+        200: UserModel.profileResponse,
+        401: UserModel.unauthorizedError,
+        404: UserModel.userError,
+      },
+    },
+  );
