@@ -4,6 +4,9 @@
  * Features: XP awards, level-ups, streaks, achievements, inventory
  */
 
+import { Elysia } from 'elysia'
+import { gamificationController } from './controllers'
+
 // Domain
 export * from './domain'
 
@@ -18,3 +21,5 @@ export * from './repositories'
 
 // Controllers
 export * from './controllers'
+
+export const gamificationModule = new Elysia().use(gamificationController)
