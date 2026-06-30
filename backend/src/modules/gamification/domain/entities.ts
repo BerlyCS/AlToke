@@ -46,5 +46,3 @@ export interface Inventory {
   userId: string
   items: Item[]
 }
-
-export {}

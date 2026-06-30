@@ -8,7 +8,7 @@ import { Elysia } from 'elysia'
 import { gamificationController } from './controllers'
 
 // Domain
-export * from './domain'
+export * from './domain/index'
 
 // DTOs
 export * from './dto'
