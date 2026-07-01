@@ -1,4 +1,4 @@
-name: CI
+name: CI / CD
 
 on:
   push:
@@ -11,10 +11,6 @@ on:
 permissions:
   contents: read
   packages: write
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   detect-changes:
@@ -159,9 +155,28 @@ jobs:
       - detect-changes
       - validate-backend
     if: needs.detect-changes.outputs.backend_affected == 'true'
+    concurrency:
+      group: build-backend-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Abort stale backend image run
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags --depth=1 origin "$BRANCH_NAME"
+          current_remote_sha="$(git rev-parse FETCH_HEAD)"
+
+          if [[ "$current_remote_sha" != "$EXPECTED_SHA" ]]; then
+            echo "Backend image run is stale for branch '$BRANCH_NAME'. Expected $EXPECTED_SHA but remote head is $current_remote_sha." >&2
+            exit 1
+          fi
 
       - name: Prepare image coordinates
         id: prep
@@ -242,9 +257,28 @@ jobs:
       - detect-changes
       - validate-frontend
     if: needs.detect-changes.outputs.frontend_affected == 'true'
+    concurrency:
+      group: build-frontend-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Abort stale frontend image run
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags --depth=1 origin "$BRANCH_NAME"
+          current_remote_sha="$(git rev-parse FETCH_HEAD)"
+
+          if [[ "$current_remote_sha" != "$EXPECTED_SHA" ]]; then
+            echo "Frontend image run is stale for branch '$BRANCH_NAME'. Expected $EXPECTED_SHA but remote head is $current_remote_sha." >&2
+            exit 1
+          fi
 
       - name: Prepare image coordinates
         id: prep
@@ -317,3 +351,214 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  resolve-deploy-target:
+    name: Resolve deployment target
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - validate-frontend
+      - validate-backend
+      - build-backend-image
+      - build-nginx-image
+    if: always()
+    outputs:
+      should_deploy: ${{ steps.resolve.outputs.should_deploy }}
+      deploy_branch: ${{ steps.resolve.outputs.deploy_branch }}
+      environment_name: ${{ steps.resolve.outputs.environment_name }}
+    steps:
+      - name: Verify CI jobs required for this ref
+        shell: bash
+        env:
+          DETECT_CHANGES_RESULT: ${{ needs.detect-changes.result }}
+          FRONTEND_AFFECTED: ${{ needs.detect-changes.outputs.frontend_affected }}
+          BACKEND_AFFECTED: ${{ needs.detect-changes.outputs.backend_affected }}
+          VALIDATE_FRONTEND_RESULT: ${{ needs.validate-frontend.result }}
+          VALIDATE_BACKEND_RESULT: ${{ needs.validate-backend.result }}
+          BUILD_BACKEND_IMAGE_RESULT: ${{ needs.build-backend-image.result }}
+          BUILD_NGINX_IMAGE_RESULT: ${{ needs.build-nginx-image.result }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$DETECT_CHANGES_RESULT" != "success" ]]; then
+            echo "Changed-file detection must succeed before deployment. Current result: $DETECT_CHANGES_RESULT" >&2
+            exit 1
+          fi
+
+          if [[ "$FRONTEND_AFFECTED" == "true" ]]; then
+            if [[ "$VALIDATE_FRONTEND_RESULT" != "success" ]]; then
+              echo "Frontend validation must succeed before deployment. Current result: $VALIDATE_FRONTEND_RESULT" >&2
+              exit 1
+            fi
+
+            if [[ "$BUILD_NGINX_IMAGE_RESULT" != "success" ]]; then
+              echo "Frontend image build must succeed before deployment. Current result: $BUILD_NGINX_IMAGE_RESULT" >&2
+              exit 1
+            fi
+          fi
+
+          if [[ "$BACKEND_AFFECTED" == "true" ]]; then
+            if [[ "$VALIDATE_BACKEND_RESULT" != "success" ]]; then
+              echo "Backend validation must succeed before deployment. Current result: $VALIDATE_BACKEND_RESULT" >&2
+              exit 1
+            fi
+
+            if [[ "$BUILD_BACKEND_IMAGE_RESULT" != "success" ]]; then
+              echo "Backend image build must succeed before deployment. Current result: $BUILD_BACKEND_IMAGE_RESULT" >&2
+              exit 1
+            fi
+          fi
+
+      - name: Select branch deployment target
+        id: resolve
+        shell: bash
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          should_deploy=false
+          environment_name=""
+
+          case "$DEPLOY_BRANCH" in
+            feature/devops)
+              should_deploy=true
+              environment_name="devops"
+              ;;
+            dev)
+              should_deploy=true
+              environment_name="staging"
+              ;;
+            main)
+              should_deploy=true
+              environment_name="production"
+              ;;
+          esac
+
+          echo "Branch '$DEPLOY_BRANCH' resolved to should_deploy=$should_deploy environment='${environment_name:-n/a}'"
+
+          echo "should_deploy=$should_deploy" >> "$GITHUB_OUTPUT"
+          echo "deploy_branch=$DEPLOY_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "environment_name=$environment_name" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+    needs: resolve-deploy-target
+    if: needs.resolve-deploy-target.outputs.should_deploy == 'true'
+    concurrency:
+      group: cd-${{ needs.resolve-deploy-target.outputs.environment_name }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Abort stale deploy run
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ needs.resolve-deploy-target.outputs.deploy_branch }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags --depth=1 origin "$BRANCH_NAME"
+          current_remote_sha="$(git rev-parse FETCH_HEAD)"
+
+          if [[ "$current_remote_sha" != "$EXPECTED_SHA" ]]; then
+            echo "Deploy run is stale for branch '$BRANCH_NAME'. Expected $EXPECTED_SHA but remote head is $current_remote_sha." >&2
+            exit 1
+          fi
+
+      - name: Resolve deploy path secret
+        shell: bash
+        env:
+          DEPLOY_BRANCH: ${{ needs.resolve-deploy-target.outputs.deploy_branch }}
+          DEPLOY_ENVIRONMENT: ${{ needs.resolve-deploy-target.outputs.environment_name }}
+          DEVOPS_DEPLOY_PATH: ${{ secrets.DEVOPS_DEPLOY_PATH }}
+          STAGING_DEPLOY_PATH: ${{ secrets.STAGING_DEPLOY_PATH }}
+          PROD_DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+
+          deploy_path=""
+          deploy_secret_name=""
+
+          case "$DEPLOY_ENVIRONMENT" in
+            devops)
+              deploy_path="$DEVOPS_DEPLOY_PATH"
+              deploy_secret_name="DEVOPS_DEPLOY_PATH"
+              ;;
+            staging)
+              deploy_path="$STAGING_DEPLOY_PATH"
+              deploy_secret_name="STAGING_DEPLOY_PATH"
+              ;;
+            production)
+              deploy_path="$PROD_DEPLOY_PATH"
+              deploy_secret_name="PROD_DEPLOY_PATH"
+              ;;
+            *)
+              echo "Deployment target resolution failed: unsupported environment '$DEPLOY_ENVIRONMENT' for branch '$DEPLOY_BRANCH'." >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ -z "$deploy_path" ]]; then
+            echo "Deployment target resolution failed: repository secret '$deploy_secret_name' is empty or missing for branch '$DEPLOY_BRANCH'." >&2
+            exit 1
+          fi
+
+          echo "DEPLOY_PATH=$deploy_path" >> "$GITHUB_ENV"
+          echo "DEPLOY_SECRET_NAME=$deploy_secret_name" >> "$GITHUB_ENV"
+
+      - name: Log deployment context
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Deploying branch '${{ needs.resolve-deploy-target.outputs.deploy_branch }}' to environment '${{ needs.resolve-deploy-target.outputs.environment_name }}'."
+          echo "Repository secret '$DEPLOY_SECRET_NAME' is configured."
+
+      - name: Run remote deployment commands
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30m
+          envs: DEPLOY_PATH
+          request_pty: false
+          script: |
+            bash -lc '
+              set -euo pipefail
+
+              deploy_path="$DEPLOY_PATH"
+              compose_candidates=(docker-compose.yml docker-compose.yaml compose.yml compose.yaml)
+              compose_file=""
+
+              if [[ ! -d "$deploy_path" ]]; then
+                echo "Remote deploy path validation failed: the directory configured by the deploy-path secret does not exist on host $(hostname)." >&2
+                echo "Verify the branch-to-environment mapping and confirm the secret value points to an existing directory on the server." >&2
+                exit 1
+              fi
+
+              cd "$deploy_path"
+              for candidate in "${compose_candidates[@]}"; do
+                if [[ -f "$candidate" ]]; then
+                  compose_file="$candidate"
+                  break
+                fi
+              done
+
+              if [[ -z "$compose_file" ]]; then
+                echo "Remote deploy path validation failed: no Docker Compose file was found in the deploy directory." >&2
+                echo "Expected one of: ${compose_candidates[*]}" >&2
+                exit 1
+              fi
+
+              echo "Validated remote deploy directory and compose file: $compose_file"
+              docker compose -f "$compose_file" pull
+              docker compose -f "$compose_file" up -d
+              docker compose -f "$compose_file" ps
+            '
