@@ -21,64 +21,39 @@ jobs:
     outputs:
       should_deploy: ${{ steps.resolve.outputs.should_deploy }}
       deploy_branch: ${{ steps.resolve.outputs.deploy_branch }}
-      deploy_path: ${{ steps.resolve.outputs.deploy_path }}
       environment_name: ${{ steps.resolve.outputs.environment_name }}
-      deploy_secret_name: ${{ steps.resolve.outputs.deploy_secret_name }}
     steps:
       - name: Select branch deployment target
         id: resolve
         shell: bash
         env:
           HEAD_BRANCH: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
-          DEVOPS_DEPLOY_PATH: ${{ secrets.DEVOPS_DEPLOY_PATH }}
-          STAGING_DEPLOY_PATH: ${{ secrets.STAGING_DEPLOY_PATH }}
-          PROD_DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
         run: |
           set -euo pipefail
 
           should_deploy=false
-          deploy_path=""
           environment_name=""
-          deploy_secret_name=""
 
           case "$HEAD_BRANCH" in
             feature/devops)
               should_deploy=true
-              deploy_path="$DEVOPS_DEPLOY_PATH"
               environment_name="devops"
-              deploy_secret_name="DEVOPS_DEPLOY_PATH"
               ;;
             dev)
               should_deploy=true
-              deploy_path="$STAGING_DEPLOY_PATH"
               environment_name="staging"
-              deploy_secret_name="STAGING_DEPLOY_PATH"
               ;;
             main)
               should_deploy=true
-              deploy_path="$PROD_DEPLOY_PATH"
               environment_name="production"
-              deploy_secret_name="PROD_DEPLOY_PATH"
               ;;
           esac
 
-          path_configured=false
-          if [[ -n "$deploy_path" ]]; then
-            path_configured=true
-          fi
-
-          echo "Branch '$HEAD_BRANCH' resolved to should_deploy=$should_deploy environment='${environment_name:-n/a}' deploy_secret='${deploy_secret_name:-n/a}' path_configured=$path_configured"
-
-          if [[ "$should_deploy" == "true" && -z "$deploy_path" ]]; then
-            echo "Deployment target resolution failed: branch '$HEAD_BRANCH' maps to environment '$environment_name', but secret '$deploy_secret_name' is empty or missing." >&2
-            exit 1
-          fi
+          echo "Branch '$HEAD_BRANCH' resolved to should_deploy=$should_deploy environment='${environment_name:-n/a}'"
 
           echo "should_deploy=$should_deploy" >> "$GITHUB_OUTPUT"
           echo "deploy_branch=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
-          echo "deploy_path=$deploy_path" >> "$GITHUB_OUTPUT"
           echo "environment_name=$environment_name" >> "$GITHUB_OUTPUT"
-          echo "deploy_secret_name=$deploy_secret_name" >> "$GITHUB_OUTPUT"
 
   deploy:
     name: Deploy via SSH
@@ -92,17 +67,54 @@ jobs:
       group: cd-${{ needs.resolve-target.outputs.environment_name }}
       cancel-in-progress: false
     steps:
+      - name: Resolve deploy path secret
+        shell: bash
+        env:
+          DEPLOY_BRANCH: ${{ needs.resolve-target.outputs.deploy_branch }}
+          DEPLOY_ENVIRONMENT: ${{ needs.resolve-target.outputs.environment_name }}
+          DEVOPS_DEPLOY_PATH: ${{ secrets.DEVOPS_DEPLOY_PATH }}
+          STAGING_DEPLOY_PATH: ${{ secrets.STAGING_DEPLOY_PATH }}
+          PROD_DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+
+          deploy_path=""
+          deploy_secret_name=""
+
+          case "$DEPLOY_ENVIRONMENT" in
+            devops)
+              deploy_path="$DEVOPS_DEPLOY_PATH"
+              deploy_secret_name="DEVOPS_DEPLOY_PATH"
+              ;;
+            staging)
+              deploy_path="$STAGING_DEPLOY_PATH"
+              deploy_secret_name="STAGING_DEPLOY_PATH"
+              ;;
+            production)
+              deploy_path="$PROD_DEPLOY_PATH"
+              deploy_secret_name="PROD_DEPLOY_PATH"
+              ;;
+            *)
+              echo "Deployment target resolution failed: unsupported environment '$DEPLOY_ENVIRONMENT' for branch '$DEPLOY_BRANCH'." >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ -z "$deploy_path" ]]; then
+            echo "Deployment target resolution failed: repository secret '$deploy_secret_name' is empty or missing for branch '$DEPLOY_BRANCH'." >&2
+            exit 1
+          fi
+
+          echo "DEPLOY_PATH=$deploy_path" >> "$GITHUB_ENV"
+          echo "DEPLOY_SECRET_NAME=$deploy_secret_name" >> "$GITHUB_ENV"
+
       - name: Log deployment context
         shell: bash
         run: |
           set -euo pipefail
-          path_configured=false
-          if [[ -n "${{ needs.resolve-target.outputs.deploy_path }}" ]]; then
-            path_configured=true
-          fi
 
           echo "Deploying branch '${{ needs.resolve-target.outputs.deploy_branch }}' to environment '${{ needs.resolve-target.outputs.environment_name }}'."
-          echo "Using deploy path secret '${{ needs.resolve-target.outputs.deploy_secret_name }}'; path configured: $path_configured"
+          echo "Repository secret '$DEPLOY_SECRET_NAME' is configured."
 
       - name: Run remote deployment commands
         uses: appleboy/ssh-action@v1.2.2
@@ -146,5 +158,3 @@ jobs:
               docker compose -f "$compose_file" up -d
               docker compose -f "$compose_file" ps
             '
-        env:
-          DEPLOY_PATH: ${{ needs.resolve-target.outputs.deploy_path }}
