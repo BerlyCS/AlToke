@@ -14,10 +14,16 @@
     "format:check": "oxfmt . --check"
   },
   "dependencies": {
-    "elysia": "latest"
+    "@elysiajs/cors": "^1.4.2",
+    "@elysiajs/jwt": "^1.4.2",
+    "drizzle-orm": "^0.45.2",
+    "elysia": "latest",
+    "google-auth-library": "^10.9.0",
+    "postgres": "^3.4.9"
   },
   "devDependencies": {
     "bun-types": "latest",
+    "drizzle-kit": "^0.31.10",
     "oxfmt": "^0.45.0",
     "oxlint": "~1.60.0",
     "typescript": "~6.0.0"

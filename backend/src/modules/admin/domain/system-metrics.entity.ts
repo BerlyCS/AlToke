@@ -1,18 +1,18 @@
 export class SystemMetrics {
-  totalUsers: number;
-  activeUsersDaily: number;
-  tasksCompletedToday: number;
-  retentionRate: number;
+  totalUsers: number
+  activeUsersDaily: number
+  tasksCompletedToday: number
+  retentionRate: number
 
   constructor(
     totalUsers: number,
     activeUsersDaily: number,
     tasksCompletedToday: number,
-    retentionRate: number
+    retentionRate: number,
   ) {
-    this.totalUsers = totalUsers;
-    this.activeUsersDaily = activeUsersDaily;
-    this.tasksCompletedToday = tasksCompletedToday;
-    this.retentionRate = retentionRate;
+    this.totalUsers = totalUsers
+    this.activeUsersDaily = activeUsersDaily
+    this.tasksCompletedToday = tasksCompletedToday
+    this.retentionRate = retentionRate
   }
 }

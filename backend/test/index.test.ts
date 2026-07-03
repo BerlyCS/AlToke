@@ -8,7 +8,7 @@ describe('app', () => {
     const response = await app.handle(new Request('http://localhost/'))
 
     expect(response.status).toBe(200)
-    expect(await response.text()).toBe('Hello Elysia')
+    expect(await response.text()).toBe('API AlToke')
   })
 
   it('uses container-friendly defaults when env vars are missing', () => {
