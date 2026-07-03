@@ -1,5 +1,10 @@
 import { Elysia } from 'elysia'
 import { serverConfig } from './config'
+import { gamificationModule } from './modules/gamification'
+
+export const app = new Elysia()
+  .get('/', () => 'Hello Elysia')
+  .use(gamificationModule)
 import { authRoutes } from './modules/auth'
 import { userRoutes } from './modules/user'
 // @ts-ignore
