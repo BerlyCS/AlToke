@@ -4,17 +4,13 @@
  * Features: Performance analysis, execution time suggestions, workload prediction, re-prioritization
  */
 
-// Domain
+import { Elysia } from 'elysia'
+import { aiController } from './controllers'
+
 export * from './domain'
-
-// DTOs
 export * from './dto'
-
-// Services
 export * from './services'
-
-// Repositories
 export * from './repositories'
-
-// Controllers
 export * from './controllers'
+
+export const aiModule = new Elysia().use(aiController)
