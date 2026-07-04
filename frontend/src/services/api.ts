@@ -1,18 +1,4 @@
-type ApiEnv = {
-  VITE_API_URL?: string
-}
-
-const DEFAULT_API_URL = '/api'
-
-const normalizeApiUrl = (value: string) => value.replace(/\/+$/, '') || DEFAULT_API_URL
-
-export const resolveApiUrl = (env: ApiEnv = import.meta.env) => {
-  const configuredUrl = env.VITE_API_URL?.trim()
-
-  return configuredUrl ? normalizeApiUrl(configuredUrl) : DEFAULT_API_URL
-}
-
-const API_URL = resolveApiUrl()
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 export const fetchApi = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
   const token = localStorage.getItem('token')
