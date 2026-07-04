@@ -12,7 +12,7 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: docker/nginx.Dockerfile
+      dockerfile: docker/frontend.Dockerfile
     depends_on:
       - backend
     ports:
