@@ -32,3 +32,21 @@ export interface Credentials {
   password: string
   nickname?: string
 }
+
+export type SuggestionStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED'
+
+export interface TaskSuggestion {
+  id: string
+  userId: string
+  suggestedTitle: string
+  suggestedTime: string
+  explanation: string
+  status: SuggestionStatus
+  createdAt: string
+}
+
+export interface TaskOverloadPrediction {
+  isOverloaded: boolean
+  riskLevel: 'low' | 'medium' | 'high'
+  explanation: string
+}
