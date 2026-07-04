@@ -1,141 +1,186 @@
 <template>
-  <div class="min-h-screen w-full bg-background shadow-2xl overflow-hidden grid lg:grid-cols-2">
-    <div class="hidden lg:flex relative px-10 py-7 lg:px-14 lg:py-7 flex-col justify-between">
-      <div class="flex items-center gap-4">
-        <img
-          src="../assets/images/logo-horizontal.webp"
-          alt="AlToke"
-          decoding="async"
-          fetchpriority="high"
-          class="w-50 sm:w-50 h-auto max-w-full object-contain select-none"
-        />
-      </div>
+  <div class="grid min-h-svh lg:grid-cols-2 bg-background">
+    <div class="relative hidden bg-muted lg:flex flex-col border-r border-border overflow-hidden">
+      <div class="absolute inset-0 bg-primary/5"></div>
 
-      <div>
-        <div class="flex flex-col leading-none mt-10">
-          <h2 class="text-5xl lg:text-6xl font-black leading-none text-slate-900">Tus tareas,</h2>
-          <h2 class="text-5xl lg:text-6xl font-black leading-none text-success-400">
-            tu progreso,
-          </h2>
-          <h2
-            class="text-5xl lg:text-6xl font-black leading-none bg-linear-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent"
-          >
-            tu juego.
-          </h2>
+      <div class="relative z-10 flex flex-col h-full justify-between p-12">
+        <a
+          href="#"
+          class="flex items-center gap-3 w-fit hover:opacity-80 transition-opacity"
+          @click.prevent="router.push('/')"
+        >
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden">
+            <img :src="logoUrl" alt="AlToke Logo" class="w-full h-full object-cover" />
+          </div>
+          <span class="text-2xl font-black tracking-tight">AlToke</span>
+        </a>
+
+        <div class="flex flex-col items-start justify-center flex-1 py-12">
+          <div class="flex flex-col leading-none">
+            <h2 class="text-5xl lg:text-6xl font-black leading-none text-foreground">
+              Tus tareas,
+            </h2>
+            <h2 class="text-5xl lg:text-6xl font-black leading-none text-success-500">
+              tu progreso,
+            </h2>
+            <h2
+              class="text-5xl lg:text-6xl font-black leading-none bg-linear-to-r from-primary to-purple-500 bg-clip-text text-transparent pb-2"
+            >
+              tu juego.
+            </h2>
+          </div>
+
+          <div class="flex flex-wrap gap-4 mt-10">
+            <Card
+              class="flex items-center gap-3 px-5 py-4 rounded-2xl bg-primary/10 border-primary/20 shadow-none"
+            >
+              <Trophy class="w-6 h-6 text-primary" />
+              <span class="font-bold text-primary">Logros</span>
+            </Card>
+            <Card
+              class="flex items-center gap-3 px-5 py-4 rounded-2xl bg-success-500/10 border-success-500/20 shadow-none"
+            >
+              <Target class="w-6 h-6 text-success-500" />
+              <span class="font-bold text-success-500">Retos</span>
+            </Card>
+            <Card
+              class="flex items-center gap-3 px-5 py-4 rounded-2xl bg-warning-500/10 border-warning-500/20 shadow-none"
+            >
+              <Flame class="w-6 h-6 text-warning-500" />
+              <span class="font-bold text-warning-500">Rachas</span>
+            </Card>
+          </div>
         </div>
 
-        <div class="flex flex-wrap gap-4 mt-8">
-          <div
-            class="flex items-center gap-2 bg-primary-50 text-primary-500 px-5 py-3 rounded-2xl font-semibold"
-          >
-            <Trophy class="w-5 h-5" /> Logros
-          </div>
-          <div
-            class="flex items-center gap-2 bg-success-50 text-success-400 px-5 py-3 rounded-2xl font-semibold"
-          >
-            <Target class="w-5 h-5" /> Retos
-          </div>
-          <div
-            class="flex items-center gap-2 bg-warning-50 text-warning-500 px-5 py-3 rounded-2xl font-semibold"
-          >
-            <Flame class="w-5 h-5" /> Rachas
-          </div>
+        <div class="flex justify-center mt-auto">
+          <img
+            src="../assets/images/img1.webp"
+            alt="Mascota AlToke"
+            class="w-full max-w-[20rem] object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500"
+          />
         </div>
-      </div>
-      <div class="mt-auto flex items-end justify-center lg:justify-start gap-4 pb-2">
-        <img
-          src="../assets/images/img1.webp"
-          alt="mascota1"
-          decoding="async"
-          fetchpriority="high"
-          class="w-70 h-auto max-w-full object-contain select-none"
-        />
       </div>
     </div>
 
-    <div class="relative bg-primary-200 flex items-center justify-center p-4">
-      <div
-        class="relative w-full max-w-md bg-white rounded-[36px] shadow-2xl border border-slate-100 p-8"
-      >
-        <div class="text-center">
-          <h2 class="text-4xl font-black text-slate-900">
-            {{ isLogin ? '¡Bienvenido!' : 'Crear Cuenta' }}
-          </h2>
-          <p class="text-slate-500 mt-3 leading-relaxed">
-            {{
-              isLogin
-                ? 'Organiza tus tareas, gana experiencia y sube de nivel.'
-                : 'Únete a AlToke y empieza a jugar con tu productividad.'
-            }}
-          </p>
-        </div>
+    <div class="flex flex-col p-6 md:p-10 relative">
+      <div class="absolute right-6 top-6 md:right-10 md:top-10">
+        <ModeToggle />
+      </div>
 
-        <form @submit.prevent="handleSubmit" class="mt-8 space-y-4">
-          <div v-if="!isLogin">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Apodo (opcional)</label>
-            <input
-              v-model="form.nickname"
-              type="text"
-              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-              placeholder="Tu apodo"
-            />
-          </div>
+      <div class="flex flex-col items-center justify-center flex-1 pt-12 lg:pt-0">
+        <div class="w-full max-w-104">
+          <Card class="bg-card text-card-foreground rounded-3xl border-border shadow-2xl">
+            <div class="p-6 md:p-8 flex flex-col gap-6">
+              <div class="flex flex-col items-center gap-2 text-center">
+                <h1 class="text-2xl font-bold">
+                  {{ isLogin ? 'Bienvenido de nuevo' : 'Crea tu cuenta' }}
+                </h1>
+                <p class="text-sm text-balance text-muted-foreground">
+                  {{
+                    isLogin
+                      ? 'Inicia sesión con tu cuenta de Google o correo'
+                      : 'Únete a AlToke y empieza a jugar con tu productividad'
+                  }}
+                </p>
+              </div>
 
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Correo electrónico</label>
-            <input
-              v-model="form.email"
-              type="email"
-              required
-              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-              placeholder="ejemplo@correo.com"
-            />
-          </div>
+              <div class="grid gap-6">
+                <div
+                  id="google-btn-wrapper"
+                  class="w-full flex justify-center overflow-hidden rounded-md [&>div]:w-full [&_iframe]:w-full"
+                ></div>
 
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
-            <input
-              v-model="form.password"
-              type="password"
-              required
-              minlength="6"
-              class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
-              placeholder="••••••••"
-            />
-          </div>
+                <div
+                  class="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"
+                >
+                  <span class="relative z-10 bg-card px-2 text-muted-foreground">
+                    O continúa con
+                  </span>
+                </div>
 
-          <p v-if="errorMsg" class="text-error-500 text-sm font-medium text-center">
-            {{ errorMsg }}
-          </p>
+                <form class="grid gap-6" @submit.prevent="handleSubmit">
+                  <div v-if="!isLogin" class="grid gap-2">
+                    <Label for="nickname">Apodo (opcional)</Label>
+                    <Input
+                      id="nickname"
+                      v-model="form.nickname"
+                      type="text"
+                      placeholder="Tu apodo"
+                      class="h-11"
+                    />
+                  </div>
 
-          <button
-            type="submit"
-            :disabled="isLoading"
-            class="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-primary-500/30 disabled:opacity-70"
-          >
-            {{ isLoading ? 'Cargando...' : isLogin ? 'Iniciar Sesión' : 'Registrarse' }}
-          </button>
-        </form>
+                  <div class="grid gap-2">
+                    <Label for="email">Correo electrónico</Label>
+                    <Input
+                      id="email"
+                      v-model="form.email"
+                      type="email"
+                      placeholder="ejemplo@correo.com"
+                      required
+                      class="h-11"
+                    />
+                  </div>
 
-        <div class="mt-6 flex items-center justify-between">
-          <span class="w-1/5 border-b border-slate-200 lg:w-1/4"></span>
-          <span class="text-xs text-center text-slate-500 uppercase">o continúa con</span>
-          <span class="w-1/5 border-b border-slate-200 lg:w-1/4"></span>
-        </div>
+                  <div class="grid gap-2">
+                    <div class="flex items-center">
+                      <Label for="password">Contraseña</Label>
+                      <a
+                        v-if="isLogin"
+                        href="#"
+                        class="ml-auto inline-block text-sm underline-offset-4 hover:underline text-muted-foreground"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </a>
+                    </div>
+                    <Input
+                      id="password"
+                      v-model="form.password"
+                      type="password"
+                      required
+                      minlength="6"
+                      placeholder="••••••••"
+                      class="h-11"
+                    />
+                  </div>
 
-        <div class="mt-6">
-          <div id="google-btn-wrapper" class="flex justify-center h-10"></div>
-        </div>
+                  <p v-if="errorMsg" class="text-destructive text-sm font-medium text-center">
+                    {{ errorMsg }}
+                  </p>
 
-        <div class="mt-6 text-center text-sm text-slate-600">
-          {{ isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?' }}
-          <button
-            @click="toggleMode"
-            type="button"
-            class="font-bold text-primary-600 hover:underline"
-          >
-            {{ isLogin ? 'Regístrate aquí' : 'Inicia sesión' }}
-          </button>
+                  <Button
+                    type="submit"
+                    class="w-full h-11 text-base font-bold shadow-lg"
+                    :disabled="isLoading"
+                  >
+                    {{ isLoading ? 'Cargando...' : isLogin ? 'Iniciar Sesión' : 'Registrarse' }}
+                  </Button>
+                </form>
+              </div>
+
+              <div class="text-center text-sm text-muted-foreground mt-2">
+                {{ isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?' }}
+                <button
+                  type="button"
+                  @click="toggleMode"
+                  class="underline underline-offset-4 text-foreground font-bold hover:text-primary transition-colors ml-1"
+                >
+                  {{ isLogin ? 'Regístrate' : 'Inicia sesión' }}
+                </button>
+              </div>
+
+              <div class="text-center text-xs text-muted-foreground mt-4 px-2">
+                Al hacer clic en continuar, aceptas nuestros
+                <a href="#" class="underline underline-offset-4 hover:text-foreground"
+                  >Términos de servicio</a
+                >
+                y
+                <a href="#" class="underline underline-offset-4 hover:text-foreground"
+                  >Política de privacidad</a
+                >.
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
@@ -143,12 +188,20 @@
 </template>
 
 <script setup lang="ts">
-import { Flame, Target, Trophy } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
+import ModeToggle from '@/components/ModeToggle.vue'
+import logoUrl from '@/assets/images/logo.webp'
+import { Trophy, Target, Flame } from 'lucide-vue-next'
 import { ref, reactive, onMounted } from 'vue'
 import { authService } from '../services/auth.service'
 import { useAuthStore } from '../stores/auth'
+import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 const isLogin = ref(true)
 const isLoading = ref(false)
@@ -180,8 +233,7 @@ const handleSubmit = async () => {
         })
 
     authStore.setAuth(res.user, res.token)
-    // router.push('/dashboard') // Redirigir cuando exista
-    alert('Autenticado con éxito!')
+    router.push('/dashboard')
   } catch (err: unknown) {
     if (err instanceof Error) errorMsg.value = err.message
   } finally {
@@ -196,8 +248,7 @@ const handleGoogleCallback = async (response: { credential: string }) => {
   try {
     const res = await authService.googleLogin(response.credential)
     authStore.setAuth(res.user, res.token)
-    alert('Autenticado con Google!')
-    // router.push('/dashboard')
+    router.push('/dashboard')
   } catch (err: unknown) {
     if (err instanceof Error) errorMsg.value = err.message
   } finally {
@@ -228,7 +279,9 @@ onMounted(() => {
     window.google.accounts.id.renderButton(document.getElementById('google-btn-wrapper'), {
       theme: 'outline',
       size: 'large',
-      width: '100%',
+      text: 'continue_with',
+      shape: 'rectangular',
+      logo_alignment: 'center',
     })
   }
 })

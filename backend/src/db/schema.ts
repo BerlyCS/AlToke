@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm'
 import {
   boolean,
   integer,
@@ -27,26 +28,6 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
-export const tasks = pgTable('tasks', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id')
-    .references(() => users.id)
-    .notNull(),
-  assignedBy: uuid('assigned_by').references(() => users.id),
-  title: varchar('title', { length: 100 }).notNull(),
-  description: text('description'),
-  taskType: varchar('task_type', { length: 20 }).default('TASK').notNull(),
-  priority: varchar('priority', { length: 20 }).default('MEDIUM').notNull(),
-  status: varchar('status', { length: 20 }).default('PENDING').notNull(),
-  estimatedTimeMinutes: integer('estimated_time_mins').default(0).notNull(),
-  startTime: timestamp('start_time'),
-  dueDate: timestamp('due_date'),
-  completionDate: timestamp('completion_date'),
-  deletedAt: timestamp('deleted_at'),
-  tags: jsonb('tags').default([]).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-})
-
 export const privacySettings = pgTable('privacy_settings', {
   userId: uuid('user_id')
     .references(() => users.id)
@@ -55,6 +36,64 @@ export const privacySettings = pgTable('privacy_settings', {
   showStreak: boolean('show_streak').default(true),
   showAchievements: boolean('show_achievements').default(true),
 })
+
+export const tasks = pgTable('tasks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  type: varchar('type', { length: 20 }).default('TASK').notNull(),
+  priority: varchar('priority', { length: 20 }).default('MEDIUM').notNull(),
+  status: varchar('status', { length: 20 }).default('PENDING').notNull(),
+  estimatedTime: integer('estimated_time'),
+  startDate: timestamp('start_date'),
+  dueDate: timestamp('due_date'),
+  completedAt: timestamp('completed_at'),
+  recurrence: varchar('recurrence', { length: 20 }).default('NONE').notNull(),
+  deletedAt: timestamp('deleted_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const tags = pgTable('tags', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 50 }).notNull(),
+  color: varchar('color', { length: 20 }),
+  icon: varchar('icon', { length: 50 }),
+})
+
+export const taskTags = pgTable('task_tags', {
+  taskId: uuid('task_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  tagId: uuid('tag_id')
+    .notNull()
+    .references(() => tags.id, { onDelete: 'cascade' }),
+})
+
+export const tasksRelations = relations(tasks, ({ many }) => ({
+  taskTags: many(taskTags),
+}))
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  taskTags: many(taskTags),
+}))
+
+export const taskTagsRelations = relations(taskTags, ({ one }) => ({
+  task: one(tasks, {
+    fields: [taskTags.taskId],
+    references: [tasks.id],
+  }),
+  tag: one(tags, {
+    fields: [taskTags.tagId],
+    references: [tags.id],
+  }),
+}))
 
 export const achievements = pgTable('achievements', {
   id: uuid('id').defaultRandom().primaryKey(),
