@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { taskService } from '@/services/task.service'
-import { tagService } from '@/services/tag.service'
-import type { Tag } from '@/types'
-import type { Component } from 'vue'
+import { ref, onMounted, computed } from "vue";
+import { taskService } from "@/services/task.service";
+import { tagService } from "@/services/tag.service";
+import type { Tag } from "@/types";
+import type { Component } from "vue";
 
 import {
   Dialog,
@@ -12,15 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
+} from "@/components/ui/dialog";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -28,7 +28,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   CalendarIcon,
   Leaf,
@@ -47,9 +47,10 @@ import {
   Plus,
   Clock,
   AlignLeft,
-} from 'lucide-vue-next'
-import { DateFormatter, getLocalTimeZone, today } from '@internationalized/date'
-import type { DateValue } from '@internationalized/date'
+  Search,
+} from "lucide-vue-next";
+import { DateFormatter, getLocalTimeZone, today } from "@internationalized/date";
+import type { DateValue } from "@internationalized/date";
 
 const IconMap: Record<string, Component> = {
   Tag: TagIcon,
@@ -63,104 +64,112 @@ const IconMap: Record<string, Component> = {
   Dumbbell,
   Music,
   AlignLeft,
-}
+};
 
 defineProps<{
-  open: boolean
-}>()
+  open: boolean;
+}>();
 
-const emit = defineEmits(['update:open', 'created'])
+const emit = defineEmits(["update:open", "created"]);
 
-const isSubmitting = ref(false)
+const isSubmitting = ref(false);
 
 const newTask = ref({
-  title: '',
-  description: '',
-  type: 'TASK',
-  priority: 'MEDIUM',
-  estimatedTime: '',
-  recurrence: 'NONE',
-})
+  title: "",
+  description: "",
+  type: "TASK",
+  priority: "MEDIUM",
+  estimatedTime: "",
+  recurrence: "NONE",
+});
 
 function getTomorrow() {
-  return today(getLocalTimeZone()).add({ days: 1 })
+  return today(getLocalTimeZone()).add({ days: 1 });
 }
 
 function getCurrentTime() {
-  const now = new Date()
-  return now.toTimeString().slice(0, 5) // "HH:MM"
+  const now = new Date();
+  return now.toTimeString().slice(0, 5); // "HH:MM"
 }
 
-const df = new DateFormatter('es-ES', { dateStyle: 'long' })
-const dueDate = ref<DateValue | undefined>(getTomorrow() as unknown as DateValue)
-const dueTime = ref(getCurrentTime())
+const df = new DateFormatter("es-ES", { dateStyle: "long" });
+const dueDate = ref<DateValue | undefined>(getTomorrow() as unknown as DateValue);
+const dueTime = ref(getCurrentTime());
 
-const tags = ref<Tag[]>([])
-const selectedTags = ref<Set<string>>(new Set())
+const tags = ref<Tag[]>([]);
+const selectedTags = ref<Set<string>>(new Set());
 
-const showTagModal = ref(false)
-const newTag = ref({ name: '', color: 'bg-blue-500', icon: 'Tag' })
+const tagSearchQuery = ref("");
+const filteredTags = computed(() => {
+  if (!tagSearchQuery.value) return tags.value;
+  return tags.value.filter((tag) =>
+    tag.name.toLowerCase().includes(tagSearchQuery.value.toLowerCase()),
+  );
+});
+
+const showTagModal = ref(false);
+const newTag = ref({ name: "", color: "bg-blue-500", icon: "Tag" });
 const tagColors = [
-  'bg-red-500',
-  'bg-orange-500',
-  'bg-yellow-500',
-  'bg-green-500',
-  'bg-blue-500',
-  'bg-indigo-500',
-  'bg-purple-500',
-  'bg-pink-500',
-]
+  "bg-red-500",
+  "bg-orange-500",
+  "bg-yellow-500",
+  "bg-green-500",
+  "bg-blue-500",
+  "bg-indigo-500",
+  "bg-purple-500",
+  "bg-pink-500",
+];
 const tagIcons = [
-  'Tag',
-  'Briefcase',
-  'Home',
-  'Code',
-  'Heart',
-  'Star',
-  'Book',
-  'Coffee',
-  'Dumbbell',
-  'Music',
-]
+  "Tag",
+  "Briefcase",
+  "Home",
+  "Code",
+  "Heart",
+  "Star",
+  "Book",
+  "Coffee",
+  "Dumbbell",
+  "Music",
+];
 
 onMounted(async () => {
   try {
-    tags.value = await tagService.getAllTags()
+    tags.value = await tagService.getAllTags();
   } catch (e) {
-    console.error('Failed to load tags', e)
+    console.error("Failed to load tags", e);
   }
-})
+});
 
 async function createNewTag() {
-  if (!newTag.value.name) return
+  if (!newTag.value.name) return;
   try {
-    const created = await tagService.createTag(newTag.value)
-    tags.value.push(created)
-    selectedTags.value.add(created.id)
-    showTagModal.value = false
-    newTag.value = { name: '', color: 'bg-blue-500', icon: 'Tag' }
+    const created = await tagService.createTag(newTag.value);
+    tags.value.push(created);
+    selectedTags.value.add(created.id);
+    showTagModal.value = false;
+    newTag.value = { name: "", color: "bg-blue-500", icon: "Tag" };
   } catch (e) {
-    console.error(e)
-    alert('Error al crear categoría')
+    console.error(e);
+    alert("Error al crear categoría");
   }
 }
 
 function toggleTag(id: string) {
-  if (selectedTags.value.has(id)) selectedTags.value.delete(id)
-  else selectedTags.value.add(id)
+  if (selectedTags.value.has(id)) selectedTags.value.delete(id);
+  else selectedTags.value.add(id);
 }
 
 async function createTask() {
   try {
-    isSubmitting.value = true
-    let finalDueDate: string | undefined = undefined
+    isSubmitting.value = true;
+    let finalDueDate: string | undefined = undefined;
     if (dueDate.value) {
-      const date = dueDate.value.toDate(getLocalTimeZone())
+      const date = dueDate.value.toDate(getLocalTimeZone());
       if (dueTime.value) {
-        const [hours, minutes] = dueTime.value.split(':')
-        date.setHours(parseInt(hours || '0'), parseInt(minutes || '0'))
+        const [hours, minutes] = dueTime.value.split(":");
+        date.setHours(parseInt(hours || "0"), parseInt(minutes || "0"));
       }
-      finalDueDate = date.toISOString()
+      finalDueDate = date.toISOString();
     }
 
     const payload = {
@@ -174,29 +183,29 @@ async function createTask() {
         ? { estimatedTime: parseInt(newTask.value.estimatedTime) }
         : {}),
       ...(finalDueDate && { dueDate: finalDueDate }),
-    }
+    };
 
-    const created = await taskService.createTask(payload)
-    emit('created', created)
+    const created = await taskService.createTask(payload);
+    emit("created", created);
 
     // Reset form
     newTask.value = {
-      title: '',
-      description: '',
-      type: 'TASK',
-      priority: 'MEDIUM',
-      estimatedTime: '',
-      recurrence: 'NONE',
-    }
-    dueDate.value = getTomorrow()
-    dueTime.value = getCurrentTime()
-    selectedTags.value.clear()
-    emit('update:open', false)
+      title: "",
+      description: "",
+      type: "TASK",
+      priority: "MEDIUM",
+      estimatedTime: "",
+      recurrence: "NONE",
+    };
+    dueDate.value = getTomorrow();
+    dueTime.value = getCurrentTime();
+    selectedTags.value.clear();
+    emit("update:open", false);
   } catch (e) {
-    console.error(e)
-    alert('Error al crear tarea')
+    console.error(e);
+    alert("Error al crear tarea");
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 </script>
@@ -283,7 +292,7 @@ async function createTask() {
                         {{
                           dueDate
                             ? df.format(dueDate.toDate(getLocalTimeZone()))
-                            : 'Selecciona una fecha'
+                            : "Selecciona una fecha"
                         }}
                       </Button>
                     </PopoverTrigger>
@@ -381,31 +390,47 @@ async function createTask() {
                 </div>
               </div>
 
-              <div class="space-y-2">
+              <div class="space-y-3">
                 <Label>Categorías</Label>
-                <div class="flex flex-wrap gap-2">
-                  <div
-                    v-for="tag in tags"
-                    :key="tag.id"
-                    @click="toggleTag(tag.id)"
-                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all border-2"
-                    :class="
-                      selectedTags.has(tag.id)
-                        ? `border-transparent text-white ${tag.color || 'bg-primary'}`
-                        : 'border-border bg-transparent text-muted-foreground hover:border-muted'
-                    "
-                  >
-                    <component :is="IconMap[tag.icon || 'Tag']" class="w-3.5 h-3.5" />
-                    {{ tag.name }}
-                  </div>
-                  <div
-                    @click="showTagModal = true"
-                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all border-2 border-dashed border-border bg-transparent text-muted-foreground hover:border-primary hover:text-primary"
-                  >
-                    <Plus class="w-3.5 h-3.5" />
-                    Nueva
-                  </div>
+                <div class="relative">
+                  <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    v-model="tagSearchQuery"
+                    placeholder="Buscar categoría..."
+                    class="pl-9 h-9 bg-background"
+                  />
                 </div>
+                <ScrollArea class="h-[120px] pr-3 rounded-md border p-2 bg-background/50">
+                  <div class="flex flex-wrap gap-2">
+                    <div
+                      v-for="tag in filteredTags"
+                      :key="tag.id"
+                      @click="toggleTag(tag.id)"
+                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all border-2"
+                      :class="
+                        selectedTags.has(tag.id)
+                          ? `border-transparent text-white ${tag.color || 'bg-primary'}`
+                          : 'border-border bg-transparent text-muted-foreground hover:border-muted'
+                      "
+                    >
+                      <component :is="IconMap[tag.icon || 'Tag']" class="w-3.5 h-3.5" />
+                      {{ tag.name }}
+                    </div>
+                    <div
+                      @click="showTagModal = true"
+                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all border-2 border-dashed border-border bg-transparent text-muted-foreground hover:border-primary hover:text-primary"
+                    >
+                      <Plus class="w-3.5 h-3.5" />
+                      Nueva
+                    </div>
+                  </div>
+                  <div
+                    v-if="filteredTags.length === 0"
+                    class="text-sm text-muted-foreground text-center py-4"
+                  >
+                    No se encontraron categorías.
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           </CardContent>
@@ -416,7 +441,7 @@ async function createTask() {
               :disabled="isSubmitting || !newTask.title"
               class="px-8 font-bold"
             >
-              {{ isSubmitting ? 'Creando...' : 'Guardar Tarea' }}
+              {{ isSubmitting ? "Creando..." : "Guardar Tarea" }}
             </Button>
           </DialogFooter>
         </Card>
