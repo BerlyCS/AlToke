@@ -11,10 +11,16 @@ import type {
   TaskSuggestion,
 } from '../domain'
 
-const deepseek = new OpenAI({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-  baseURL: 'https://api.deepseek.com',
-})
+let _deepseek: OpenAI | null = null
+const getDeepSeek = () => {
+  if (!_deepseek) {
+    _deepseek = new OpenAI({
+      apiKey: process.env.DEEPSEEK_API_KEY || '',
+      baseURL: 'https://api.deepseek.com',
+    })
+  }
+  return _deepseek
+}
 
 const recommendationSchema = z.object({
   suggestions: z
@@ -70,7 +76,7 @@ const parseWithRetry = async <TInput, TOutput>(options: {
 }) => {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const response = await deepseek.chat.completions.create({
+      const response = await getDeepSeek().chat.completions.create({
         model: 'deepseek-v4-flash',
         response_format: { type: 'json_object' },
         max_tokens: attempt === 0 ? options.maxTokens : Math.round(options.maxTokens * 1.5),
