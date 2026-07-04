@@ -1,11 +1,8 @@
 import { t, type UnwrapSchema } from 'elysia'
 
-export const SuggestionsQuery = t.Object({
-  userId: t.String(),
-})
+export const SuggestionsQuery = t.Object({})
 
 export const PredictOverloadQuery = t.Object({
-  userId: t.String(),
   date: t.String(),
 })
 
