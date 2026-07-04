@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Component } from 'vue'
-import type { Task } from '@/types'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { computed } from "vue";
+import type { Component } from "vue";
+import type { Task } from "@/types";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import {
   Clock,
   CheckCircle2,
@@ -19,7 +19,7 @@ import {
   Dumbbell,
   Music,
   AlignLeft,
-} from 'lucide-vue-next'
+} from "lucide-vue-next";
 
 const IconMap: Record<string, Component> = {
   Tag,
@@ -33,64 +33,64 @@ const IconMap: Record<string, Component> = {
   Dumbbell,
   Music,
   AlignLeft,
-}
+};
 
 const props = defineProps<{
-  tasks: Task[]
-}>()
+  tasks: Task[];
+}>();
 
-defineEmits(['toggleStatus', 'deleteTask', 'openTask'])
+defineEmits(["toggleStatus", "deleteTask", "openTask"]);
 
 const todayTasks = computed(() => {
-  const now = new Date()
+  const now = new Date();
   return props.tasks.filter((task) => {
-    if (!task.dueDate) return false
-    const d = new Date(task.dueDate)
+    if (!task.dueDate) return false;
+    const d = new Date(task.dueDate);
     return (
       d.getDate() === now.getDate() &&
       d.getMonth() === now.getMonth() &&
       d.getFullYear() === now.getFullYear()
-    )
-  })
-})
+    );
+  });
+});
 
 function formatTime(val: string | Date) {
-  const d = new Date(val)
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const d = new Date(val);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 const colorMap: Record<string, { bg: string; border: string; text: string }> = {
-  'bg-red-500': { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' },
-  'bg-orange-500': {
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500/30',
-    text: 'text-orange-500',
+  "bg-red-500": { bg: "bg-red-500/10", border: "border-red-500/30", text: "text-red-500" },
+  "bg-orange-500": {
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/30",
+    text: "text-orange-500",
   },
-  'bg-yellow-500': {
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
-    text: 'text-yellow-500',
+  "bg-yellow-500": {
+    bg: "bg-yellow-500/10",
+    border: "border-yellow-500/30",
+    text: "text-yellow-500",
   },
-  'bg-green-500': { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
-  'bg-blue-500': { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-500' },
-  'bg-indigo-500': {
-    bg: 'bg-indigo-500/10',
-    border: 'border-indigo-500/30',
-    text: 'text-indigo-500',
+  "bg-green-500": { bg: "bg-green-500/10", border: "border-green-500/30", text: "text-green-500" },
+  "bg-blue-500": { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-500" },
+  "bg-indigo-500": {
+    bg: "bg-indigo-500/10",
+    border: "border-indigo-500/30",
+    text: "text-indigo-500",
   },
-  'bg-purple-500': {
-    bg: 'bg-purple-500/10',
-    border: 'border-purple-500/30',
-    text: 'text-purple-500',
+  "bg-purple-500": {
+    bg: "bg-purple-500/10",
+    border: "border-purple-500/30",
+    text: "text-purple-500",
   },
-  'bg-pink-500': { bg: 'bg-pink-500/10', border: 'border-pink-500/30', text: 'text-pink-500' },
-}
+  "bg-pink-500": { bg: "bg-pink-500/10", border: "border-pink-500/30", text: "text-pink-500" },
+};
 
 function getTaskColors(task: Task) {
-  const defaultColors = { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary' }
-  if (!task.tags || task.tags.length === 0) return defaultColors
-  const color = task.tags?.[0]?.color
-  return (color ? colorMap[color] : undefined) || defaultColors
+  const defaultColors = { bg: "bg-primary/10", border: "border-primary/30", text: "text-primary" };
+  if (!task.tags || task.tags.length === 0) return defaultColors;
+  const color = task.tags?.[0]?.color;
+  return (color ? colorMap[color] : undefined) || defaultColors;
 }
 </script>
 
@@ -111,7 +111,7 @@ function getTaskColors(task: Task) {
       <div
         v-for="task in todayTasks"
         :key="task.id"
-        class="flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
+        class="flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md min-w-0"
         :class="[
           getTaskColors(task).bg,
           getTaskColors(task).border,
@@ -119,7 +119,7 @@ function getTaskColors(task: Task) {
         ]"
         @click="$emit('openTask', task)"
       >
-        <div class="flex items-center gap-4 w-full">
+        <div class="flex items-center gap-4 w-full min-w-0">
           <button
             @click.stop="$emit('toggleStatus', task)"
             class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"

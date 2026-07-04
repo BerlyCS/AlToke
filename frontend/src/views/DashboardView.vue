@@ -80,6 +80,10 @@ function openTask(task: Task) {
   selectedTask.value = task
   showViewModal.value = true
 }
+
+function editTask(task: Task) {
+  alert('Editar tarea: Próximamente')
+}
 </script>
 
 <template>
@@ -142,7 +146,7 @@ function openTask(task: Task) {
       </div>
 
       <div class="grid xl:grid-cols-3 gap-6">
-        <div class="xl:col-span-2">
+        <div class="xl:col-span-2 min-w-0">
           <UpcomingTasks
             :tasks="tasks"
             @toggle-status="toggleStatus"
@@ -211,7 +215,13 @@ function openTask(task: Task) {
     </template>
 
     <CreateTaskDialog v-model:open="showCreateModal" @created="(t) => tasks.unshift(t)" />
-    <ViewTaskDialog v-model:open="showViewModal" :task="selectedTask" />
+    <ViewTaskDialog
+      v-model:open="showViewModal"
+      :task="selectedTask"
+      @delete-task="deleteTask"
+      @toggle-status="toggleStatus"
+      @edit-task="editTask"
+    />
   </div>
 </template>
 
