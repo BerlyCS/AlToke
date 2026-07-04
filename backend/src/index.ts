@@ -1,6 +1,7 @@
 import { cors } from '@elysiajs/cors'
 import { Elysia } from 'elysia'
 import { serverConfig } from './config'
+import { aiModule } from './modules/ai'
 import { authRoutes } from './modules/auth'
 import { gamificationModule } from './modules/gamification'
 import { userRoutes } from './modules/user'
@@ -9,7 +10,7 @@ export const app = new Elysia()
   // @ts-ignore
   .use(cors())
   .get('/', () => 'API AlToke')
-  .group('/api', (app) => app.use(authRoutes).use(userRoutes).use(gamificationModule))
+  .group('/api', (app) => app.use(authRoutes).use(userRoutes).use(gamificationModule).use(aiModule))
 
 if (import.meta.main) {
   const server = app.listen(serverConfig)

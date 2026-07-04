@@ -1,3 +1,5 @@
+export * from './domain'
+export * from './repositories'
 /**
  * Task Module
  * The functional core of the application.
