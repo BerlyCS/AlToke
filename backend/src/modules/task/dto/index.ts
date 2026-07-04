@@ -1,28 +1,27 @@
 import { t, type UnwrapSchema } from 'elysia'
-import { Priority, TaskStatus, TaskType, RecurrenceFrequency } from './domain'
+import { Priority, TaskStatus, TaskType, RecurrenceType } from './domain'
 
 // 1. Esquemas Base
-export const RecurrenceSchema = t.Object({
-  frequency: t.Enum(RecurrenceFrequency),
-  interval: t.Number(),
-  daysOfWeek: t.Array(t.Number()),
-  endDate: t.Optional(t.Union([t.String({ format: 'date-time' }), t.Null()])),
+export const TagSchema = t.Object({
+  id: t.String({ format: 'uuid' }),
+  name: t.String(),
+  color: t.Union([t.String(), t.Null()]),
+  icon: t.Union([t.String(), t.Null()]),
 })
 
 export const CreateTaskSchema = t.Object({
   title: t.String(),
-  description: t.String(),
-  type: t.Enum(TaskType),
-  estimatedTimeMinutes: t.Number(),
-  priority: t.Enum(Priority),
-  tags: t.Array(t.String()),
-  startTime: t.Optional(t.Union([t.String({ format: 'date-time' }), t.Null()])),
+  description: t.Optional(t.String()),
+  type: t.Optional(t.Enum(TaskType)),
+  priority: t.Optional(t.Enum(Priority)),
+  estimatedTime: t.Optional(t.Union([t.Number(), t.Null()])),
+  startDate: t.Optional(t.Union([t.String({ format: 'date-time' }), t.Null()])),
   dueDate: t.Optional(t.Union([t.String({ format: 'date-time' }), t.Null()])),
-  assignedBy: t.Optional(t.Union([t.String({ format: 'uuid' }), t.Null()])),
-  recurrence: t.Optional(RecurrenceSchema)
+  recurrence: t.Optional(t.Enum(RecurrenceType)),
+  // En lugar de objetos completos, la API podría recibir IDs de tags al crear
+  tagIds: t.Optional(t.Array(t.String({ format: 'uuid' }))), 
 })
 
-// Elysia permite heredar y hacer opcionales los campos fácilmente con t.Partial
 export const UpdateTaskSchema = t.Partial(CreateTaskSchema)
 
 export const TaskFilterSchema = t.Object({
@@ -31,33 +30,35 @@ export const TaskFilterSchema = t.Object({
   limit: t.Optional(t.Numeric()),
 })
 
-// Esquema de Respuesta para mantener coherencia con las respuestas (como LeaderboardEntryResponse)
+// Esquema de Respuesta
 export const TaskResponse = t.Object({
   id: t.String(),
   userId: t.String(),
-  assignedBy: t.Union([t.String(), t.Null()]),
   title: t.String(),
-  description: t.String(),
+  description: t.Union([t.String(), t.Null()]),
   type: t.Enum(TaskType),
-  estimatedTimeMinutes: t.Number(),
-  startTime: t.Union([t.String(), t.Null()]),
-  dueDate: t.Union([t.String(), t.Null()]),
-  completionDate: t.Union([t.String(), t.Null()]),
-  deletedAt: t.Union([t.String(), t.Null()]),
   priority: t.Enum(Priority),
   status: t.Enum(TaskStatus),
-  tags: t.Array(t.String()),
+  estimatedTime: t.Union([t.Number(), t.Null()]),
+  startDate: t.Union([t.String(), t.Null()]),
+  dueDate: t.Union([t.String(), t.Null()]),
+  completedAt: t.Union([t.String(), t.Null()]),
+  recurrence: t.Enum(RecurrenceType),
+  deletedAt: t.Union([t.String(), t.Null()]),
+  createdAt: t.String(),
+  updatedAt: t.String(),
+  tags: t.Array(TagSchema) // Incluimos los tags resueltos
 })
 
 export const TaskListResponse = t.Array(TaskResponse)
 
-// 2. Extracción de Tipos (UnwrapSchema)
-export type RecurrenceSchema = UnwrapSchema<typeof RecurrenceSchema>
-export type CreateTaskSchema = UnwrapSchema<typeof CreateTaskSchema>
-export type UpdateTaskSchema = UnwrapSchema<typeof UpdateTaskSchema>
-export type TaskFilterSchema = UnwrapSchema<typeof TaskFilterSchema>
+// 2. Extracción de Tipos
+export type CreateTaskBody = UnwrapSchema<typeof CreateTaskSchema>
+export type UpdateTaskBody = UnwrapSchema<typeof UpdateTaskSchema>
+export type TaskFilterQuery = UnwrapSchema<typeof TaskFilterSchema>
 export type TaskResponse = UnwrapSchema<typeof TaskResponse>
 export type TaskListResponse = UnwrapSchema<typeof TaskListResponse>
+export type TagResponse = UnwrapSchema<typeof TagSchema>
 
 // 3. Agrupación en el Modelo del Módulo
 export const TaskModel = {
