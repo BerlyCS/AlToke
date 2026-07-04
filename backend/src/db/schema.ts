@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -15,6 +24,26 @@ export const users = pgTable('users', {
   streakFrozenUntil: timestamp('streak_frozen_until'),
   overdueHighPriorityCount: integer('overdue_high_priority_count').default(0),
   lastActiveAt: timestamp('last_active_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const tasks = pgTable('tasks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  assignedBy: uuid('assigned_by').references(() => users.id),
+  title: varchar('title', { length: 100 }).notNull(),
+  description: text('description'),
+  taskType: varchar('task_type', { length: 20 }).default('TASK').notNull(),
+  priority: varchar('priority', { length: 20 }).default('MEDIUM').notNull(),
+  status: varchar('status', { length: 20 }).default('PENDING').notNull(),
+  estimatedTimeMinutes: integer('estimated_time_mins').default(0).notNull(),
+  startTime: timestamp('start_time'),
+  dueDate: timestamp('due_date'),
+  completionDate: timestamp('completion_date'),
+  deletedAt: timestamp('deleted_at'),
+  tags: jsonb('tags').default([]).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -84,5 +113,26 @@ export const xpTransactions = pgTable('xp_transactions', {
     .notNull(),
   amount: integer('amount').notNull(),
   source: varchar('source', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const aiHabitAnalyses = pgTable('ai_habit_analyses', {
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .primaryKey(),
+  frequentTimeSlots: jsonb('frequent_time_slots').default([]).notNull(),
+  categoryAffinity: jsonb('category_affinity').default({}).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const taskSuggestions = pgTable('task_suggestions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  suggestedTitle: varchar('suggested_title', { length: 100 }).notNull(),
+  suggestedTime: timestamp('suggested_time').notNull(),
+  explanation: text('explanation').notNull(),
+  status: varchar('status', { length: 20 }).default('PENDING').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
