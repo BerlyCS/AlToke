@@ -27,7 +27,7 @@
     "pre-commit": "bun run format:check && bun run lint:check",
     "pre-commit:fix": "bun run format && bun run lint"
   },
-  "devDependencies": {
-    "husky": "9.1.7"
-  }
+    "devDependencies": {
+      "husky": "9.1.7"
+    }
 }

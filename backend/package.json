@@ -19,7 +19,9 @@
     "drizzle-orm": "^0.45.2",
     "elysia": "latest",
     "google-auth-library": "^10.9.0",
-    "postgres": "^3.4.9"
+    "openai": "^6.45.0",
+    "postgres": "^3.4.9",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "bun-types": "latest",
