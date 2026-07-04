@@ -22,5 +22,3 @@ export type Task = {
   tags: string[]
   createdAt: Date
 }
-// Task Domain Entities
-export {}
