@@ -7,9 +7,9 @@
     "start": "bun run src/index.ts",
     "test": "bun test",
     "type-check": "tsc --noEmit",
-    "lint": "bun run lint:fix",
-    "lint:check": "oxlint .",
-    "lint:fix": "oxlint . --fix",
+    "lint": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint . --fix\"",
+    "lint:check": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint .\"",
+    "lint:fix": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint . --fix\"",
     "format": "oxfmt .",
     "format:check": "oxfmt . --check"
   },

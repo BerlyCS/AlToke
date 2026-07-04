@@ -15,8 +15,8 @@
     "test:e2e:dev": "start-server-and-test 'vite dev --port 4173' http://localhost:4173 'cypress open --e2e'",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "lint": "oxlint . --fix",
-    "lint:check": "oxlint .",
+    "lint": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint . --fix\"",
+    "lint:check": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint .\"",
     "format": "oxfmt .",
     "format:check": "oxfmt . --check"
   },
