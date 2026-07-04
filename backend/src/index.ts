@@ -6,10 +6,10 @@ import { gamificationModule } from './modules/gamification'
 import { userRoutes } from './modules/user'
 
 export const app = new Elysia()
-	// @ts-ignore
-	.use(cors())
-	.get('/', () => 'API AlToke')
-	.group('/api', (app) => app.use(authRoutes).use(userRoutes).use(gamificationModule))
+  // @ts-ignore
+  .use(cors())
+  .get('/', () => 'API AlToke')
+  .group('/api', (app) => app.use(authRoutes).use(userRoutes).use(gamificationModule))
 
 if (import.meta.main) {
   const server = app.listen(serverConfig)

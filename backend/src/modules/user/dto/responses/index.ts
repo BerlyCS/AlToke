@@ -1,34 +1,34 @@
 import { t, type UnwrapSchema } from 'elysia'
 
 export const PrivacyResponse = t.Object({
-	showLevel: t.Union([t.Boolean(), t.Null()]),
-	showStreak: t.Union([t.Boolean(), t.Null()]),
-	showAchievements: t.Union([t.Boolean(), t.Null()]),
+  showLevel: t.Union([t.Boolean(), t.Null()]),
+  showStreak: t.Union([t.Boolean(), t.Null()]),
+  showAchievements: t.Union([t.Boolean(), t.Null()]),
 })
 
 export const ProfileResponse = t.Object({
-	id: t.String(),
-	email: t.String(),
-	nickname: t.Union([t.String(), t.Null()]),
-	bio: t.Union([t.String(), t.Null()]),
-	avatarUrl: t.Union([t.String(), t.Null()]),
-	xp: t.Number(),
-	level: t.Union([t.Number(), t.Null()]),
-	currentStreak: t.Union([t.Number(), t.Null()]),
-	maxStreak: t.Union([t.Number(), t.Null()]),
-	privacy: t.Union([PrivacyResponse, t.Undefined()]),
+  id: t.String(),
+  email: t.String(),
+  nickname: t.Union([t.String(), t.Null()]),
+  bio: t.Union([t.String(), t.Null()]),
+  avatarUrl: t.Union([t.String(), t.Null()]),
+  xp: t.Number(),
+  level: t.Union([t.Number(), t.Null()]),
+  currentStreak: t.Union([t.Number(), t.Null()]),
+  maxStreak: t.Union([t.Number(), t.Null()]),
+  privacy: t.Union([PrivacyResponse, t.Undefined()]),
 })
 
 export const PublicProfileResponse = t.Object({
-	id: t.String(),
-	nickname: t.Union([t.String(), t.Null()]),
-	bio: t.Union([t.String(), t.Null()]),
-	avatarUrl: t.Union([t.String(), t.Null()]),
-	xp: t.Number(),
-	level: t.Union([t.Number(), t.Null()]),
-	currentStreak: t.Union([t.Number(), t.Null()]),
-	maxStreak: t.Union([t.Number(), t.Null()]),
-	privacy: t.Union([PrivacyResponse, t.Undefined()]),
+  id: t.String(),
+  nickname: t.Union([t.String(), t.Null()]),
+  bio: t.Union([t.String(), t.Null()]),
+  avatarUrl: t.Union([t.String(), t.Null()]),
+  xp: t.Number(),
+  level: t.Union([t.Number(), t.Null()]),
+  currentStreak: t.Union([t.Number(), t.Null()]),
+  maxStreak: t.Union([t.Number(), t.Null()]),
+  privacy: t.Union([PrivacyResponse, t.Undefined()]),
 })
 
 export const UnauthorizedResponse = t.Literal('Unauthorized')
