@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'bun:test'
 
 import { resolveServerConfig, serverConfig } from '../src/config'
-import { app } from '../src/index'
+
+process.env.JWT_SECRET = 'test-jwt-secret'
+process.env.DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/altoke'
+
+const getApp = async () => {
+  const module = await import('../src/index')
+  return module.app
+}
 
 describe('app', () => {
   it('responds on the root route', async () => {
+    const app = await getApp()
     const response = await app.handle(new Request('http://localhost/'))
 
     expect(response.status).toBe(200)

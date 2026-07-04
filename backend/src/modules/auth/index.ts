@@ -2,12 +2,13 @@ import { Elysia } from 'elysia'
 import { AuthService } from './service'
 import { AuthModel } from './model'
 import { jwt } from '@elysiajs/jwt'
+import { resolveJwtSecret } from '../../shared/auth/jwt-secret'
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
   .use(
     jwt({
       name: 'jwt',
-      secret: process.env.JWT_SECRET || 'super-secret',
+      secret: resolveJwtSecret(),
     }),
   )
   .post(

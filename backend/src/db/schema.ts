@@ -1,4 +1,14 @@
-import { pgTable, uuid, varchar, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -26,6 +36,39 @@ export const privacySettings = pgTable('privacy_settings', {
   showStreak: boolean('show_streak').default(true),
   showAchievements: boolean('show_achievements').default(true),
 })
+
+export const notificationSettings = pgTable('notification_settings', {
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .primaryKey(),
+  emailEnabled: boolean('email_enabled').default(false),
+  pushEnabled: boolean('push_enabled').default(false),
+  isMuted: boolean('is_muted').default(false),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const notificationChannelEnum = pgEnum('notification_channel', [
+  'EMAIL',
+  'PUSH',
+  'IN_APP',
+  'SYSTEM',
+])
+
+export const notificationLogs = pgTable(
+  'notification_logs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id)
+      .notNull(),
+    channel: notificationChannelEnum('channel').default('IN_APP').notNull(),
+    type: varchar('type', { length: 50 }).notNull(),
+    title: varchar('title', { length: 150 }).notNull(),
+    message: text('message').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('notification_logs_user_id_created_at_idx').on(table.userId, table.createdAt)],
+)
 
 export const achievements = pgTable('achievements', {
   id: uuid('id').defaultRandom().primaryKey(),
