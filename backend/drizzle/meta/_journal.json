@@ -8,6 +8,13 @@
       "when": 1782822199933,
       "tag": "0000_famous_maggott",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782926946269,
+      "tag": "0001_simple_bloodaxe",
+      "breakpoints": true
     }
   ]
 }

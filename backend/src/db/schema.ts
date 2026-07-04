@@ -1,4 +1,5 @@
 import { pgTable, uuid, varchar, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -26,6 +27,64 @@ export const privacySettings = pgTable('privacy_settings', {
   showStreak: boolean('show_streak').default(true),
   showAchievements: boolean('show_achievements').default(true),
 })
+
+export const tasks = pgTable('tasks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  type: varchar('type', { length: 20 }).default('TASK').notNull(), // TASK, MEETING, EVENT
+  priority: varchar('priority', { length: 20 }).default('MEDIUM').notNull(), // HIGH, MEDIUM, LOW
+  status: varchar('status', { length: 20 }).default('PENDING').notNull(), // PENDING, IN_PROGRESS, COMPLETED
+  estimatedTime: integer('estimated_time'), // in minutes
+  startDate: timestamp('start_date'),
+  dueDate: timestamp('due_date'),
+  completedAt: timestamp('completed_at'),
+  recurrence: varchar('recurrence', { length: 20 }).default('NONE').notNull(), // NONE, DAILY, WEEKLY, MONTHLY
+  deletedAt: timestamp('deleted_at'), // soft delete (30-day trash bin)
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const tags = pgTable('tags', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: varchar('name', { length: 50 }).notNull(),
+  color: varchar('color', { length: 20 }),
+  icon: varchar('icon', { length: 50 }),
+})
+
+export const taskTags = pgTable('task_tags', {
+  taskId: uuid('task_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  tagId: uuid('tag_id')
+    .notNull()
+    .references(() => tags.id, { onDelete: 'cascade' }),
+})
+
+export const tasksRelations = relations(tasks, ({ many }) => ({
+  taskTags: many(taskTags),
+}))
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  taskTags: many(taskTags),
+}))
+
+export const taskTagsRelations = relations(taskTags, ({ one }) => ({
+  task: one(tasks, {
+    fields: [taskTags.taskId],
+    references: [tasks.id],
+  }),
+  tag: one(tags, {
+    fields: [taskTags.tagId],
+    references: [tags.id],
+  }),
+}))
 
 export const achievements = pgTable('achievements', {
   id: uuid('id').defaultRandom().primaryKey(),

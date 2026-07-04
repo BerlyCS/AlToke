@@ -1,15 +1,32 @@
 import { cors } from '@elysiajs/cors'
 import { Elysia } from 'elysia'
+import { cors } from '@elysiajs/cors'
+import { openapi } from '@elysiajs/openapi'
 import { serverConfig } from './config'
 import { authRoutes } from './modules/auth'
 import { gamificationModule } from './modules/gamification'
 import { userRoutes } from './modules/user'
+import { taskRoutes } from './modules/task'
+import { tagRoutes } from './modules/tag'
 
 export const app = new Elysia()
-  // @ts-ignore
   .use(cors())
-  .get('/', () => 'API AlToke')
-  .group('/api', (app) => app.use(authRoutes).use(userRoutes).use(gamificationModule))
+  .use(
+    openapi({
+      documentation: {
+        info: { title: 'AlToke API', version: '1.0.0' },
+        components: {
+          securitySchemes: {
+            bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+          },
+        },
+      },
+    }),
+  )
+  .get('/', () => 'API AlToke en funcionamiento 🚀')
+  .group('/api', (app) => app.use(authRoutes).use(userRoutes).use(taskRoutes).use(tagRoutes))
+
+export type App = typeof app
 
 if (import.meta.main) {
   const server = app.listen(serverConfig)
