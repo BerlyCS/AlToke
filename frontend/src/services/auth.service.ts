@@ -1,4 +1,5 @@
-import { fetchApi } from './api'
+import { api, ApiError } from './api'
+import type { Credentials } from '@/types'
 
 export interface User {
   id: string
@@ -7,27 +8,22 @@ export interface User {
   avatarUrl?: string | null
 }
 
-export interface AuthResponse {
-  user: User
-  token: string
-}
-
 export const authService = {
-  login: (credentials: Record<string, string>) =>
-    fetchApi<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    }),
+  login: async (credentials: Credentials) => {
+    const { data, error, status } = await api.api.auth.login.post(credentials)
+    if (error) throw new ApiError(status, String(error.value) || 'Login failed')
+    return data!
+  },
 
-  register: (data: Record<string, string>) =>
-    fetchApi<AuthResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
+  register: async (credentials: Credentials) => {
+    const { data, error, status } = await api.api.auth.register.post(credentials)
+    if (error) throw new ApiError(status, String(error.value) || 'Register failed')
+    return data!
+  },
 
-  googleLogin: (idToken: string) =>
-    fetchApi<AuthResponse>('/auth/google', {
-      method: 'POST',
-      body: JSON.stringify({ idToken }),
-    }),
+  googleLogin: async (idToken: string) => {
+    const { data, error, status } = await api.api.auth.google.post({ idToken })
+    if (error) throw new ApiError(status, String(error.value) || 'Google login failed')
+    return data!
+  },
 }
