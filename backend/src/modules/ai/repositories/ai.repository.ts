@@ -4,7 +4,7 @@ import { db } from '../../../db'
 import { aiHabitAnalyses, taskSuggestions, tasks } from '../../../db/schema'
 import type { HabitAnalysis, HabitTimeSlot, SuggestionStatus, TaskSuggestion } from '../domain'
 
-const activityAt = sql<Date>`coalesce(${tasks.completionDate}, ${tasks.dueDate}, ${tasks.startTime})`
+const activityAt = sql<Date>`coalesce(${tasks.completedAt}, ${tasks.dueDate}, ${tasks.startDate})`
 
 const toHabitAnalysis = (row: typeof aiHabitAnalyses.$inferSelect): HabitAnalysis => ({
   userId: row.userId,
@@ -51,7 +51,7 @@ export abstract class AIRepository {
 
     const categoryRows = await db
       .select({
-        category: tasks.taskType,
+        category: tasks.type,
         count: sql<number>`count(*)::int`,
       })
       .from(tasks)
@@ -62,7 +62,7 @@ export abstract class AIRepository {
           sql`${tasks.deletedAt} is null`,
         ),
       )
-      .groupBy(tasks.taskType)
+      .groupBy(tasks.type)
 
     const totalCount = categoryRows.reduce((sum, row) => sum + row.count, 0)
     const frequentTimeSlots = slotRows.map((row) => ({

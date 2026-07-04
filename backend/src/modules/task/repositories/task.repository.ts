@@ -7,22 +7,22 @@ import type { Task } from '../domain'
 const toTaskDomain = (task: typeof tasks.$inferSelect): Task => ({
   id: task.id,
   userId: task.userId,
-  assignedBy: task.assignedBy ?? null,
+  assignedBy: null,
   title: task.title,
   description: task.description ?? null,
-  taskType: (task.taskType as Task['taskType']) ?? 'TASK',
+  taskType: (task.type as Task['taskType']) ?? 'TASK',
   priority: (task.priority as Task['priority']) ?? 'MEDIUM',
   status: (task.status as Task['status']) ?? 'PENDING',
-  estimatedTimeMinutes: task.estimatedTimeMinutes ?? 0,
-  startTime: task.startTime ?? null,
+  estimatedTimeMinutes: task.estimatedTime ?? 0,
+  startTime: task.startDate ?? null,
   dueDate: task.dueDate ?? null,
-  completionDate: task.completionDate ?? null,
+  completionDate: task.completedAt ?? null,
   deletedAt: task.deletedAt ?? null,
-  tags: Array.isArray(task.tags) ? (task.tags as string[]) : [],
+  tags: [],
   createdAt: task.createdAt,
 })
 
-const activityAt = sql<Date>`coalesce(${tasks.completionDate}, ${tasks.dueDate}, ${tasks.startTime})`
+const activityAt = sql<Date>`coalesce(${tasks.completedAt}, ${tasks.dueDate}, ${tasks.startDate})`
 
 const startOfDay = (date: Date) => {
   const value = new Date(date)
@@ -42,7 +42,7 @@ export abstract class TaskRepository {
       .select()
       .from(tasks)
       .where(eq(tasks.userId, userId))
-      .orderBy(desc(tasks.createdAt), desc(tasks.completionDate), desc(tasks.dueDate))
+      .orderBy(desc(tasks.createdAt), desc(tasks.completedAt), desc(tasks.dueDate))
       .limit(limit)
 
     return rows.map(toTaskDomain)
@@ -53,7 +53,7 @@ export abstract class TaskRepository {
       .select()
       .from(tasks)
       .where(eq(tasks.userId, userId))
-      .orderBy(desc(tasks.createdAt), desc(tasks.completionDate), desc(tasks.dueDate))
+      .orderBy(desc(tasks.createdAt), desc(tasks.completedAt), desc(tasks.dueDate))
 
     return rows.map(toTaskDomain)
   }

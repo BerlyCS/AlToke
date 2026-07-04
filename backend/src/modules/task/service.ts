@@ -5,15 +5,35 @@ import type { TaskModel } from './model'
 
 export abstract class TaskService {
   static async create(userId: string, data: TaskModel['createTaskBody']) {
-    const { tagIds, ...taskData } = data
+    const {
+      tagIds,
+      title,
+      description,
+      type,
+      priority,
+      estimatedTime,
+      startDate,
+      dueDate,
+      recurrence,
+    } = data
 
     const [task] = await db
       .insert(tasks)
-      .values({ ...taskData, userId })
+      .values({
+        userId,
+        title,
+        description,
+        type,
+        priority,
+        estimatedTime,
+        startDate,
+        dueDate,
+        recurrence,
+      })
       .returning()
 
     if (task && tagIds && tagIds.length > 0) {
-      const taskTagsData = tagIds.map((tagId) => ({
+      const taskTagsData = tagIds.map((tagId: string) => ({
         taskId: task.id,
         tagId: tagId,
       }))

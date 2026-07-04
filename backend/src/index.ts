@@ -25,7 +25,13 @@ export const app = new Elysia()
   )
   .get('/', () => 'API AlToke en funcionamiento 🚀')
   .group('/api', (app) =>
-    app.use(authRoutes).use(userRoutes).use(taskRoutes).use(tagRoutes).use(gamificationModule).use(aiModule),
+    app
+      .use(authRoutes)
+      .use(userRoutes)
+      .use(taskRoutes)
+      .use(tagRoutes)
+      .use(gamificationModule)
+      .use(aiModule),
   )
 
 export type App = typeof app
