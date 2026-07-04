@@ -1,24 +1,16 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+import { treaty } from '@elysiajs/eden'
+import type { App } from '@backend/index'
 
-export const fetchApi = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
-  const token = localStorage.getItem('token')
-  const headers = new Headers(options.headers || {})
-  headers.set('Content-Type', 'application/json')
+// @ts-expect-error Eden types might mismatch depending on setup
+export const api = treaty<App>(
+  (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/api$/, ''),
+)
 
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message)
   }
-
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  })
-
-  const data = await response.json()
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Error en la petición')
-  }
-
-  return data
 }

@@ -42,7 +42,7 @@ export abstract class UserRepository {
 
   static async save(user: Omit<User, 'id' | 'createdAt'> & Partial<Pick<User, 'id'>>) {
     const [saved] = await db.insert(users).values(user).returning()
-    return toUserDomain(saved)
+    return toUserDomain(saved!)
   }
 
   static async update(user: User) {

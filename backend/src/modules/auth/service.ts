@@ -27,14 +27,14 @@ export abstract class AuthService {
       .returning()
 
     await db.insert(privacySettings).values({
-      userId: user.id,
+      userId: user!.id,
     })
 
     return {
-      id: user.id,
-      email: user.email,
-      nickname: user.nickname,
-      avatarUrl: user.avatarUrl,
+      id: user!.id,
+      email: user!.email,
+      nickname: user!.nickname,
+      avatarUrl: user!.avatarUrl,
     }
   }
 
@@ -95,14 +95,14 @@ export abstract class AuthService {
         .returning()
 
       await db.insert(privacySettings).values({
-        userId: newUser.id,
+        userId: newUser!.id,
       })
 
       return {
-        id: newUser.id,
-        email: newUser.email,
-        nickname: newUser.nickname,
-        avatarUrl: newUser.avatarUrl,
+        id: newUser!.id,
+        email: newUser!.email,
+        nickname: newUser!.nickname,
+        avatarUrl: newUser!.avatarUrl,
       }
     } catch (error) {
       console.error('GOOGLE LOGIN ERROR:', error)
