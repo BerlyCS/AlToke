@@ -1,6 +1,5 @@
 import { cors } from '@elysiajs/cors'
 import { Elysia } from 'elysia'
-import { cors } from '@elysiajs/cors'
 import { openapi } from '@elysiajs/openapi'
 import { serverConfig } from './config'
 import { authRoutes } from './modules/auth'
