@@ -10,6 +10,19 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/altoke
+      JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-change-me}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "const response = await fetch('http://127.0.0.1:3000/'); if (!response.ok) process.exit(1)",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
     ports:
       - "3000:3000"
 
@@ -18,7 +31,8 @@ services:
       context: .
       dockerfile: docker/frontend.Dockerfile
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "8080:80"
 
