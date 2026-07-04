@@ -250,7 +250,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  build-nginx-image:
+  build-frontend-image:
     name: Build and push frontend image
     runs-on: ubuntu-latest
     needs:
@@ -342,11 +342,11 @@ jobs:
             org.opencontainers.image.source=${{ steps.prep.outputs.source_url }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Build and push nginx image
+      - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./docker/nginx.Dockerfile
+          file: ./docker/frontend.Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -360,7 +360,7 @@ jobs:
       - validate-frontend
       - validate-backend
       - build-backend-image
-      - build-nginx-image
+      - build-frontend-image
     if: always()
     outputs:
       should_deploy: ${{ steps.resolve.outputs.should_deploy }}
@@ -376,7 +376,7 @@ jobs:
           VALIDATE_FRONTEND_RESULT: ${{ needs.validate-frontend.result }}
           VALIDATE_BACKEND_RESULT: ${{ needs.validate-backend.result }}
           BUILD_BACKEND_IMAGE_RESULT: ${{ needs.build-backend-image.result }}
-          BUILD_NGINX_IMAGE_RESULT: ${{ needs.build-nginx-image.result }}
+          BUILD_FRONTEND_IMAGE_RESULT: ${{ needs.build-frontend-image.result }}
         run: |
           set -euo pipefail
 
@@ -391,8 +391,8 @@ jobs:
               exit 1
             fi
 
-            if [[ "$BUILD_NGINX_IMAGE_RESULT" != "success" ]]; then
-              echo "Frontend image build must succeed before deployment. Current result: $BUILD_NGINX_IMAGE_RESULT" >&2
+            if [[ "$BUILD_FRONTEND_IMAGE_RESULT" != "success" ]]; then
+              echo "Frontend image build must succeed before deployment. Current result: $BUILD_FRONTEND_IMAGE_RESULT" >&2
               exit 1
             fi
           fi
@@ -445,7 +445,7 @@ jobs:
     name: Deploy via SSH
     runs-on: ubuntu-latest
     needs: resolve-deploy-target
-    if: needs.resolve-deploy-target.outputs.should_deploy == 'true'
+    if: ${{ always() && needs.resolve-deploy-target.result == 'success' && needs.resolve-deploy-target.outputs.should_deploy == 'true' }}
     concurrency:
       group: cd-${{ needs.resolve-deploy-target.outputs.environment_name }}
       cancel-in-progress: false
