@@ -121,6 +121,10 @@ jobs:
   validate-backend:
     name: Validate backend inputs
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/altoke
+      JWT_SECRET: test-jwt-secret
+      GOOGLE_CLIENT_ID: ""
     needs: detect-changes
     if: needs.detect-changes.outputs.backend_affected == 'true'
     steps:
