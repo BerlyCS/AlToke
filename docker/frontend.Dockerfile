@@ -1,6 +1,8 @@
 FROM oven/bun:1 AS frontend-build
 WORKDIR /app/frontend
 
+ENV VITE_API_URL=/api
+
 COPY frontend/package.json frontend/bun.lock ./
 RUN bun install --frozen-lockfile
 

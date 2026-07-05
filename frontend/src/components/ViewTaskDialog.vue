@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   CalendarIcon,
   Clock,
@@ -16,65 +16,65 @@ import {
   Trash2,
   Edit,
   CheckCircle,
-} from "lucide-vue-next";
-import { DateFormatter } from "@internationalized/date";
-import type { Component } from "vue";
-import type { Task } from "@/types";
-import * as icons from "lucide-vue-next";
+} from 'lucide-vue-next'
+import { DateFormatter } from '@internationalized/date'
+import type { Component } from 'vue'
+import type { Task } from '@/types'
+import * as icons from 'lucide-vue-next'
 
-const IconMap: Record<string, Component> = icons as unknown as Record<string, Component>;
+const IconMap: Record<string, Component> = icons as unknown as Record<string, Component>
 
 defineProps<{
-  open: boolean;
-  task: Task | null;
-}>();
+  open: boolean
+  task: Task | null
+}>()
 
-defineEmits(["update:open", "delete-task", "edit-task", "toggle-status"]);
+defineEmits(['update:open', 'delete-task', 'edit-task', 'toggle-status'])
 
-const df = new DateFormatter("es-ES", { dateStyle: "long", timeStyle: "short" });
+const df = new DateFormatter('es-ES', { dateStyle: 'long', timeStyle: 'short' })
 
 function formatDueDate(val: string | Date) {
-  const date = new Date(val);
-  return df.format(date);
+  const date = new Date(val)
+  return df.format(date)
 }
 
 function getPriorityIcon(priority: string) {
-  if (priority === "LOW") return Leaf;
-  if (priority === "HIGH") return Rocket;
-  return Flame;
+  if (priority === 'LOW') return Leaf
+  if (priority === 'HIGH') return Rocket
+  return Flame
 }
 
 function getPriorityColor(priority: string) {
-  if (priority === "LOW")
-    return "text-green-500 bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20";
-  if (priority === "HIGH")
-    return "text-red-500 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20";
-  return "text-orange-500 bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20";
+  if (priority === 'LOW')
+    return 'text-green-500 bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20'
+  if (priority === 'HIGH')
+    return 'text-red-500 bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20'
+  return 'text-orange-500 bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20'
 }
 
 function getPriorityLabel(priority: string) {
-  if (priority === "LOW") return "Baja";
-  if (priority === "HIGH") return "Alta";
-  return "Media";
+  if (priority === 'LOW') return 'Baja'
+  if (priority === 'HIGH') return 'Alta'
+  return 'Media'
 }
 
 function getRecurrenceLabel(recurrence: string) {
   const map: Record<string, string> = {
-    NONE: "Una vez",
-    DAILY: "Diariamente",
-    WEEKLY: "Semanalmente",
-    MONTHLY: "Mensualmente",
-  };
-  return map[recurrence] || "Una vez";
+    NONE: 'Una vez',
+    DAILY: 'Diariamente',
+    WEEKLY: 'Semanalmente',
+    MONTHLY: 'Mensualmente',
+  }
+  return map[recurrence] || 'Una vez'
 }
 
 function getTypeLabel(type: string) {
   const map: Record<string, string> = {
-    TASK: "Tarea",
-    MEETING: "Reunión",
-    EVENT: "Evento",
-  };
-  return map[type] || "Tarea";
+    TASK: 'Tarea',
+    MEETING: 'Reunión',
+    EVENT: 'Evento',
+  }
+  return map[type] || 'Tarea'
 }
 </script>
 
@@ -199,7 +199,7 @@ function getTypeLabel(type: string) {
                   Se repite
                 </div>
                 <div class="text-sm font-bold text-foreground">
-                  {{ getRecurrenceLabel(task.recurrence || "NONE") }}
+                  {{ getRecurrenceLabel(task.recurrence || 'NONE') }}
                 </div>
               </CardContent>
             </Card>
@@ -238,13 +238,13 @@ function getTypeLabel(type: string) {
           class="w-full font-bold shadow-sm py-5 text-md"
           @click="
             () => {
-              $emit('toggle-status', task!);
-              $emit('update:open', false);
+              $emit('toggle-status', task!)
+              $emit('update:open', false)
             }
           "
         >
           <CheckCircle class="w-5 h-5 mr-2" />
-          {{ task.status === "COMPLETED" ? "Marcar Pendiente" : "Completar Tarea" }}
+          {{ task.status === 'COMPLETED' ? 'Marcar Pendiente' : 'Completar Tarea' }}
         </Button>
         <div class="flex justify-center items-center gap-3 w-full">
           <Button
@@ -253,8 +253,8 @@ function getTypeLabel(type: string) {
             class="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10 border-red-200 dark:border-red-500/20 font-bold shadow-sm"
             @click="
               () => {
-                $emit('delete-task', task!.id);
-                $emit('update:open', false);
+                $emit('delete-task', task!.id)
+                $emit('update:open', false)
               }
             "
           >
@@ -266,8 +266,8 @@ function getTypeLabel(type: string) {
             class="flex-1 font-bold shadow-sm text-foreground"
             @click="
               () => {
-                $emit('edit-task', task!);
-                $emit('update:open', false);
+                $emit('edit-task', task!)
+                $emit('update:open', false)
               }
             "
           >

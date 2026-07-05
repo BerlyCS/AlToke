@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ChevronRightIcon } from '@lucide/vue'
+import { ChevronRightIcon } from 'lucide-vue-next'
 
 import type { CalendarNextProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'

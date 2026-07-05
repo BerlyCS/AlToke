@@ -33,7 +33,6 @@ export const InventoryItemResponse = t.Object({
 })
 
 export const UseItemBody = t.Object({
-  userId: t.String(),
   itemId: t.String(),
 })
 
@@ -42,10 +41,6 @@ export const UseItemResponse = t.Object({
   itemId: t.String(),
   remainingQuantity: t.Number(),
   appliedEffect: t.Union([t.String(), t.Null()]),
-})
-
-export const UserIdQuery = t.Object({
-  userId: t.String(),
 })
 
 export const LeaderboardQuery = t.Object({
@@ -61,7 +56,6 @@ export type AchievementResponse = UnwrapSchema<typeof AchievementResponse>
 export type InventoryItemResponse = UnwrapSchema<typeof InventoryItemResponse>
 export type UseItemBody = UnwrapSchema<typeof UseItemBody>
 export type UseItemResponse = UnwrapSchema<typeof UseItemResponse>
-export type UserIdQuery = UnwrapSchema<typeof UserIdQuery>
 export type LeaderboardQuery = UnwrapSchema<typeof LeaderboardQuery>
 export type AchievementListResponse = UnwrapSchema<typeof AchievementListResponse>
 export type InventoryResponse = UnwrapSchema<typeof InventoryResponse>
@@ -69,7 +63,6 @@ export type LeaderboardResponse = UnwrapSchema<typeof LeaderboardResponse>
 
 export const GamificationModel = {
   leaderboardQuery: LeaderboardQuery,
-  userIdQuery: UserIdQuery,
   useItemBody: UseItemBody,
   leaderboardResponse: LeaderboardResponse,
   achievementsResponse: AchievementListResponse,
@@ -79,7 +72,6 @@ export const GamificationModel = {
 
 export type GamificationModel = {
   leaderboardQuery: typeof LeaderboardQuery
-  userIdQuery: typeof UserIdQuery
   useItemBody: typeof UseItemBody
   leaderboardResponse: typeof LeaderboardResponse
   achievementsResponse: typeof AchievementListResponse

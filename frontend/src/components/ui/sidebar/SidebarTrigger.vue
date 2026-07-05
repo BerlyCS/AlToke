@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PanelLeftIcon } from '@lucide/vue'
+import { PanelLeftIcon } from 'lucide-vue-next'
 
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'

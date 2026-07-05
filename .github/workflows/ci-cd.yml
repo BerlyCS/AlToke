@@ -121,6 +121,10 @@ jobs:
   validate-backend:
     name: Validate backend inputs
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/altoke
+      JWT_SECRET: test-jwt-secret
+      GOOGLE_CLIENT_ID: ""
     needs: detect-changes
     if: needs.detect-changes.outputs.backend_affected == 'true'
     steps:
@@ -529,36 +533,4 @@ jobs:
           command_timeout: 30m
           envs: DEPLOY_PATH
           request_pty: false
-          script: |
-            bash -lc '
-              set -euo pipefail
-
-              deploy_path="$DEPLOY_PATH"
-              compose_candidates=(docker-compose.yml docker-compose.yaml compose.yml compose.yaml)
-              compose_file=""
-
-              if [[ ! -d "$deploy_path" ]]; then
-                echo "Remote deploy path validation failed: the directory configured by the deploy-path secret does not exist on host $(hostname)." >&2
-                echo "Verify the branch-to-environment mapping and confirm the secret value points to an existing directory on the server." >&2
-                exit 1
-              fi
-
-              cd "$deploy_path"
-              for candidate in "${compose_candidates[@]}"; do
-                if [[ -f "$candidate" ]]; then
-                  compose_file="$candidate"
-                  break
-                fi
-              done
-
-              if [[ -z "$compose_file" ]]; then
-                echo "Remote deploy path validation failed: no Docker Compose file was found in the deploy directory." >&2
-                echo "Expected one of: ${compose_candidates[*]}" >&2
-                exit 1
-              fi
-
-              echo "Validated remote deploy directory and compose file: $compose_file"
-              docker compose -f "$compose_file" pull
-              docker compose -f "$compose_file" up -d
-              docker compose -f "$compose_file" ps
-            '
+          script_path: .github/scripts/deploy.sh

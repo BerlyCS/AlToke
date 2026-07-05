@@ -1,7 +1,9 @@
 import { describe, expect, it, beforeAll } from 'bun:test'
-import { api, createTestUserAndLogin } from './utils'
+import { api, createTestUserAndLogin, isDatabaseAvailable } from './utils'
 
-describe('User Profile API', () => {
+const databaseAvailable = await isDatabaseAvailable()
+
+describe.skipIf(!databaseAvailable)('User Profile API', () => {
   let token = ''
   let userEmail = ''
 

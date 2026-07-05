@@ -4,6 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
+    "generate:migrations": "drizzle-kit generate",
+    "migrate": "bun run src/db/migrate.ts",
+    "seed": "bun run src/seed.ts",
     "start": "bun run src/index.ts",
     "test": "bun test",
     "type-check": "tsc --noEmit",
@@ -22,7 +25,9 @@
     "drizzle-typebox": "^0.3.3",
     "elysia": "latest",
     "google-auth-library": "^10.9.0",
-    "postgres": "^3.4.9"
+    "openai": "^6.45.0",
+    "postgres": "^3.4.9",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "bun-types": "latest",

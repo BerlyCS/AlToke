@@ -7,7 +7,12 @@ export abstract class TagService {
   static async create(userId: string, data: TagModel['createTagBody']) {
     const [tag] = await db
       .insert(tags)
-      .values({ ...data, userId })
+      .values({
+        userId,
+        name: data.name,
+        color: data.color,
+        icon: data.icon,
+      })
       .returning()
     return tag
   }

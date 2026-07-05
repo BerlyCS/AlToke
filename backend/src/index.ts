@@ -2,8 +2,10 @@ import { cors } from '@elysiajs/cors'
 import { Elysia } from 'elysia'
 import { openapi } from '@elysiajs/openapi'
 import { serverConfig } from './config'
+import { aiModule } from './modules/ai'
 import { authRoutes } from './modules/auth'
 import { gamificationModule } from './modules/gamification'
+import { notificationRoutes } from './modules/notification'
 import { userRoutes } from './modules/user'
 import { taskRoutes } from './modules/task'
 import { tagRoutes } from './modules/tag'
@@ -23,7 +25,16 @@ export const app = new Elysia()
     }),
   )
   .get('/', () => 'API AlToke en funcionamiento 🚀')
-  .group('/api', (app) => app.use(authRoutes).use(userRoutes).use(taskRoutes).use(tagRoutes))
+  .group('/api', (app) =>
+    app
+      .use(authRoutes)
+      .use(userRoutes)
+      .use(taskRoutes)
+      .use(tagRoutes)
+      .use(gamificationModule)
+      .use(notificationRoutes)
+      .use(aiModule),
+  )
 
 export type App = typeof app
 

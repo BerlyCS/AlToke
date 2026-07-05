@@ -1,121 +1,78 @@
-import { and, asc, desc, eq, isNotNull, isNull, lt } from 'drizzle-orm'
+// Task Repository
+import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { db } from '../../../db'
 import { tasks } from '../../../db/schema'
-import type { Task, Tag } from '../domain/entities'
+import type { Task } from '../domain'
 
-// --- Mapper ---
-const toTask = (row: typeof tasks.$inferSelect, taskTagsArray: Tag[] = []): Task => ({
-  id: row.id,
-  userId: row.userId,
-  title: row.title,
-  description: row.description ?? '',
-  type: row.type as Task['type'],
-  priority: row.priority as Task['priority'],
-  status: row.status as Task['status'],
-  estimatedTime: row.estimatedTime ?? null,
-  startDate: row.startDate ?? null,
-  dueDate: row.dueDate ?? null,
-  completedAt: row.completedAt ?? null,
-  recurrence: row.recurrence as Task['recurrence'],
-  deletedAt: row.deletedAt ?? null,
-  createdAt: row.createdAt,
-  updatedAt: row.updatedAt,
-  tags: taskTagsArray,
+const toTaskDomain = (task: typeof tasks.$inferSelect): Task => ({
+  id: task.id,
+  userId: task.userId,
+  assignedBy: null,
+  title: task.title,
+  description: task.description ?? null,
+  taskType: (task.type as Task['taskType']) ?? 'TASK',
+  priority: (task.priority as Task['priority']) ?? 'MEDIUM',
+  status: (task.status as Task['status']) ?? 'PENDING',
+  estimatedTimeMinutes: task.estimatedTime ?? 0,
+  startTime: task.startDate ?? null,
+  dueDate: task.dueDate ?? null,
+  completionDate: task.completedAt ?? null,
+  deletedAt: task.deletedAt ?? null,
+  tags: [],
+  createdAt: task.createdAt,
 })
 
-// --- Repository ---
-export class TaskRepository {
-  async save(task: Task): Promise<void> {
-    await db.insert(tasks).values({
-      id: task.id,
-      userId: task.userId,
-      title: task.title,
-      description: task.description,
-      type: task.type,
-      priority: task.priority,
-      status: task.status,
-      estimatedTime: task.estimatedTime,
-      startDate: task.startDate,
-      dueDate: task.dueDate,
-      completedAt: task.completedAt,
-      recurrence: task.recurrence,
-      deletedAt: task.deletedAt,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-    })
-  }
+const activityAt = sql<Date>`coalesce(${tasks.completedAt}, ${tasks.dueDate}, ${tasks.startDate})`
 
-  async update(task: Task): Promise<void> {
-    await db
-      .update(tasks)
-      .set({
-        title: task.title,
-        description: task.description,
-        type: task.type,
-        priority: task.priority,
-        status: task.status,
-        estimatedTime: task.estimatedTime,
-        startDate: task.startDate,
-        dueDate: task.dueDate,
-        completedAt: task.completedAt,
-        recurrence: task.recurrence,
-        deletedAt: task.deletedAt,
-        updatedAt: new Date(),
-      })
-      .where(eq(tasks.id, task.id))
-  }
+const startOfDay = (date: Date) => {
+  const value = new Date(date)
+  value.setHours(0, 0, 0, 0)
+  return value
+}
 
-  async findById(id: string): Promise<Task | null> {
-    const [row] = await db
+const endOfDay = (date: Date) => {
+  const value = new Date(date)
+  value.setHours(23, 59, 59, 999)
+  return value
+}
+
+export abstract class TaskRepository {
+  static async getRecentTasks(userId: string, limit = 10): Promise<Task[]> {
+    const rows = await db
       .select()
       .from(tasks)
-      .where(eq(tasks.id, id))
-      .limit(1)
+      .where(eq(tasks.userId, userId))
+      .orderBy(desc(tasks.createdAt), desc(tasks.completedAt), desc(tasks.dueDate))
+      .limit(limit)
 
-    return row ? toTask(row) : null
+    return rows.map(toTaskDomain)
   }
 
-  async findByUserId(userId: string): Promise<Task[]> {
+  static async findByUserId(userId: string): Promise<Task[]> {
+    const rows = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.userId, userId))
+      .orderBy(desc(tasks.createdAt), desc(tasks.completedAt), desc(tasks.dueDate))
+
+    return rows.map(toTaskDomain)
+  }
+
+  static async findTasksForDate(userId: string, date: Date): Promise<Task[]> {
     const rows = await db
       .select()
       .from(tasks)
       .where(
         and(
           eq(tasks.userId, userId),
-          isNull(tasks.deletedAt)
-        )
+          sql`${activityAt} is not null`,
+          gte(activityAt, startOfDay(date)),
+          lt(activityAt, new Date(endOfDay(date).getTime() + 1)),
+        ),
       )
-      .orderBy(asc(tasks.dueDate))
+      .orderBy(asc(tasks.createdAt))
 
-    return rows.map((row: typeof tasks.$inferSelect) => toTask(row))
-  }
-
-  async findTrashedTasks(userId: string): Promise<Task[]> {
-    const rows = await db
-      .select()
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.userId, userId),
-          isNotNull(tasks.deletedAt)
-        )
-      )
-      .orderBy(desc(tasks.deletedAt))
-
-    return rows.map((row: typeof tasks.$inferSelect) => toTask(row))
-  }
-
-  async findExpiredTrash(beforeDate: Date): Promise<Task[]> {
-    const rows = await db
-      .select()
-      .from(tasks)
-      .where(
-        and(
-          isNotNull(tasks.deletedAt),
-          lt(tasks.deletedAt, beforeDate)
-        )
-      )
-
-    return rows.map((row: typeof tasks.$inferSelect) => toTask(row))
+    return rows.map(toTaskDomain)
   }
 }
+// Task Repository

@@ -1,5 +1,6 @@
 import { jwt } from '@elysiajs/jwt'
 import { Elysia, status } from 'elysia'
+import { resolveJwtSecret } from '../../../shared/auth/jwt-secret'
 import { UserModel } from '../model'
 import { UserService } from '../service'
 
@@ -30,7 +31,7 @@ export const userRoutes = new Elysia({ prefix: '/users' })
   .use(
     jwt({
       name: 'jwt',
-      secret: process.env.JWT_SECRET || 'super-secret',
+      secret: resolveJwtSecret(),
     }),
   )
   .derive(async (context) => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { XIcon } from '@lucide/vue'
+import { XIcon } from 'lucide-vue-next'
 
 import type { DialogContentEmits, DialogContentProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'

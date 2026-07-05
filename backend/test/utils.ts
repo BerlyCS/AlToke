@@ -1,7 +1,20 @@
 import { treaty } from '@elysiajs/eden'
+import { sql } from 'drizzle-orm'
 import { app, type App } from '../src/index'
+import { db } from '../src/db'
 
 export const api = treaty<App>(app)
+
+let databaseAvailabilityPromise: Promise<boolean> | undefined
+
+export function isDatabaseAvailable() {
+  databaseAvailabilityPromise ??= db
+    .execute(sql`select 1`)
+    .then(() => true)
+    .catch(() => false)
+
+  return databaseAvailabilityPromise
+}
 
 export async function createTestUserAndLogin() {
   const email = `test-${Date.now()}-${Math.random().toString(36).substring(7)}@example.com`

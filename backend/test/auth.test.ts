@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'bun:test'
-import { api } from './utils'
+import { api, isDatabaseAvailable } from './utils'
 
 const testUserEmail = `auth-test-${Date.now()}@example.com`
+const databaseAvailable = await isDatabaseAvailable()
 
-describe('Auth API', () => {
+describe.skipIf(!databaseAvailable)('Auth API', () => {
   it('should register a new user', async () => {
     const { data, error, status } = await api.api.auth.register.post({
       email: testUserEmail,

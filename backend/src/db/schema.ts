@@ -1,5 +1,16 @@
-import { pgTable, uuid, varchar, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -35,15 +46,15 @@ export const tasks = pgTable('tasks', {
     .references(() => users.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
-  type: varchar('type', { length: 20 }).default('TASK').notNull(), // TASK, MEETING, EVENT
-  priority: varchar('priority', { length: 20 }).default('MEDIUM').notNull(), // HIGH, MEDIUM, LOW
-  status: varchar('status', { length: 20 }).default('PENDING').notNull(), // PENDING, IN_PROGRESS, COMPLETED
-  estimatedTime: integer('estimated_time'), // in minutes
+  type: varchar('type', { length: 20 }).default('TASK').notNull(),
+  priority: varchar('priority', { length: 20 }).default('MEDIUM').notNull(),
+  status: varchar('status', { length: 20 }).default('PENDING').notNull(),
+  estimatedTime: integer('estimated_time'),
   startDate: timestamp('start_date'),
   dueDate: timestamp('due_date'),
   completedAt: timestamp('completed_at'),
-  recurrence: varchar('recurrence', { length: 20 }).default('NONE').notNull(), // NONE, DAILY, WEEKLY, MONTHLY
-  deletedAt: timestamp('deleted_at'), // soft delete (30-day trash bin)
+  recurrence: varchar('recurrence', { length: 20 }).default('NONE').notNull(),
+  deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -85,6 +96,38 @@ export const taskTagsRelations = relations(taskTags, ({ one }) => ({
     references: [tags.id],
   }),
 }))
+export const notificationSettings = pgTable('notification_settings', {
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .primaryKey(),
+  emailEnabled: boolean('email_enabled').default(false),
+  pushEnabled: boolean('push_enabled').default(false),
+  isMuted: boolean('is_muted').default(false),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const notificationChannelEnum = pgEnum('notification_channel', [
+  'EMAIL',
+  'PUSH',
+  'IN_APP',
+  'SYSTEM',
+])
+
+export const notificationLogs = pgTable(
+  'notification_logs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id)
+      .notNull(),
+    channel: notificationChannelEnum('channel').default('IN_APP').notNull(),
+    type: varchar('type', { length: 50 }).notNull(),
+    title: varchar('title', { length: 150 }).notNull(),
+    message: text('message').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('notification_logs_user_id_created_at_idx').on(table.userId, table.createdAt)],
+)
 
 export const achievements = pgTable('achievements', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -143,5 +186,26 @@ export const xpTransactions = pgTable('xp_transactions', {
     .notNull(),
   amount: integer('amount').notNull(),
   source: varchar('source', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const aiHabitAnalyses = pgTable('ai_habit_analyses', {
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .primaryKey(),
+  frequentTimeSlots: jsonb('frequent_time_slots').default([]).notNull(),
+  categoryAffinity: jsonb('category_affinity').default({}).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const taskSuggestions = pgTable('task_suggestions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .notNull(),
+  suggestedTitle: varchar('suggested_title', { length: 100 }).notNull(),
+  suggestedTime: timestamp('suggested_time').notNull(),
+  explanation: text('explanation').notNull(),
+  status: varchar('status', { length: 20 }).default('PENDING').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })

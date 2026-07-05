@@ -154,7 +154,11 @@ export class GamificationService {
       throw status(404, 'User not found')
     }
 
-    await this.repo.saveStats(user)
+    const count = await this.repo.countOverdueHighPriorityTasks(userId)
+    await this.repo.saveStats({
+      ...user,
+      overdueHighPriorityCount: count,
+    })
   }
 
   static async resetStreak(userId: string): Promise<void> {
@@ -210,6 +214,8 @@ export class GamificationService {
   }
 
   static async getFriendsLeaderboard(userId: string): Promise<LeaderboardEntry[]> {
+    // NOTE: requires a friends/follows table to be meaningful
+    // Currently returns all users except the current one as a fallback
     const friends = await this.repo.getFriendsStats(userId)
     return friends.map((friend, index) => ({
       userId: friend.userId,
