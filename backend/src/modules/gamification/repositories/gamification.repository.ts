@@ -1,9 +1,10 @@
-import { and, asc, between, desc, eq, gte, lt, sql } from 'drizzle-orm'
+import { and, asc, between, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { db } from '../../../db'
 import {
   achievements,
   items,
   levelRewards,
+  tasks,
   userAchievements,
   userInventories,
   xpTransactions,
@@ -281,6 +282,23 @@ export class GamificationRepository {
   async findLevelRewardByLevel(level: number) {
     const [row] = await db.select().from(levelRewards).where(eq(levelRewards.level, level)).limit(1)
     return row ?? null
+  }
+
+  async countOverdueHighPriorityTasks(userId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, userId),
+          eq(tasks.priority, 'HIGH'),
+          sql`${tasks.status} <> 'COMPLETED'`,
+          sql`${tasks.dueDate} is not null`,
+          sql`${tasks.dueDate} < now()`,
+          isNull(tasks.deletedAt),
+        ),
+      )
+    return result?.count ?? 0
   }
 
   async consumeInventoryItem(userId: string, itemId: string): Promise<UseItemResult | null> {
