@@ -1,7 +1,11 @@
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '../../db'
 import { tasks, taskTags } from '../../db/schema'
+import { GamificationService } from '../gamification/services'
 import type { TaskModel } from './model'
+
+const XP_BASE = 10
+const XP_PER_MINUTE = 2
 
 export abstract class TaskService {
   static async create(userId: string, data: TaskModel['createTaskBody']) {
@@ -102,5 +106,38 @@ export abstract class TaskService {
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
       .returning()
     return task || null
+  }
+
+  static async completeTask(userId: string, taskId: string) {
+    const task = await this.findById(userId, taskId)
+    if (!task) return null
+
+    if (task.status === 'COMPLETED') return task
+
+    const now = new Date()
+    const completedOnTime = !task.dueDate || now <= new Date(task.dueDate)
+    const estimatedMinutes = task.estimatedTime ?? 0
+    const xpAmount = XP_BASE + estimatedMinutes * XP_PER_MINUTE
+
+    const [updated] = await db
+      .update(tasks)
+      .set({ status: 'COMPLETED', completedAt: now, updatedAt: now })
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
+      .returning()
+
+    const xpResult = await GamificationService.addXP(
+      userId,
+      xpAmount,
+      task.priority,
+      completedOnTime,
+    )
+
+    return {
+      ...updated,
+      tags: task.tags,
+      xpAwarded: xpResult.gainedXp,
+      leveledUp: xpResult.leveledUp,
+      newLevel: xpResult.currentLevel,
+    }
   }
 }

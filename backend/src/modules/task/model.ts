@@ -45,6 +45,15 @@ export const TaskModel = {
     ]),
   ),
   errorNotFound: t.Literal('Task not found'),
+  completeTaskResponse: t.Intersect([
+    t.Object(dbModel.select.tasks as any),
+    t.Object({
+      tags: t.Optional(t.Array(t.Object(dbModel.select.tags as any))),
+      xpAwarded: t.Number(),
+      leveledUp: t.Boolean(),
+      newLevel: t.Number(),
+    }),
+  ]),
 } as const
 
 export type TaskModel = {
