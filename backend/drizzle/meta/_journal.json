@@ -5,43 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1782822199933,
-      "tag": "0000_famous_maggott",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1782926946269,
-      "tag": "0001_simple_bloodaxe",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1783190800924,
-      "tag": "0002_clumsy_mandroid",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1783191637520,
-      "tag": "0003_early_starbolt",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1783206544346,
-      "tag": "0004_slippery_gateway",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1783210160163,
-      "tag": "0005_worried_bullseye",
+      "when": 1783269396471,
+      "tag": "0000_quiet_roulette",
       "breakpoints": true
     }
   ]
