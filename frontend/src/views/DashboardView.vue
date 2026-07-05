@@ -11,7 +11,7 @@ import UpcomingTasks from '@/components/UpcomingTasks.vue'
 import StatCard from '@/components/StatCard.vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Zap, Trophy, Flame, Plus, Target, Users } from 'lucide-vue-next'
+import { CheckCircle, Zap, Trophy, Flame, Plus, Target, Users, ArrowRight } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -153,6 +153,16 @@ function editTask(task: Task) {
             @delete-task="deleteTask"
             @open-task="openTask"
           />
+          <div class="mt-4 flex justify-center">
+            <Button
+              variant="outline"
+              class="rounded-2xl h-12 px-8 font-bold border-border gap-2"
+              @click="router.push('/tasks')"
+            >
+              Ver todas las tareas
+              <ArrowRight class="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         <div class="space-y-6">
