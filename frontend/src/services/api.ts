@@ -1,5 +1,16 @@
 import { treaty } from '@elysiajs/eden'
-import type { Credentials, Tag, Task, TaskOverloadPrediction, TaskSuggestion } from '@/types'
+import type {
+  Achievement,
+  CompleteTaskResult,
+  Credentials,
+  InventoryItem,
+  LeaderboardEntry,
+  Tag,
+  Task,
+  TaskOverloadPrediction,
+  TaskSuggestion,
+  UseItemResult,
+} from '@/types'
 
 type ApiResult<T> = Promise<{
   data: T | null
@@ -57,7 +68,24 @@ type ApiClientContract = {
     } & ((params: { id: string }) => {
       patch: (body: Partial<Task>, options: AuthHeaders) => ApiResult<Task>
       delete: (body: Record<string, never>, options: AuthHeaders) => ApiResult<Task>
+      complete: {
+        patch: (body: Record<string, never>, options: AuthHeaders) => ApiResult<CompleteTaskResult>
+      }
     })
+    gamification: {
+      leaderboard: {
+        get: (options: { query?: { limit?: number } }) => ApiResult<LeaderboardEntry[]>
+      }
+      achievements: {
+        get: (options: AuthHeaders) => ApiResult<Achievement[]>
+      }
+      inventory: {
+        get: (options: AuthHeaders) => ApiResult<InventoryItem[]>
+        use: {
+          post: (body: { itemId: string }, options: AuthHeaders) => ApiResult<UseItemResult>
+        }
+      }
+    }
   }
 }
 

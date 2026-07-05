@@ -91,7 +91,7 @@ export interface UseItemResult {
 }
 
 export interface CompleteTaskResult extends Task {
-  xpAwarded: number
-  leveledUp: boolean
-  newLevel: number
+  xpAwarded?: number
+  leveledUp?: boolean
+  newLevel?: number
 }
