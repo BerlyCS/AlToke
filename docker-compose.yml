@@ -6,6 +6,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file: ./backend/.env
     environment:
       HOST: 0.0.0.0
       PORT: 3000
@@ -30,6 +31,9 @@ services:
     build:
       context: .
       dockerfile: docker/frontend.Dockerfile
+      args:
+        VITE_API_URL: /api
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     depends_on:
       backend:
         condition: service_healthy

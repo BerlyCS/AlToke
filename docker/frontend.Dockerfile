@@ -1,7 +1,10 @@
 FROM oven/bun:1 AS frontend-build
 WORKDIR /app/frontend
 
-ENV VITE_API_URL=/api
+ARG VITE_API_URL
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
 COPY frontend/package.json frontend/bun.lock ./
 RUN bun install --frozen-lockfile
