@@ -8,6 +8,13 @@
       "when": 1783269396471,
       "tag": "0000_quiet_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783300000000,
+      "tag": "0006_add_gamification_tables",
+      "breakpoints": true
     }
   ]
 }
