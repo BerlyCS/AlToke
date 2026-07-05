@@ -143,33 +143,45 @@ const getItemId = async (code: string) => {
 }
 
 const seed = async () => {
-  console.log('Seeding achievements...')
-  for (const a of seedAchievements) {
-    await db
-      .insert(achievements)
-      .values({ id: randomUUID(), ...a })
-      .onConflictDoNothing({ target: achievements.code })
-  }
-
-  console.log('Seeding items...')
-  for (const i of seedItems) {
-    await db
-      .insert(items)
-      .values({ id: randomUUID(), ...i })
-      .onConflictDoNothing({ target: items.code })
-  }
-
-  console.log('Seeding level rewards...')
-  for (const r of seedLevelRewards) {
-    const itemId = await getItemId(r.itemCode)
-    if (!itemId) {
-      console.warn(`Item ${r.itemCode} not found, skipping level reward for level ${r.level}`)
-      continue
+  try {
+    console.log('Seeding achievements...')
+    for (const a of seedAchievements) {
+      await db
+        .insert(achievements)
+        .values({ id: randomUUID(), ...a })
+        .onConflictDoNothing({ target: achievements.code })
     }
-    await db
-      .insert(levelRewards)
-      .values({ id: randomUUID(), level: r.level, itemId, quantity: r.quantity })
-      .onConflictDoNothing({ target: levelRewards.level })
+  } catch (e) {
+    console.error('Achievements seed skipped:', (e as Error).message)
+  }
+
+  try {
+    console.log('Seeding items...')
+    for (const i of seedItems) {
+      await db
+        .insert(items)
+        .values({ id: randomUUID(), ...i })
+        .onConflictDoNothing({ target: items.code })
+    }
+  } catch (e) {
+    console.error('Items seed skipped:', (e as Error).message)
+  }
+
+  try {
+    console.log('Seeding level rewards...')
+    for (const r of seedLevelRewards) {
+      const itemId = await getItemId(r.itemCode)
+      if (!itemId) {
+        console.warn(`Item ${r.itemCode} not found, skipping level reward for level ${r.level}`)
+        continue
+      }
+      await db
+        .insert(levelRewards)
+        .values({ id: randomUUID(), level: r.level, itemId, quantity: r.quantity })
+        .onConflictDoNothing({ target: levelRewards.level })
+    }
+  } catch (e) {
+    console.error('Level rewards seed skipped:', (e as Error).message)
   }
 
   console.log('Seed completed!')
