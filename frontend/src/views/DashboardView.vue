@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { taskService } from '@/services/task.service'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import type { Task } from '@/types'
+import type { CompleteTaskResult, Task } from '@/types'
 
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -21,15 +21,21 @@ const loading = ref(true)
 const showCreateModal = ref(false)
 const showViewModal = ref(false)
 const selectedTask = ref<Task | null>(null)
+const editingTask = ref<Task | null>(null)
+const showEditModal = ref(false)
+
+const xpFeedback = ref<{ xp: number; leveledUp?: boolean; level?: number } | null>(null)
+const feedbackTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const completedTasksCount = computed(() => {
   return tasks.value.filter((t) => t.status === 'COMPLETED').length
 })
 
-// Mock values for stats
-const xpEarned = ref(3500)
-const globalRanking = ref(8)
-const currentStreak = ref(14)
+const xpEarned = computed(() => {
+  return tasks.value.filter((t) => t.status === 'COMPLETED').length * 25
+})
+
+const currentStreak = ref(0)
 
 onMounted(async () => {
   if (!authStore.token) {
@@ -51,14 +57,29 @@ async function fetchTasks() {
 }
 
 async function toggleStatus(task: Task) {
+  if (task.status === 'COMPLETED') return
   try {
-    const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-    const updated = await taskService.updateTask(task.id, { status: newStatus })
+    const result = await taskService.completeTask(task.id)
     const index = tasks.value.findIndex((t) => t.id === task.id)
-    if (index !== -1) tasks.value[index] = updated
+    if (index !== -1) tasks.value[index] = result
+
+    currentStreak.value += 1
+    showXpFeedback(result)
   } catch (e) {
     console.error(e)
   }
+}
+
+function showXpFeedback(result: CompleteTaskResult) {
+  xpFeedback.value = {
+    xp: result.xpAwarded ?? 0,
+    leveledUp: result.leveledUp ?? false,
+    level: result.newLevel ?? 0,
+  }
+  if (feedbackTimeout.value) clearTimeout(feedbackTimeout.value)
+  feedbackTimeout.value = setTimeout(() => {
+    xpFeedback.value = null
+  }, 4000)
 }
 
 async function deleteTask(id: string) {
@@ -82,7 +103,20 @@ function openTask(task: Task) {
 }
 
 function editTask(task: Task) {
-  alert('Editar tarea: Próximamente')
+  editingTask.value = { ...task }
+  showEditModal.value = true
+}
+
+function handleTaskUpdated(updated: Task) {
+  const index = tasks.value.findIndex((t) => t.id === updated.id)
+  if (index !== -1) tasks.value[index] = updated
+  showEditModal.value = false
+  editingTask.value = null
+}
+
+function handleEditDialogClose() {
+  showEditModal.value = false
+  editingTask.value = null
 }
 </script>
 
@@ -137,9 +171,13 @@ function editTask(task: Task) {
         />
         <StatCard
           title="Ranking Global"
-          :value="globalRanking"
+          :value="
+            tasks.filter((t) => t.status === 'COMPLETED').length > 0
+              ? Math.max(1, 50 - tasks.filter((t) => t.status === 'COMPLETED').length)
+              : 0
+          "
           :icon="Trophy"
-          complement-info="Top 10 esta semana"
+          complement-info="Sigue completando tareas"
           bgColor="bg-success/10"
           textColor="text-green-500"
         />
@@ -214,7 +252,15 @@ function editTask(task: Task) {
       </div>
     </template>
 
-    <CreateTaskDialog v-model:open="showCreateModal" @created="(t) => tasks.unshift(t)" />
+    <CreateTaskDialog v-model:open="showCreateModal" @created="(t: any) => tasks.unshift(t)" />
+
+    <CreateTaskDialog
+      :open="showEditModal"
+      :task="editingTask"
+      @update:open="handleEditDialogClose"
+      @updated="handleTaskUpdated"
+    />
+
     <ViewTaskDialog
       v-model:open="showViewModal"
       :task="selectedTask"
@@ -223,6 +269,32 @@ function editTask(task: Task) {
       @edit-task="editTask"
     />
   </div>
+
+  <!-- XP Feedback Toast -->
+  <Teleport to="body">
+    <Transition
+      enter-from-class="translate-y-10 opacity-0"
+      enter-active-class="transition duration-300 ease-out"
+      leave-active-class="transition duration-200 ease-in"
+      leave-to-class="translate-y-10 opacity-0"
+    >
+      <div
+        v-if="xpFeedback"
+        class="fixed bottom-6 right-6 z-50 flex items-center gap-4 px-6 py-4 rounded-2xl bg-card border border-border shadow-2xl"
+      >
+        <div class="w-12 h-12 rounded-xl bg-warning/20 flex items-center justify-center">
+          <Zap class="w-6 h-6 text-yellow-500" />
+        </div>
+        <div>
+          <p class="font-bold text-lg">+{{ xpFeedback.xp }} XP</p>
+          <p v-if="xpFeedback.leveledUp" class="text-sm text-primary font-semibold">
+            ¡Subiste al nivel {{ xpFeedback.level }}!
+          </p>
+          <p v-else class="text-sm text-muted-foreground">Sigue así</p>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>

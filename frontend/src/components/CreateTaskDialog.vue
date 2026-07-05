@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { taskService } from '@/services/task.service'
 import { tagService } from '@/services/tag.service'
-import type { Tag } from '@/types'
+import type { Tag, Task } from '@/types'
 import type { Component } from 'vue'
 
 import {
@@ -66,11 +66,12 @@ const IconMap: Record<string, Component> = {
   AlignLeft,
 }
 
-defineProps<{
+const props = defineProps<{
   open: boolean
+  task?: Task | null
 }>()
 
-const emit = defineEmits(['update:open', 'created'])
+const emit = defineEmits(['update:open', 'created', 'updated'])
 
 const isSubmitting = ref(false)
 
@@ -82,6 +83,31 @@ const newTask = ref({
   estimatedTime: '',
   recurrence: 'NONE',
 })
+
+const isEditing = computed(() => !!props.task)
+
+watch(
+  () => props.task,
+  (task) => {
+    if (task) {
+      newTask.value = {
+        title: task.title,
+        description: task.description || '',
+        type: task.type || 'TASK',
+        priority: task.priority || 'MEDIUM',
+        estimatedTime: task.estimatedTime?.toString() || '',
+        recurrence: task.recurrence || 'NONE',
+      }
+      dueDate.value = task.dueDate
+        ? (new Date(task.dueDate).toISOString().split('T')[0] as unknown as DateValue)
+        : undefined
+      dueTime.value = task.dueDate
+        ? new Date(task.dueDate).toTimeString().slice(0, 5)
+        : getCurrentTime()
+      selectedTags.value = new Set(task.tags?.map((t) => t.id) || [])
+    }
+  },
+)
 
 function getTomorrow() {
   return today(getLocalTimeZone()).add({ days: 1 })
@@ -159,7 +185,7 @@ function toggleTag(id: string) {
   else selectedTags.value.add(id)
 }
 
-async function createTask() {
+async function handleSubmit() {
   try {
     isSubmitting.value = true
     let finalDueDate: string | undefined = undefined
@@ -185,10 +211,14 @@ async function createTask() {
       ...(finalDueDate && { dueDate: finalDueDate }),
     }
 
-    const created = await taskService.createTask(payload)
-    emit('created', created)
+    if (isEditing.value && props.task) {
+      const updated = await taskService.updateTask(props.task.id, payload)
+      emit('updated', updated)
+    } else {
+      const created = await taskService.createTask(payload)
+      emit('created', created)
+    }
 
-    // Reset form
     newTask.value = {
       title: '',
       description: '',
@@ -197,13 +227,13 @@ async function createTask() {
       estimatedTime: '',
       recurrence: 'NONE',
     }
-    dueDate.value = getTomorrow()
+    dueDate.value = undefined
     dueTime.value = getCurrentTime()
-    selectedTags.value.clear()
+    selectedTags.value = new Set()
     emit('update:open', false)
   } catch (e) {
     console.error(e)
-    alert('Error al crear tarea')
+    alert(isEditing.value ? 'Error al actualizar tarea' : 'Error al crear tarea')
   } finally {
     isSubmitting.value = false
   }
@@ -437,7 +467,7 @@ async function createTask() {
           <DialogFooter class="mt-6">
             <Button variant="ghost" @click="$emit('update:open', false)">Cancelar</Button>
             <Button
-              @click="createTask"
+              @click="handleSubmit"
               :disabled="isSubmitting || !newTask.title"
               class="px-8 font-bold"
             >
