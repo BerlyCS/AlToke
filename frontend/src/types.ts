@@ -50,3 +50,48 @@ export interface TaskOverloadPrediction {
   riskLevel: 'low' | 'medium' | 'high'
   explanation: string
 }
+
+export interface LeaderboardEntry {
+  userId: string
+  nickname: string | null
+  avatarUrl: string | null
+  currentLevel: number
+  totalXp: number
+  streakCount: number
+  maxStreak: number
+  rank: number
+}
+
+export interface Achievement {
+  id: string
+  code: string
+  title: string
+  description: string
+  isSecret: boolean
+  requiredXp: number
+  unlockedAt: string
+}
+
+export interface InventoryItem {
+  id: string
+  code: string
+  name: string
+  itemType: string
+  effect: string | null
+  assetUrl: string | null
+  quantity: number
+  isEquipped: boolean
+}
+
+export interface UseItemResult {
+  userId: string
+  itemId: string
+  remainingQuantity: number
+  appliedEffect: string | null
+}
+
+export interface CompleteTaskResult extends Task {
+  xpAwarded: number
+  leveledUp: boolean
+  newLevel: number
+}

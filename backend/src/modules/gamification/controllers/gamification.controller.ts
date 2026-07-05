@@ -1,4 +1,5 @@
 import { Elysia } from 'elysia'
+import { authPlugin } from '../../../shared/utils/auth-plugin'
 import { GamificationModel } from '../dto'
 import { GamificationService } from '../services'
 
@@ -15,13 +16,14 @@ export const gamificationController = new Elysia({ prefix: '/gamification' })
       },
     },
   )
+  .use(authPlugin)
   .get(
     '/achievements',
-    async ({ query }) => {
-      return await GamificationService.getUnlockedAchievements(query.userId)
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+      return await GamificationService.getUnlockedAchievements(userId)
     },
     {
-      query: GamificationModel.userIdQuery,
       response: {
         200: GamificationModel.achievementsResponse,
       },
@@ -29,11 +31,11 @@ export const gamificationController = new Elysia({ prefix: '/gamification' })
   )
   .get(
     '/inventory',
-    async ({ query }) => {
-      return (await GamificationService.getInventory(query.userId)) as any
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+      return (await GamificationService.getInventory(userId)) as any
     },
     {
-      query: GamificationModel.userIdQuery,
       response: {
         200: GamificationModel.inventoryResponse,
       },
@@ -41,8 +43,9 @@ export const gamificationController = new Elysia({ prefix: '/gamification' })
   )
   .post(
     '/inventory/use',
-    async ({ body }) => {
-      return await GamificationService.useItem(body.userId, body.itemId)
+    async ({ requireAuth, body }) => {
+      const userId = requireAuth()
+      return await GamificationService.useItem(userId, body.itemId)
     },
     {
       body: GamificationModel.useItemBody,

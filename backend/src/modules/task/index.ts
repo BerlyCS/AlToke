@@ -72,6 +72,21 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
       },
     },
   )
+  .patch(
+    '/:id/complete',
+    async ({ requireAuth, params }) => {
+      const userId = requireAuth()
+      const result = await TaskService.completeTask(userId, params.id)
+      if (!result) throw status(404, 'Task not found' satisfies TaskModel['errorNotFound'])
+      return result as any
+    },
+    {
+      response: {
+        200: TaskModel.completeTaskResponse,
+        404: TaskModel.errorNotFound,
+      },
+    },
+  )
 
 export * from './model'
 export * from './service'
