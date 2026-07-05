@@ -1,6 +1,6 @@
 import { api, ApiError } from './api'
 import { useAuthStore } from '@/stores/auth'
-import type { Task } from '@/types'
+import type { CompleteTaskResult, Task } from '@/types'
 
 // Helper to get auth headers automatically
 const getHeaders = () => {
@@ -41,5 +41,13 @@ export const taskService = {
       .delete(null as unknown as Record<string, never>, { headers: getHeaders() })
     if (error) throw new ApiError(status, String(error.value) || 'Failed to delete task')
     return data as unknown as Task
+  },
+
+  completeTask: async (id: string): Promise<CompleteTaskResult> => {
+    const { data, error, status } = await api.api
+      .tasks({ id })
+      .complete.patch(null as unknown as Record<string, never>, { headers: getHeaders() })
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to complete task')
+    return data as unknown as CompleteTaskResult
   },
 }
