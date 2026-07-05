@@ -89,9 +89,10 @@ type ApiClientContract = {
   }
 }
 
-export const api = treaty(
-  (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/api$/, ''),
-) as unknown as ApiClientContract
+const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const baseUrl = rawUrl.startsWith('/') ? window.location.origin + rawUrl : rawUrl
+
+export const api = treaty(baseUrl.replace(/\/api$/, '')) as unknown as ApiClientContract
 
 export class ApiError extends Error {
   constructor(
