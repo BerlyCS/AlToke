@@ -6,6 +6,7 @@
     "dev": "bun run --watch src/index.ts",
     "generate:migrations": "drizzle-kit generate",
     "migrate": "bun run src/db/migrate.ts",
+    "seed": "bun run src/seed.ts",
     "start": "bun run src/index.ts",
     "test": "bun test",
     "type-check": "tsc --noEmit",
