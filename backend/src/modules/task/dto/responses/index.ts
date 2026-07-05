@@ -23,7 +23,7 @@ export const TaskResponse = t.Object({
       name: t.String(),
       color: t.Union([t.String(), t.Null()]),
       icon: t.Union([t.String(), t.Null()]),
-    })
+    }),
   ),
 })
 

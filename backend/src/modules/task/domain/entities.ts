@@ -1,26 +1,26 @@
 export enum Priority {
   HIGH = 'HIGH',
   MEDIUM = 'MEDIUM',
-  LOW = 'LOW'
+  LOW = 'LOW',
 }
 
 export enum TaskType {
   TASK = 'TASK',
   MEETING = 'MEETING',
-  EVENT = 'EVENT'
+  EVENT = 'EVENT',
 }
 
 export enum TaskStatus {
   PENDING = 'PENDING',
   IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED'
+  COMPLETED = 'COMPLETED',
 }
 
 export enum RecurrenceType {
   NONE = 'NONE',
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
-  MONTHLY = 'MONTHLY'
+  MONTHLY = 'MONTHLY',
 }
 
 // Entidad Tag para la relación
