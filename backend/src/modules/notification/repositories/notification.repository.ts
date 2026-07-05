@@ -81,6 +81,10 @@ export abstract class NotificationRepository {
       })
       .returning()
 
+    if (!settings) {
+      throw new Error('Failed to save notification settings')
+    }
+
     return toSettingsDomain(settings)
   }
 
@@ -109,6 +113,10 @@ export abstract class NotificationRepository {
         message: input.message,
       })
       .returning()
+
+    if (!log) {
+      throw new Error('Failed to create notification log')
+    }
 
     return toLogDomain(log)
   }
