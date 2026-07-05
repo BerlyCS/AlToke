@@ -17,4 +17,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "bun run migrate && exec bun run start"]
+CMD ["sh", "-c", "bun run migrate && bun run seed && exec bun run start"]
