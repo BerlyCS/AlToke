@@ -52,10 +52,10 @@ const sameDay = (left: Date, right: Date) =>
 const toDateKey = (date: Date) => date.toISOString().slice(0, 10)
 
 const activityAt = (task: {
-  completionDate: Date | null
+  completedAt: Date | null
   dueDate: Date | null
-  startTime: Date | null
-}) => task.completionDate ?? task.dueDate ?? task.startTime
+  startDate: Date | null
+}) => task.completedAt ?? task.dueDate ?? task.startDate
 
 const buildSystemPrompt = (title: string, example: string) =>
   [
@@ -204,7 +204,7 @@ export class AIService {
         const key = toDateKey(current)
         const group = historicGroups.get(key) ?? { count: 0, minutes: 0 }
         group.count += 1
-        group.minutes += task.estimatedTimeMinutes
+        group.minutes += task.estimatedTime ?? 0
         historicGroups.set(key, group)
       }
 
@@ -218,7 +218,7 @@ export class AIService {
           ? historicValues.reduce((sum, entry) => sum + entry.minutes, 0) / historicValues.length
           : 0
       const totalEstimatedMinutes = targetTasks.reduce(
-        (sum, task) => sum + task.estimatedTimeMinutes,
+        (sum, task) => sum + (task.estimatedTime ?? 0),
         0,
       )
       const assignedTasks = targetTasks.length

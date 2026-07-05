@@ -2,24 +2,25 @@
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { db } from '../../../db'
 import { tasks } from '../../../db/schema'
-import type { Task } from '../domain'
+import type { Priority, RecurrenceType, Task, TaskStatus, TaskType } from '../domain'
 
 const toTaskDomain = (task: typeof tasks.$inferSelect): Task => ({
   id: task.id,
   userId: task.userId,
-  assignedBy: null,
   title: task.title,
-  description: task.description ?? null,
-  taskType: (task.type as Task['taskType']) ?? 'TASK',
-  priority: (task.priority as Task['priority']) ?? 'MEDIUM',
-  status: (task.status as Task['status']) ?? 'PENDING',
-  estimatedTimeMinutes: task.estimatedTime ?? 0,
-  startTime: task.startDate ?? null,
-  dueDate: task.dueDate ?? null,
-  completionDate: task.completedAt ?? null,
-  deletedAt: task.deletedAt ?? null,
-  tags: [],
+  description: task.description ?? '',
+  type: (task.type as TaskType) ?? 'TASK',
+  priority: (task.priority as Priority) ?? 'MEDIUM',
+  status: (task.status as TaskStatus) ?? 'PENDING',
+  estimatedTime: task.estimatedTime,
+  startDate: task.startDate,
+  dueDate: task.dueDate,
+  completedAt: task.completedAt,
+  recurrence: (task.recurrence as RecurrenceType) ?? 'NONE',
+  deletedAt: task.deletedAt,
   createdAt: task.createdAt,
+  updatedAt: task.updatedAt,
+  tags: [],
 })
 
 const activityAt = sql<Date>`coalesce(${tasks.completedAt}, ${tasks.dueDate}, ${tasks.startDate})`
