@@ -1,8 +1,10 @@
 import { relations } from 'drizzle-orm'
 import {
   boolean,
+  index,
   integer,
   jsonb,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -94,6 +96,38 @@ export const taskTagsRelations = relations(taskTags, ({ one }) => ({
     references: [tags.id],
   }),
 }))
+export const notificationSettings = pgTable('notification_settings', {
+  userId: uuid('user_id')
+    .references(() => users.id)
+    .primaryKey(),
+  emailEnabled: boolean('email_enabled').default(false),
+  pushEnabled: boolean('push_enabled').default(false),
+  isMuted: boolean('is_muted').default(false),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const notificationChannelEnum = pgEnum('notification_channel', [
+  'EMAIL',
+  'PUSH',
+  'IN_APP',
+  'SYSTEM',
+])
+
+export const notificationLogs = pgTable(
+  'notification_logs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id)
+      .notNull(),
+    channel: notificationChannelEnum('channel').default('IN_APP').notNull(),
+    type: varchar('type', { length: 50 }).notNull(),
+    title: varchar('title', { length: 150 }).notNull(),
+    message: text('message').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('notification_logs_user_id_created_at_idx').on(table.userId, table.createdAt)],
+)
 
 export const achievements = pgTable('achievements', {
   id: uuid('id').defaultRandom().primaryKey(),

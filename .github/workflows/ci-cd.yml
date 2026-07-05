@@ -561,4 +561,37 @@ jobs:
               docker compose -f "$compose_file" pull
               docker compose -f "$compose_file" up -d
               docker compose -f "$compose_file" ps
+
+              backend_container_id="$(docker compose -f "$compose_file" ps -q backend)"
+              if [[ -z "$backend_container_id" ]]; then
+                echo "Deployment verification failed: backend service container was not created." >&2
+                docker compose -f "$compose_file" ps >&2 || true
+                exit 1
+              fi
+
+              deadline=$((SECONDS + 120))
+              while true; do
+                health_status="$(docker inspect --format "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}" "$backend_container_id")"
+
+                if [[ "$health_status" == "healthy" ]]; then
+                  echo "Backend deployment verification succeeded: container is healthy."
+                  break
+                fi
+
+                if [[ "$health_status" == "unhealthy" || "$health_status" == "exited" || "$health_status" == "dead" ]]; then
+                  echo "Deployment verification failed: backend container entered status '$health_status'." >&2
+                  docker compose -f "$compose_file" ps >&2 || true
+                  docker compose -f "$compose_file" logs --no-color backend >&2 || true
+                  exit 1
+                fi
+
+                if (( SECONDS >= deadline )); then
+                  echo "Deployment verification failed: backend container did not become healthy within 120 seconds (last status: '$health_status')." >&2
+                  docker compose -f "$compose_file" ps >&2 || true
+                  docker compose -f "$compose_file" logs --no-color backend >&2 || true
+                  exit 1
+                fi
+
+                sleep 5
+              done
             '

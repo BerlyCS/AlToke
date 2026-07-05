@@ -38,4 +38,3 @@ export type HabitAnalysisResponse = UnwrapSchema<typeof HabitAnalysisResponse>
 export type TaskSuggestionResponse = UnwrapSchema<typeof TaskSuggestionResponse>
 export type GenerateRecommendationsResponse = UnwrapSchema<typeof GenerateRecommendationsResponse>
 export type PredictTaskOverloadResponse = UnwrapSchema<typeof PredictTaskOverloadResponse>
-export {}

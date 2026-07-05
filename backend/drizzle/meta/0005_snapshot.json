@@ -1,6 +1,6 @@
 {
-  "id": "920fc82e-4c3c-4987-a675-862f6beec8be",
-  "prevId": "e2b0ac1b-057e-4703-962b-ba494ecaaca0",
+  "id": "3e0c91af-a65e-4954-9f90-a46b64c4bf07",
+  "prevId": "ea7c1f95-d2cd-42bb-9040-34e90224d1d8",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -242,7 +242,8 @@
         },
         "channel": {
           "name": "channel",
-          "type": "varchar(20)",
+          "type": "notification_channel",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'IN_APP'"
@@ -328,14 +329,14 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
-          "default": true
+          "default": false
         },
         "push_enabled": {
           "name": "push_enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
-          "default": true
+          "default": false
         },
         "is_muted": {
           "name": "is_muted",
@@ -1002,7 +1003,13 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.notification_channel": {
+      "name": "notification_channel",
+      "schema": "public",
+      "values": ["EMAIL", "PUSH", "IN_APP", "SYSTEM"]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},

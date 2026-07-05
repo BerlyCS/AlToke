@@ -5,6 +5,7 @@ import { serverConfig } from './config'
 import { aiModule } from './modules/ai'
 import { authRoutes } from './modules/auth'
 import { gamificationModule } from './modules/gamification'
+import { notificationRoutes } from './modules/notification'
 import { userRoutes } from './modules/user'
 import { taskRoutes } from './modules/task'
 import { tagRoutes } from './modules/tag'
@@ -31,6 +32,7 @@ export const app = new Elysia()
       .use(taskRoutes)
       .use(tagRoutes)
       .use(gamificationModule)
+      .use(notificationRoutes)
       .use(aiModule),
   )
 
