@@ -125,7 +125,7 @@ function formatTimeOnly(date: Date) {
   >
     <CardContent class="p-0 flex-1 flex flex-col min-h-0">
       <ScrollArea class="w-full h-full">
-        <div class="min-w-[1000px] lg:min-w-[1200px] flex flex-col h-full bg-background/50">
+        <div class="min-w-1 lg:min-w-3 flex flex-col h-full bg-background/50">
           <!-- Days Header -->
           <div
             class="grid grid-cols-[60px_1fr_1fr_1fr_1fr_1fr_1fr_1fr] border-b border-border sticky top-0 z-40 bg-card/90 backdrop-blur-md shadow-sm"

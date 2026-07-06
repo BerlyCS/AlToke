@@ -285,7 +285,7 @@ async function deleteTask(id: string) {
       </div>
 
       <!-- Right Sidebar Area -->
-      <div class="w-full xl:w-[400px] flex flex-col gap-4 min-h-0 shrink-0">
+      <div class="w-full xl:w-70 flex flex-col gap-4 min-h-0 shrink-0">
         <!-- Summary Card -->
         <Card
           class="bg-primary text-primary-foreground border-primary shadow-xl rounded-3xl overflow-hidden shrink-0 relative"
