@@ -8,6 +8,7 @@ import ViewTaskDialog from "@/components/ViewTaskDialog.vue";
 
 import CalendarWeekView from "@/components/calendar/CalendarWeekView.vue";
 import CalendarDayView from "@/components/calendar/CalendarDayView.vue";
+import CalendarMonthView from "@/components/calendar/CalendarMonthView.vue";
 
 const currentDate = ref(new Date());
 const viewMode = ref<'day' | 'week' | 'month'>('week');
@@ -151,14 +152,14 @@ async function deleteTask(id: string) {
       @select-day="handleSelectDay"
     />
     
-    <!-- Month View Placeholder -->
-    <div v-else-if="viewMode === 'month'" class="flex-1 flex items-center justify-center bg-card/60 rounded-3xl border border-border">
-      <div class="text-center text-muted-foreground flex flex-col items-center gap-2">
-        <CalendarIcon class="w-12 h-12 opacity-50" />
-        <h3 class="text-xl font-bold">Vista mensual en construcción</h3>
-        <p>Próximamente podrás visualizar tus tareas de todo el mes aquí.</p>
-      </div>
-    </div>
+    <!-- Month View -->
+    <CalendarMonthView 
+      v-else-if="viewMode === 'month'" 
+      :current-date="currentDate" 
+      :tasks="tasks" 
+      @open-task="openTask" 
+      @select-day="handleSelectDay"
+    />
 
     <!-- Task Dialog reused for all views -->
     <ViewTaskDialog
