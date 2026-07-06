@@ -47,6 +47,18 @@ export interface UserProfile {
   privacy?: Privacy
 }
 
+export interface ProfileUpdateBody {
+  nickname?: string
+  bio?: string
+  avatarUrl?: string
+}
+
+export interface PrivacyUpdateBody {
+  showLevel?: boolean
+  showStreak?: boolean
+  showAchievements?: boolean
+}
+
 export interface Credentials {
   email: string
   password: string

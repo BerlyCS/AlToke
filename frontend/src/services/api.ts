@@ -5,6 +5,8 @@ import type {
   Credentials,
   InventoryItem,
   LeaderboardEntry,
+  PrivacyUpdateBody,
+  ProfileUpdateBody,
   Tag,
   Task,
   TaskOverloadPrediction,
@@ -96,7 +98,10 @@ type ApiClientContract = {
     users: {
       profile: {
         get: (options: AuthHeaders) => ApiResult<UserProfile>
-        patch: (body: Partial<UserProfile>, options: AuthHeaders) => ApiResult<UserProfile>
+        patch: (body: Partial<ProfileUpdateBody>, options: AuthHeaders) => ApiResult<UserProfile>
+        privacy: {
+          patch: (body: Partial<PrivacyUpdateBody>, options: AuthHeaders) => ApiResult<UserProfile>
+        }
       }
     }
   }
