@@ -49,14 +49,17 @@ const handleSendRequest = async () => {
       <!-- Profile Header / Banner -->
       <div class="h-32 bg-gradient-to-br from-primary/80 to-primary relative">
         <div class="absolute -bottom-10 left-1/2 -translate-x-1/2">
-          <img 
-            :src="user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.nickname || 'Anónimo'}`" 
-            alt="Avatar" 
-            class="w-24 h-24 rounded-full border-4 border-card bg-muted shadow-md object-cover" 
+          <img
+            :src="
+              user.avatarUrl ||
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.nickname || 'Anónimo'}`
+            "
+            alt="Avatar"
+            class="w-24 h-24 rounded-full border-4 border-card bg-muted shadow-md object-cover"
           />
         </div>
       </div>
-      
+
       <div class="px-6 pt-14 pb-8 text-center flex flex-col items-center">
         <h2 class="text-2xl font-black mb-1">{{ user.nickname || 'Jugador' }}</h2>
         <span class="text-sm font-semibold text-muted-foreground flex items-center gap-1 mb-6">
@@ -66,7 +69,9 @@ const handleSendRequest = async () => {
         <div class="grid grid-cols-3 gap-4 w-full mb-8">
           <div class="flex flex-col items-center bg-muted/40 rounded-xl p-3">
             <Trophy class="w-6 h-6 text-yellow-500 mb-1" />
-            <span class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Rank</span>
+            <span class="text-xs text-muted-foreground font-bold uppercase tracking-wider"
+              >Rank</span
+            >
             <span class="font-black text-lg">#{{ user.rank }}</span>
           </div>
           <div class="flex flex-col items-center bg-muted/40 rounded-xl p-3">
@@ -76,15 +81,17 @@ const handleSendRequest = async () => {
           </div>
           <div class="flex flex-col items-center bg-muted/40 rounded-xl p-3">
             <Flame class="w-6 h-6 text-orange-500 mb-1" />
-            <span class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Racha</span>
+            <span class="text-xs text-muted-foreground font-bold uppercase tracking-wider"
+              >Racha</span
+            >
             <span class="font-black text-lg">{{ user.streakCount }}</span>
           </div>
         </div>
 
         <div v-if="!isCurrentUser" class="w-full">
-          <Button 
-            v-if="!requestSent" 
-            class="w-full font-bold gap-2" 
+          <Button
+            v-if="!requestSent"
+            class="w-full font-bold gap-2"
             @click="handleSendRequest"
             :disabled="isSending"
           >

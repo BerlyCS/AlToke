@@ -6,7 +6,11 @@ import { taskService } from '@/services/task.service'
 import { tagService } from '@/services/tag.service'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
-import { useGamification } from '@/composables/useGamification'
+import {
+  useGamification,
+  unlockedAchievementsQueue,
+  processAchievementsQueue,
+} from '@/composables/useGamification'
 import type { Task, Tag } from '@/types'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -202,7 +206,13 @@ async function toggleStatus(task: Task) {
       updated = { ...task, ...result }
       if (typeof result.xpAwarded === 'number') {
         authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
-        showReward(result.xpAwarded, task.title, result.leveledUp ?? false, result.newLevel)
+        showReward(
+          result.xpAwarded,
+          task.title,
+          result.leveledUp ?? false,
+          result.newLevel,
+          result.unlockedAchievements,
+        )
       }
     } else {
       const result = await taskService.updateTask(task.id, { status: newStatus })
@@ -241,6 +251,14 @@ function editTask(task: Task) {
 function onTaskUpdated(updated: Task) {
   const index = tasks.value.findIndex((t) => t.id === updated.id)
   if (index !== -1) tasks.value[index] = updated
+}
+
+function onTaskCreated(created: Task) {
+  tasks.value.unshift(created)
+  if (created.unlockedAchievements?.length) {
+    unlockedAchievementsQueue.value.push(...created.unlockedAchievements)
+    processAchievementsQueue()
+  }
 }
 
 function formatTime(val: string | Date) {
@@ -640,11 +658,7 @@ function formatTime(val: string | Date) {
       </Card>
     </template>
 
-    <CreateTaskDialog
-      v-model:open="showCreateModal"
-      :task="null"
-      @created="(t) => tasks.unshift(t)"
-    />
+    <CreateTaskDialog v-model:open="showCreateModal" :task="null" @created="onTaskCreated" />
     <CreateTaskDialog
       v-model:open="showEditModal"
       :task="editingTask"

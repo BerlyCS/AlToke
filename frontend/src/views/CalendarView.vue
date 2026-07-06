@@ -197,7 +197,13 @@ async function toggleStatus(task: Task) {
       updated = { ...task, ...result }
       if (typeof result.xpAwarded === 'number') {
         authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
-        showReward(result.xpAwarded, task.title, result.leveledUp ?? false, result.newLevel)
+        showReward(
+          result.xpAwarded,
+          task.title,
+          result.leveledUp ?? false,
+          result.newLevel,
+          result.unlockedAchievements,
+        )
       }
     } else {
       const result = await taskService.updateTask(task.id, { status: newStatus })

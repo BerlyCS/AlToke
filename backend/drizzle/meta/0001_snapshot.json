@@ -55,9 +55,7 @@
         "achievements_code_unique": {
           "name": "achievements_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -102,12 +100,8 @@
           "name": "ai_habit_analyses_user_id_users_id_fk",
           "tableFrom": "ai_habit_analyses",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -207,12 +201,8 @@
           "name": "friendships_requester_id_users_id_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "requester_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["requester_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -220,12 +210,8 @@
           "name": "friendships_addressee_id_users_id_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "addressee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["addressee_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -285,9 +271,7 @@
         "items_code_unique": {
           "name": "items_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -331,12 +315,8 @@
           "name": "level_rewards_item_id_items_id_fk",
           "tableFrom": "level_rewards",
           "tableTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -346,9 +326,7 @@
         "level_rewards_level_unique": {
           "name": "level_rewards_level_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "level"
-          ]
+          "columns": ["level"]
         }
       },
       "policies": {},
@@ -434,12 +412,8 @@
           "name": "notification_logs_user_id_users_id_fk",
           "tableFrom": "notification_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -495,12 +469,8 @@
           "name": "notification_settings_user_id_users_id_fk",
           "tableFrom": "notification_settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -549,12 +519,8 @@
           "name": "privacy_settings_user_id_users_id_fk",
           "tableFrom": "privacy_settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -607,12 +573,8 @@
           "name": "tags_user_id_users_id_fk",
           "tableFrom": "tags",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -679,12 +641,8 @@
           "name": "task_suggestions_user_id_users_id_fk",
           "tableFrom": "task_suggestions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -718,12 +676,8 @@
           "name": "task_tags_task_id_tasks_id_fk",
           "tableFrom": "task_tags",
           "tableTo": "tasks",
-          "columnsFrom": [
-            "task_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["task_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -731,12 +685,8 @@
           "name": "task_tags_tag_id_tags_id_fk",
           "tableFrom": "task_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -855,12 +805,8 @@
           "name": "tasks_user_id_users_id_fk",
           "tableFrom": "tasks",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -908,12 +854,8 @@
           "name": "user_achievements_user_id_users_id_fk",
           "tableFrom": "user_achievements",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -921,12 +863,8 @@
           "name": "user_achievements_achievement_id_achievements_id_fk",
           "tableFrom": "user_achievements",
           "tableTo": "achievements",
-          "columnsFrom": [
-            "achievement_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["achievement_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -981,12 +919,8 @@
           "name": "user_inventories_user_id_users_id_fk",
           "tableFrom": "user_inventories",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -994,12 +928,8 @@
           "name": "user_inventories_item_id_items_id_fk",
           "tableFrom": "user_inventories",
           "tableTo": "items",
-          "columnsFrom": [
-            "item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["item_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1120,9 +1050,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -1172,12 +1100,8 @@
           "name": "xp_transactions_user_id_users_id_fk",
           "tableFrom": "xp_transactions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1193,21 +1117,12 @@
     "public.friendship_status": {
       "name": "friendship_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "ACCEPTED",
-        "REJECTED"
-      ]
+      "values": ["PENDING", "ACCEPTED", "REJECTED"]
     },
     "public.notification_channel": {
       "name": "notification_channel",
       "schema": "public",
-      "values": [
-        "EMAIL",
-        "PUSH",
-        "IN_APP",
-        "SYSTEM"
-      ]
+      "values": ["EMAIL", "PUSH", "IN_APP", "SYSTEM"]
     }
   },
   "schemas": {},

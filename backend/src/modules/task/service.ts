@@ -1,4 +1,4 @@
-import { eq, and, isNull, isNotNull, ilike, or, lt } from 'drizzle-orm'
+import { eq, and, isNull, isNotNull, ilike, or, lt, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { tasks, taskTags } from '../../db/schema'
 import { GamificationService } from '../gamification/services'
@@ -44,7 +44,21 @@ export abstract class TaskService {
       await db.insert(taskTags).values(taskTagsData)
     }
 
-    return await this.findById(userId, task!.id)
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tasks)
+      .where(eq(tasks.userId, userId))
+
+    let newAchievement = null
+    if (Number(count) === 1) {
+      newAchievement = await GamificationService.triggerAchievement(userId, 'first_task_created')
+    }
+
+    const createdTask = await this.findById(userId, task!.id)
+    return {
+      ...createdTask,
+      unlockedAchievements: newAchievement ? [newAchievement] : [],
+    }
   }
 
   static async findAll(userId: string, search?: string) {
@@ -138,6 +152,25 @@ export abstract class TaskService {
       completedOnTime,
     )
 
+    // Check task count achievements
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), eq(tasks.status, 'COMPLETED')))
+
+    const taskAchs = []
+    const numCount = Number(count)
+    if (numCount === 1)
+      taskAchs.push(await GamificationService.triggerAchievement(userId, 'first_task_completed'))
+    if (numCount === 10)
+      taskAchs.push(await GamificationService.triggerAchievement(userId, 'tasks_10'))
+    if (numCount === 50)
+      taskAchs.push(await GamificationService.triggerAchievement(userId, 'tasks_50'))
+    if (numCount === 100)
+      taskAchs.push(await GamificationService.triggerAchievement(userId, 'tasks_100'))
+
+    const unlockedAchievements = [...xpResult.unlockedAchievements, ...taskAchs.filter(Boolean)]
+
     return {
       ...updated,
       tags: task.tags,
@@ -145,6 +178,7 @@ export abstract class TaskService {
       leveledUp: xpResult.leveledUp,
       newLevel: xpResult.currentLevel,
       newStreak: xpResult.streakCount,
+      unlockedAchievements,
     }
   }
 

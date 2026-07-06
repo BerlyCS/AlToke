@@ -225,7 +225,7 @@ export class GamificationRepository {
     return nextQuantity
   }
 
-  async unlockAchievement(userId: string, achievementId: string): Promise<void> {
+  async unlockAchievement(userId: string, achievementId: string): Promise<boolean> {
     const [existing] = await db
       .select()
       .from(userAchievements)
@@ -234,9 +234,10 @@ export class GamificationRepository {
       )
       .limit(1)
 
-    if (existing) return
+    if (existing) return false
 
     await db.insert(userAchievements).values({ userId, achievementId })
+    return true
   }
 
   async findUnlockedAchievements(userId: string): Promise<UnlockedAchievement[]> {

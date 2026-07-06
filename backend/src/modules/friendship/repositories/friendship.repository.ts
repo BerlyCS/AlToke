@@ -1,4 +1,4 @@
-import { eq, or, and, ne, like, ilike } from 'drizzle-orm'
+import { eq, or, and, ne, ilike } from 'drizzle-orm'
 import { db } from '../../../db'
 import { friendships, users } from '../../../db/schema'
 
@@ -52,8 +52,8 @@ export class FriendshipRepository {
             nickname: true,
             avatarUrl: true,
             level: true,
-          }
-        }
+          },
+        },
       },
       orderBy: (fs, { desc }) => [desc(fs.createdAt)],
     })
@@ -63,7 +63,7 @@ export class FriendshipRepository {
     const allFriendships = await db.query.friendships.findMany({
       where: and(
         eq(friendships.status, 'ACCEPTED'),
-        or(eq(friendships.requesterId, userId), eq(friendships.addresseeId, userId))
+        or(eq(friendships.requesterId, userId), eq(friendships.addresseeId, userId)),
       ),
       with: {
         requester: {
@@ -74,7 +74,7 @@ export class FriendshipRepository {
             level: true,
             xp: true,
             currentStreak: true,
-          }
+          },
         },
         addressee: {
           columns: {
@@ -84,12 +84,12 @@ export class FriendshipRepository {
             level: true,
             xp: true,
             currentStreak: true,
-          }
-        }
-      }
+          },
+        },
+      },
     })
 
-    return allFriendships.map(f => {
+    return allFriendships.map((f) => {
       const friend = f.requesterId === userId ? f.addressee : f.requester
       return {
         friendshipId: f.id,
@@ -107,12 +107,7 @@ export class FriendshipRepository {
         level: users.level,
       })
       .from(users)
-      .where(
-        and(
-          ne(users.id, excludeUserId),
-          ilike(users.nickname, `%${query}%`)
-        )
-      )
+      .where(and(ne(users.id, excludeUserId), ilike(users.nickname, `%${query}%`)))
       .limit(10)
   }
 }

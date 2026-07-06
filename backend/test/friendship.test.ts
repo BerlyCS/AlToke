@@ -41,7 +41,7 @@ describe.skipIf(!databaseAvailable)('Friendship API', () => {
       { headers: { authorization: `Bearer ${user1.token}` } },
     )
 
-    const friendshipId = request.data?.id!
+    const friendshipId = request.data!.id
 
     // user2 accepts the request
     const { data, error, status } = await api.api.friendships.accept.post(
@@ -64,11 +64,11 @@ describe.skipIf(!databaseAvailable)('Friendship API', () => {
     )
 
     await api.api.friendships.accept.post(
-      { friendshipId: request.data?.id! },
+      { friendshipId: request.data!.id },
       { headers: { authorization: `Bearer ${user2.token}` } },
     )
 
-    const { data, error, status } = await api.api.friendships[''].get({
+    const { data, error, status } = await api.api.friendships.get({
       headers: { authorization: `Bearer ${user1.token}` },
     })
 
@@ -111,7 +111,7 @@ describe.skipIf(!databaseAvailable)('Friendship API', () => {
     expect(error).toBeNull()
     expect(data).toBeInstanceOf(Array)
     // Should not contain user1
-    const foundUser1 = data?.find(u => u.id === user1.userId)
+    const foundUser1 = data?.find((u) => u.id === user1.userId)
     expect(foundUser1).toBeUndefined()
   })
 })

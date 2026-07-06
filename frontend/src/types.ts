@@ -16,6 +16,7 @@ export interface Task {
   dueDate?: string | Date
   recurrence?: string
   tags?: Tag[]
+  unlockedAchievements?: Achievement[]
   deletedAt?: string | Date | null
   createdAt: string | Date
   updatedAt: string | Date
@@ -89,7 +90,7 @@ export interface Achievement {
   description: string
   isSecret: boolean
   requiredXp: number
-  unlockedAt: string
+  unlockedAt?: string
 }
 
 export interface InventoryItem {
@@ -111,8 +112,9 @@ export interface UseItemResult {
 }
 
 export interface CompleteTaskResult extends Task {
-  xpAwarded?: number
-  leveledUp?: boolean
-  newLevel?: number
-  newStreak?: number
+  xpAwarded: number
+  leveledUp: boolean
+  newLevel: number
+  newStreak: number
+  unlockedAchievements?: Achievement[]
 }

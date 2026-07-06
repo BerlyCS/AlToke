@@ -19,7 +19,7 @@ export class FriendshipService {
     // Find the request by looking up pending requests
     const pendingRequests = await FriendshipRepository.getPendingIncomingRequests(userId)
     const request = pendingRequests.find((req) => req.id === friendshipId)
-    
+
     if (!request) {
       throw status(404, 'Friendship request not found or unauthorized')
     }
@@ -30,7 +30,7 @@ export class FriendshipService {
   static async rejectRequest(userId: string, friendshipId: string) {
     const pendingRequests = await FriendshipRepository.getPendingIncomingRequests(userId)
     const request = pendingRequests.find((req) => req.id === friendshipId)
-    
+
     if (!request) {
       throw status(404, 'Friendship request not found or unauthorized')
     }

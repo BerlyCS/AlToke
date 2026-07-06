@@ -11,7 +11,11 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { friendshipService, type FriendProfile, type PendingRequest } from '@/services/friendship.service'
+import {
+  friendshipService,
+  type FriendProfile,
+  type PendingRequest,
+} from '@/services/friendship.service'
 import { toast } from 'vue-sonner'
 
 const open = ref(false)
@@ -33,7 +37,7 @@ const handleSearch = async () => {
     searchResults.value = []
     return
   }
-  
+
   isSearching.value = true
   try {
     searchResults.value = await friendshipService.searchUsers(searchQuery.value)
@@ -48,7 +52,7 @@ const sendRequest = async (userId: string) => {
   try {
     await friendshipService.sendRequest(userId)
     toast.success('Solicitud de amistad enviada')
-    searchResults.value = searchResults.value.filter(u => u.id !== userId)
+    searchResults.value = searchResults.value.filter((u) => u.id !== userId)
   } catch (error: any) {
     toast.error(error.message || 'Error al enviar solicitud')
   }
@@ -116,16 +120,24 @@ watch(open, (isOpen) => {
                 @keyup.enter="handleSearch"
               />
             </div>
-            <Button @click="handleSearch" :disabled="isSearching">
-              Buscar
-            </Button>
+            <Button @click="handleSearch" :disabled="isSearching"> Buscar </Button>
           </div>
 
           <!-- Search Results -->
           <div v-if="searchResults.length > 0" class="space-y-3 mt-4">
-            <div v-for="user in searchResults" :key="user.id" class="flex items-center justify-between p-3 rounded-lg border bg-card">
+            <div
+              v-for="user in searchResults"
+              :key="user.id"
+              class="flex items-center justify-between p-3 rounded-lg border bg-card"
+            >
               <div class="flex items-center gap-3">
-                <img :src="user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.nickname || 'Jugador'}`" class="w-10 h-10 rounded-full" />
+                <img
+                  :src="
+                    user.avatarUrl ||
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.nickname || 'Jugador'}`
+                  "
+                  class="w-10 h-10 rounded-full"
+                />
                 <div class="flex flex-col">
                   <span class="font-bold text-sm">{{ user.nickname || 'Usuario' }}</span>
                   <span class="text-xs text-muted-foreground">Nivel {{ user.level }}</span>
@@ -136,7 +148,10 @@ watch(open, (isOpen) => {
               </Button>
             </div>
           </div>
-          <div v-else-if="searchQuery && !isSearching && searchResults.length === 0" class="text-center text-sm text-muted-foreground py-4">
+          <div
+            v-else-if="searchQuery && !isSearching && searchResults.length === 0"
+            class="text-center text-sm text-muted-foreground py-4"
+          >
             No se encontraron usuarios
           </div>
         </div>
@@ -147,26 +162,45 @@ watch(open, (isOpen) => {
             <Clock class="w-4 h-4" /> Solicitudes Pendientes ({{ pendingRequests.length }})
           </h3>
           <div class="space-y-2">
-            <div v-for="req in pendingRequests" :key="req.id" class="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+            <div
+              v-for="req in pendingRequests"
+              :key="req.id"
+              class="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
+            >
               <div class="flex items-center gap-3">
-                <img :src="req.requester.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${req.requester.nickname || 'Jugador'}`" class="w-10 h-10 rounded-full" />
+                <img
+                  :src="
+                    req.requester.avatarUrl ||
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${req.requester.nickname || 'Jugador'}`
+                  "
+                  class="w-10 h-10 rounded-full"
+                />
                 <div class="flex flex-col">
                   <span class="font-bold text-sm">{{ req.requester.nickname || 'Usuario' }}</span>
                   <span class="text-xs text-muted-foreground">quiere ser tu amigo</span>
                 </div>
               </div>
               <div class="flex gap-2">
-                <Button size="icon" variant="default" class="h-8 w-8 rounded-full" @click="acceptRequest(req.id)">
+                <Button
+                  size="icon"
+                  variant="default"
+                  class="h-8 w-8 rounded-full"
+                  @click="acceptRequest(req.id)"
+                >
                   <Check class="w-4 h-4" />
                 </Button>
-                <Button size="icon" variant="outline" class="h-8 w-8 rounded-full" @click="rejectRequest(req.id)">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  class="h-8 w-8 rounded-full"
+                  @click="rejectRequest(req.id)"
+                >
                   <X class="w-4 h-4" />
                 </Button>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </DialogContent>
   </Dialog>

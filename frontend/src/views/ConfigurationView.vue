@@ -101,7 +101,9 @@ async function saveChanges() {
     toast.success('Cambios guardados exitosamente')
   } catch (e: any) {
     console.error(e)
-    toast.error('Error al guardar los cambios', { description: e?.message || 'Por favor, inténtalo de nuevo.' })
+    toast.error('Error al guardar los cambios', {
+      description: e?.message || 'Por favor, inténtalo de nuevo.',
+    })
   } finally {
     loading.value = false
   }

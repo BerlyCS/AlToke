@@ -33,12 +33,14 @@ const menuItems = [
 
 const userXp = computed(() => authStore.profile?.xp || 0)
 const currentLevel = computed(() => authStore.profile?.level || 1)
-const currentLevelBaseXp = computed(() => currentLevel.value === 1 ? 0 : Math.pow(currentLevel.value, 2) * 25)
+const currentLevelBaseXp = computed(() =>
+  currentLevel.value === 1 ? 0 : Math.pow(currentLevel.value, 2) * 25,
+)
 const nextLevelXp = computed(() => Math.pow(currentLevel.value + 1, 2) * 25)
 const xpProgress = computed(() => {
-  const current = userXp.value - currentLevelBaseXp.value;
-  const target = nextLevelXp.value - currentLevelBaseXp.value;
-  return Math.max(0, Math.min(100, (current / target) * 100));
+  const current = userXp.value - currentLevelBaseXp.value
+  const target = nextLevelXp.value - currentLevelBaseXp.value
+  return Math.max(0, Math.min(100, (current / target) * 100))
 })
 </script>
 
@@ -103,7 +105,9 @@ const xpProgress = computed(() => {
             <span class="font-bold text-base truncate">{{
               authStore.profile?.nickname || 'Jugador'
             }}</span>
-            <span class="text-sm text-primary-foreground/80 font-bold">Nivel {{ currentLevel }}</span>
+            <span class="text-sm text-primary-foreground/80 font-bold"
+              >Nivel {{ currentLevel }}</span
+            >
           </div>
         </div>
 

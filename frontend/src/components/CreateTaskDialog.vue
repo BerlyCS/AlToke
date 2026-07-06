@@ -248,7 +248,7 @@ async function createTask() {
   } catch (e: any) {
     console.error(e)
     toast.error(isEditing.value ? 'Error al actualizar tarea' : 'Error al crear tarea', {
-      description: e?.message || 'Error desconocido'
+      description: e?.message || 'Error desconocido',
     })
   } finally {
     isSubmitting.value = false

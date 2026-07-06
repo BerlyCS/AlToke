@@ -22,7 +22,8 @@ export const gamificationService = {
     const { data, error, status } = await api.api.gamification.leaderboard.friends.get({
       headers: getHeaders(),
     })
-    if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch friends leaderboard')
+    if (error)
+      throw new ApiError(status, String(error.value) || 'Failed to fetch friends leaderboard')
     return data as unknown as LeaderboardEntry[]
   },
 
