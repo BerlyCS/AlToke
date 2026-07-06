@@ -1,34 +1,51 @@
-@startuml
+@startuml gamification_module
 !include style.puml
 package "Modules::Gamification" {
   class GamificationController <<controller>> {
     + Elysia()
     + get('/leaderboard', getLeaderboardHandler)
     + get('/achievements', getAchievementsHandler)
+    + get('/inventory', getInventoryHandler)
     + post('/inventory/use', useItemHandler)
   }
-  
+
   class GamificationModel <<schema>> {
     + UseItemSchema : t.Object
   }
 
   class GamificationService <<service>> {
-    {static} + addXP(userId: UUID, xpAmount: int)
-    {static} + verifyStreak(userId: UUID)
+    {static} + addXP(userId: UUID, xpAmount: int, taskPriority: Priority, completedOnTime: boolean)
+    {static} + checkDailyXPLimit(userId: UUID, xpAmount: int) : int
+    {static} + recalculateLevel(userId: UUID)
+    {static} + verifyStreak(userId: UUID, completionDate: Date)
+    {static} + checkOverdueHighPriorityTasks(userId: UUID)
+    {static} + resetStreak(userId: UUID)
+    {static} + freezeStreak(userId: UUID, itemId: UUID)
     {static} + triggerAchievement(userId: UUID, code: String)
-    {static} + freezeStreak(userId: UUID)
     {static} + getGlobalLeaderboard()
+    {static} + getFriendsLeaderboard(userId: UUID)
+    {static} + useItem(userId: UUID, itemId: UUID)
   }
 
   class UserStats <<domain>> {
     - userId : UUID
     + currentLevel : int
+    + totalXp : int
     + streakCount : int
     + maxStreak : int
-    + totalXp : int
+    + streakFrozenUntil : Date
+    + overdueHighPriorityCount : int
     + lastActiveDate : Date
   }
-  
+
+  class XPTransaction <<domain>> {
+    + id : UUID
+    + userId : UUID
+    + amount : int
+    + source : String
+    + date : Date
+  }
+
   class Achievement <<domain>> {
     + id : UUID
     + code : String
@@ -37,32 +54,45 @@ package "Modules::Gamification" {
     + isSecret : boolean
     + requiredXp : int
   }
-  
+
+  class UserAchievement <<domain>> {
+    + userId : UUID
+    + achievementId : UUID
+    + unlockedAt : DateTime
+  }
+
   class Inventory <<domain>> {
     - userId : UUID
     + items : List<Item>
   }
-  
+
   class Item <<domain>> {
     + id : UUID
     + code : String
     + name : String
     + effect : String
   }
-  
+
   class GamificationRepository <<infrastructure>> {
     + saveStats(stats: UserStats) : void
+    + findStatsByUserId(userId: UUID) : UserStats
+    + getDailyXPTotal(userId: UUID, date: Date) : int
+    + saveXPTransaction(tx: XPTransaction) : void
     + getTopUsersByXp(limit: int) : List<UserStats>
+    + getFriendsStats(userId: UUID) : List<UserStats>
     + findInventoryByUserId(userId: UUID) : Inventory
     + unlockAchievement(userId: UUID, achievementId: UUID) : void
+    + findUnlockedAchievements(userId: UUID) : List<UserAchievement>
   }
 
   GamificationController --> GamificationService : uses >
   GamificationController --> GamificationModel : validates with >
   GamificationService --> GamificationRepository : uses >
   GamificationService ..> UserStats : updates >
+  GamificationService ..> XPTransaction : records >
   GamificationService "1" *-- "*" Achievement : unlocks >
   GamificationRepository ..> UserStats : manages >
+  GamificationRepository ..> UserAchievement : manages >
   Inventory "1" *-- "*" Item : contains >
 }
 @enduml

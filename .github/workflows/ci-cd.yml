@@ -1,0 +1,539 @@
+name: CI / CD
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - feature/devops
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  detect-changes:
+    name: Detect affected areas
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.detect.outputs.frontend }}
+      backend: ${{ steps.detect.outputs.backend }}
+      global: ${{ steps.detect.outputs.global }}
+      frontend_affected: ${{ steps.detect.outputs.frontend_affected }}
+      backend_affected: ${{ steps.detect.outputs.backend_affected }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed files
+        id: detect
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          frontend=false
+          backend=false
+          global=false
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            frontend=true
+            backend=true
+            global=true
+          else
+            if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+              changed_files="$(git diff-tree --no-commit-id --name-only -r "$CURRENT_SHA")"
+            else
+              changed_files="$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")"
+            fi
+
+            while IFS= read -r file; do
+              [[ -z "$file" ]] && continue
+
+              case "$file" in
+                frontend/*|docker/nginx.Dockerfile|docker/nginx.conf)
+                  frontend=true
+                  ;;
+                backend/*)
+                  backend=true
+                  ;;
+                package.json|bun.lock|mise.toml|docker-compose.yml|.dockerignore|.github/workflows/*)
+                  global=true
+                  ;;
+              esac
+            done <<< "$changed_files"
+          fi
+
+          frontend_affected=$frontend
+          backend_affected=$backend
+
+          if [[ "$global" == "true" ]]; then
+            frontend_affected=true
+            backend_affected=true
+          fi
+
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
+          echo "global=$global" >> "$GITHUB_OUTPUT"
+          echo "frontend_affected=$frontend_affected" >> "$GITHUB_OUTPUT"
+          echo "backend_affected=$backend_affected" >> "$GITHUB_OUTPUT"
+
+  validate-frontend:
+    name: Validate frontend/nginx inputs
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend_affected == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Check frontend formatting
+        run: bun run frontend:format:check
+
+      - name: Check frontend linting
+        run: bun run frontend:lint:check
+
+      - name: Check frontend types
+        run: bun run frontend:type-check
+
+      - name: Run frontend tests
+        run: bun run frontend:test
+
+      - name: Build frontend bundle
+        working-directory: frontend
+        run: bun run build
+
+  validate-backend:
+    name: Validate backend inputs
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/altoke
+      JWT_SECRET: test-jwt-secret
+      GOOGLE_CLIENT_ID: ""
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend_affected == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: bun install --frozen-lockfile
+
+      - name: Check backend formatting
+        run: bun run backend:format:check
+
+      - name: Check backend linting
+        run: bun run backend:lint:check
+
+      - name: Check backend types
+        run: bun run backend:type-check
+
+      - name: Run backend tests
+        run: bun run backend:test
+
+  build-backend-image:
+    name: Build and push backend image
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - validate-backend
+    if: needs.detect-changes.outputs.backend_affected == 'true'
+    concurrency:
+      group: build-backend-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Abort stale backend image run
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags --depth=1 origin "$BRANCH_NAME"
+          current_remote_sha="$(git rev-parse FETCH_HEAD)"
+
+          if [[ "$current_remote_sha" != "$EXPECTED_SHA" ]]; then
+            echo "Backend image run is stale for branch '$BRANCH_NAME'. Expected $EXPECTED_SHA but remote head is $current_remote_sha." >&2
+            exit 1
+          fi
+
+      - name: Prepare image coordinates
+        id: prep
+        shell: bash
+        run: |
+          set -euo pipefail
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          repo="${repo,,}"
+
+          case "$GITHUB_REF_NAME" in
+            main)
+              channel_tag="production"
+              emit_latest="true"
+              ;;
+            dev)
+              channel_tag="staging"
+              emit_latest="false"
+              ;;
+            *)
+              channel_tag="${GITHUB_REF_NAME//\//-}"
+              emit_latest="false"
+              ;;
+          esac
+
+          echo "owner=$owner" >> "$GITHUB_OUTPUT"
+          echo "repo=$repo" >> "$GITHUB_OUTPUT"
+          echo "channel_tag=$channel_tag" >> "$GITHUB_OUTPUT"
+          echo "source_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "tag_lines<<EOF"
+            echo "type=raw,value=${channel_tag}"
+            echo "type=sha,prefix=${channel_tag}-"
+            if [[ "$emit_latest" == "true" ]]; then
+              echo "type=raw,value=latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate backend image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ steps.prep.outputs.owner }}/${{ steps.prep.outputs.repo }}-backend
+          tags: ${{ steps.prep.outputs.tag_lines }}
+          labels: |
+            org.opencontainers.image.source=${{ steps.prep.outputs.source_url }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  build-frontend-image:
+    name: Build and push frontend image
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - validate-frontend
+    if: needs.detect-changes.outputs.frontend_affected == 'true'
+    concurrency:
+      group: build-frontend-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Abort stale frontend image run
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags --depth=1 origin "$BRANCH_NAME"
+          current_remote_sha="$(git rev-parse FETCH_HEAD)"
+
+          if [[ "$current_remote_sha" != "$EXPECTED_SHA" ]]; then
+            echo "Frontend image run is stale for branch '$BRANCH_NAME'. Expected $EXPECTED_SHA but remote head is $current_remote_sha." >&2
+            exit 1
+          fi
+
+      - name: Prepare image coordinates
+        id: prep
+        shell: bash
+        run: |
+          set -euo pipefail
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          repo="${repo,,}"
+
+          case "$GITHUB_REF_NAME" in
+            main)
+              channel_tag="production"
+              emit_latest="true"
+              ;;
+            dev)
+              channel_tag="staging"
+              emit_latest="false"
+              ;;
+            *)
+              channel_tag="${GITHUB_REF_NAME//\//-}"
+              emit_latest="false"
+              ;;
+          esac
+
+          echo "owner=$owner" >> "$GITHUB_OUTPUT"
+          echo "repo=$repo" >> "$GITHUB_OUTPUT"
+          echo "channel_tag=$channel_tag" >> "$GITHUB_OUTPUT"
+          echo "source_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "tag_lines<<EOF"
+            echo "type=raw,value=${channel_tag}"
+            echo "type=sha,prefix=${channel_tag}-"
+            if [[ "$emit_latest" == "true" ]]; then
+              echo "type=raw,value=latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate frontend image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ steps.prep.outputs.owner }}/${{ steps.prep.outputs.repo }}-frontend
+          tags: ${{ steps.prep.outputs.tag_lines }}
+          labels: |
+            org.opencontainers.image.source=${{ steps.prep.outputs.source_url }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/frontend.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+
+  resolve-deploy-target:
+    name: Resolve deployment target
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - validate-frontend
+      - validate-backend
+      - build-backend-image
+      - build-frontend-image
+    if: always()
+    outputs:
+      should_deploy: ${{ steps.resolve.outputs.should_deploy }}
+      deploy_branch: ${{ steps.resolve.outputs.deploy_branch }}
+      environment_name: ${{ steps.resolve.outputs.environment_name }}
+    steps:
+      - name: Verify CI jobs required for this ref
+        shell: bash
+        env:
+          DETECT_CHANGES_RESULT: ${{ needs.detect-changes.result }}
+          FRONTEND_AFFECTED: ${{ needs.detect-changes.outputs.frontend_affected }}
+          BACKEND_AFFECTED: ${{ needs.detect-changes.outputs.backend_affected }}
+          VALIDATE_FRONTEND_RESULT: ${{ needs.validate-frontend.result }}
+          VALIDATE_BACKEND_RESULT: ${{ needs.validate-backend.result }}
+          BUILD_BACKEND_IMAGE_RESULT: ${{ needs.build-backend-image.result }}
+          BUILD_FRONTEND_IMAGE_RESULT: ${{ needs.build-frontend-image.result }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$DETECT_CHANGES_RESULT" != "success" ]]; then
+            echo "Changed-file detection must succeed before deployment. Current result: $DETECT_CHANGES_RESULT" >&2
+            exit 1
+          fi
+
+          if [[ "$FRONTEND_AFFECTED" == "true" ]]; then
+            if [[ "$VALIDATE_FRONTEND_RESULT" != "success" ]]; then
+              echo "Frontend validation must succeed before deployment. Current result: $VALIDATE_FRONTEND_RESULT" >&2
+              exit 1
+            fi
+
+            if [[ "$BUILD_FRONTEND_IMAGE_RESULT" != "success" ]]; then
+              echo "Frontend image build must succeed before deployment. Current result: $BUILD_FRONTEND_IMAGE_RESULT" >&2
+              exit 1
+            fi
+          fi
+
+          if [[ "$BACKEND_AFFECTED" == "true" ]]; then
+            if [[ "$VALIDATE_BACKEND_RESULT" != "success" ]]; then
+              echo "Backend validation must succeed before deployment. Current result: $VALIDATE_BACKEND_RESULT" >&2
+              exit 1
+            fi
+
+            if [[ "$BUILD_BACKEND_IMAGE_RESULT" != "success" ]]; then
+              echo "Backend image build must succeed before deployment. Current result: $BUILD_BACKEND_IMAGE_RESULT" >&2
+              exit 1
+            fi
+          fi
+
+      - name: Select branch deployment target
+        id: resolve
+        shell: bash
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          should_deploy=false
+          environment_name=""
+
+          case "$DEPLOY_BRANCH" in
+            feature/devops)
+              should_deploy=true
+              environment_name="devops"
+              ;;
+            dev)
+              should_deploy=true
+              environment_name="staging"
+              ;;
+            main)
+              should_deploy=true
+              environment_name="production"
+              ;;
+          esac
+
+          echo "Branch '$DEPLOY_BRANCH' resolved to should_deploy=$should_deploy environment='${environment_name:-n/a}'"
+
+          echo "should_deploy=$should_deploy" >> "$GITHUB_OUTPUT"
+          echo "deploy_branch=$DEPLOY_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "environment_name=$environment_name" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+    needs: resolve-deploy-target
+    if: ${{ always() && needs.resolve-deploy-target.result == 'success' && needs.resolve-deploy-target.outputs.should_deploy == 'true' }}
+    concurrency:
+      group: cd-${{ needs.resolve-deploy-target.outputs.environment_name }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Abort stale deploy run
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ needs.resolve-deploy-target.outputs.deploy_branch }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags --depth=1 origin "$BRANCH_NAME"
+          current_remote_sha="$(git rev-parse FETCH_HEAD)"
+
+          if [[ "$current_remote_sha" != "$EXPECTED_SHA" ]]; then
+            echo "Deploy run is stale for branch '$BRANCH_NAME'. Expected $EXPECTED_SHA but remote head is $current_remote_sha." >&2
+            exit 1
+          fi
+
+      - name: Resolve deploy path secret
+        shell: bash
+        env:
+          DEPLOY_BRANCH: ${{ needs.resolve-deploy-target.outputs.deploy_branch }}
+          DEPLOY_ENVIRONMENT: ${{ needs.resolve-deploy-target.outputs.environment_name }}
+          DEVOPS_DEPLOY_PATH: ${{ secrets.DEVOPS_DEPLOY_PATH }}
+          STAGING_DEPLOY_PATH: ${{ secrets.STAGING_DEPLOY_PATH }}
+          PROD_DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+
+          deploy_path=""
+          deploy_secret_name=""
+
+          case "$DEPLOY_ENVIRONMENT" in
+            devops)
+              deploy_path="$DEVOPS_DEPLOY_PATH"
+              deploy_secret_name="DEVOPS_DEPLOY_PATH"
+              ;;
+            staging)
+              deploy_path="$STAGING_DEPLOY_PATH"
+              deploy_secret_name="STAGING_DEPLOY_PATH"
+              ;;
+            production)
+              deploy_path="$PROD_DEPLOY_PATH"
+              deploy_secret_name="PROD_DEPLOY_PATH"
+              ;;
+            *)
+              echo "Deployment target resolution failed: unsupported environment '$DEPLOY_ENVIRONMENT' for branch '$DEPLOY_BRANCH'." >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ -z "$deploy_path" ]]; then
+            echo "Deployment target resolution failed: repository secret '$deploy_secret_name' is empty or missing for branch '$DEPLOY_BRANCH'." >&2
+            exit 1
+          fi
+
+          echo "DEPLOY_PATH=$deploy_path" >> "$GITHUB_ENV"
+          echo "DEPLOY_SECRET_NAME=$deploy_secret_name" >> "$GITHUB_ENV"
+
+      - name: Log deployment context
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Deploying branch '${{ needs.resolve-deploy-target.outputs.deploy_branch }}' to environment '${{ needs.resolve-deploy-target.outputs.environment_name }}'."
+          echo "Repository secret '$DEPLOY_SECRET_NAME' is configured."
+
+      - name: Run remote deployment commands
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30m
+          envs: DEPLOY_PATH
+          request_pty: false
+          script_path: .github/scripts/deploy.sh

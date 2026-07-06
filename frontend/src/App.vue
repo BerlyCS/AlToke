@@ -1,11 +1,22 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { computed } from 'vue'
+import LevelUpModal from '@/components/LevelUpModal.vue'
+import AchievementModal from '@/components/AchievementModal.vue'
+import { Toaster } from '@/components/ui/sonner'
+import 'vue-sonner/style.css'
+import { useColorMode } from '@vueuse/core'
+
+const mode = useColorMode()
+const toasterTheme = computed(() => {
+  return mode.value === 'auto' ? 'system' : (mode.value as 'light' | 'dark' | 'system')
+})
+</script>
 
 <template>
-  <h1>You did it! Devops Changes</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <Toaster :theme="toasterTheme" position="bottom-right" rich-colors close-button />
+  <LevelUpModal />
+  <AchievementModal />
+  <router-view />
 </template>
 
 <style scoped></style>

@@ -6,6 +6,8 @@ coverage
 .eslintcache
 *.tsbuildinfo
 *.log
+.env
+.env.*
 *.local
 
 .DS_Store

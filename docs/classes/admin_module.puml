@@ -4,33 +4,68 @@ package "Modules::Admin" {
   class AdminController <<controller>> {
     + Elysia()
     + get('/users', listUsersHandler)
+    + get('/users/:id', getUserDetailHandler)
     + post('/users/:id/ban', banUserHandler)
+    + post('/users/:id/moderate', moderateProfileHandler)
     + get('/metrics', getMetricsHandler)
     + post('/tasks/assign', assignTaskHandler)
+    + get('/logs/:userId', getActivityLogsHandler)
   }
-  
+
   class AdminModel <<schema>> {
     + TaskAssignmentSchema : t.Object
+    + ModerateProfileSchema : t.Object
   }
 
   class AdminService <<service>> {
     {static} + banUser(adminId: UUID, targetUserId: UUID, reason: String)
+    {static} + moderateProfile(adminId: UUID, targetUserId: UUID, data: ModerateProfileSchema)
     {static} + getSystemMetrics()
+    {static} + getUserSummary(targetUserId: UUID)
     {static} + delegateTaskToUser(adminId: UUID, targetUserId: UUID, taskData: TaskAssignmentSchema)
-    {static} + logAdminAction(adminId: UUID, action: String)
+    {static} + getActivityLogs(targetUserId: UUID)
+    {static} + logAdminAction(adminId: UUID, targetId: UUID, targetType: String, action: String)
   }
-  
+
   class SystemMetrics <<domain>> {
     + totalUsers : int
     + activeUsersDaily : int
     + tasksCompletedToday : int
-    + retentionRate : float
   }
-  
+
+  class UserSummary <<domain>> {
+    + userId : UUID
+    + nickname : String
+    + status : UserStatus
+    + level : int
+    + lastActiveAt : DateTime
+  }
+
+  class ModerationAction <<domain>> {
+    + id : UUID
+    + targetUserId : UUID
+    + field : ModeratedField
+    + previousValue : String
+    + reason : String
+    + moderatedAt : DateTime
+  }
+
+  enum ModeratedField {
+    NICKNAME
+    AVATAR
+  }
+
+  enum UserStatus {
+    ACTIVE
+    BANNED
+    SUSPENDED
+  }
+
   class AuditLog <<domain>> {
     + id : UUID
     + adminId : UUID
     + targetId : UUID
+    + targetType : String
     + action : String
     + timestamp : DateTime
   }
@@ -38,7 +73,9 @@ package "Modules::Admin" {
   class AdminRepository <<infrastructure>> {
     + saveAuditLog(log: AuditLog) : void
     + getSystemMetrics(date: Date) : SystemMetrics
-    + getAuditLogs() : List<AuditLog>
+    + getAuditLogs(targetId: UUID) : List<AuditLog>
+    + getUserSummary(targetUserId: UUID) : UserSummary
+    + saveModerationAction(action: ModerationAction) : void
   }
 
   AdminController --> AdminService : uses >
@@ -46,6 +83,10 @@ package "Modules::Admin" {
   AdminService --> AdminRepository : uses >
   AdminRepository ..> AuditLog : manages >
   AdminRepository ..> SystemMetrics : computes >
+  AdminRepository ..> UserSummary : computes >
+  AdminService ..> ModerationAction : creates >
+  ModerationAction --> ModeratedField
+  UserSummary --> UserStatus
 }
 
 package "Modules::User" <<external>> {
@@ -55,6 +96,6 @@ package "Modules::Task" <<external>> {
   class TaskService <<external>>
 }
 
-AdminService ..> UserRepository : moderates >
-AdminService ..> TaskService : assigns tasks >
+AdminService ..> UserRepository : moderates / bans >
+AdminService ..> TaskService : assigns tasks (assignedBy=adminId) >
 @enduml

@@ -1,0 +1,82 @@
+@startuml complete_task
+title Sequence Diagram - Complete Task & XP Award
+
+actor User
+participant "Frontend" as FE
+participant "TaskController" as TC
+participant "TaskService" as TS
+participant "XPService" as XPS
+participant "TaskRepository" as TR
+participant "UserRepository" as UR
+
+User -> FE : Click "complete" on task
+FE -> TC : PATCH /tasks/:id/complete
+
+TC -> TS : completeTask(taskId, userId)
+
+TS -> TR : findById(taskId, userId)
+TR --> TS : Task | null
+
+alt Task not found
+    TS --> TC : throw NotFoundException
+    TC --> FE : 404 { message: "Task not found" }
+    FE --> User : Show error
+end
+
+TS -> UR : task.complete()
+UR --> TS : ok
+
+TS -> TR : save(task)
+TS -> XPS : awardXP(userId, task)
+
+XPS -> XPS : XP.calculate(task)
+note right of XPS
+  No XP if:
+  - completedAt > dueDate (late)
+  - completedAt ≈ createdAt (instant completion)
+end note
+
+alt No XP (late or instant)
+    XPS --> TS : { xpAwarded: 0, reason }
+    TS --> TC : { task, xpAwarded: 0 }
+    TC --> FE : 200 { task, xpAwarded: 0, reason }
+    FE --> User : Task completed\n(no XP awarded, reason shown)
+end
+
+XPS -> UR : findById(userId)
+UR --> XPS : User
+
+XPS -> XPS : XP.applyDailyLimit(user.xpToday, xpAmount)
+note right of XPS
+  Caps XP if daily limit
+  would be exceeded
+end note
+
+XPS -> UR : addXP(userId, finalXP)
+UR --> XPS : { totalXP }
+
+XPS -> XPS : calculateLevel(totalXP)
+note right of XPS
+  Level = floor(√(totalXP / 100))
+end note
+
+alt Level up
+    XPS -> UR : updateLevel(userId, newLevel)
+end
+
+XPS -> XPS : Streak.evaluate(user.lastActiveDate)
+note right of XPS
+  If no task completed today yet:
+    streak += 1
+  Otherwise:
+    streak unchanged
+end note
+
+XPS -> UR : updateStreak(userId, newStreak)
+XPS --> TS : { xpAwarded: finalXP, newLevel, leveledUp, newStreak }
+
+TS --> TC : { task, xp }
+TC --> FE : 200 { task, xpAwarded, leveledUp, newLevel, newStreak }
+FE --> User : Show XP gained, level up (if any),\nstreak update
+
+@enduml

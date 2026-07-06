@@ -1,0 +1,2 @@
+// Admin Domain Entities
+export {}

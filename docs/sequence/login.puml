@@ -1,0 +1,95 @@
+@startuml
+title Sequence Diagram - Login Flow
+
+actor User
+participant "Frontend" as FE
+participant "AuthController" as AC
+participant "AuthMiddleware" as MW
+participant "AuthService" as AS
+participant "TokenService" as TS
+participant "GoogleOAuthClient" as GOC
+participant "UserRepository" as UR
+
+alt Google SSO
+
+    User -> FE : Click "Continue with Google"
+    FE -> AC : GET /auth/google
+    AC -> GOC : getAuthorizationUrl()
+    GOC --> AC : url
+    AC --> FE : 302 redirect → Google
+
+    User -> GOC : Select account
+    GOC --> AC : GET /auth/google/callback
+
+    AC -> MW : validateCallbackParams(req)
+    MW --> AC : ok
+
+    AC -> GOC : exchangeCode(code)
+    GOC --> AC : id_token
+
+    AC -> GOC : verifyIdToken(id_token)
+    GOC --> AC : { email, name, picture }
+
+    AC -> AS : handleGoogleLogin({ email, name, picture })
+
+    AS -> UR : findByEmail(email)
+    UR --> AS : User | null
+
+    alt First time (user does not exist)
+        AS -> UR : create({ email, nickname, avatar_url })
+        UR --> AS : User
+    end
+
+    AS -> UR : updateLastActiveAt(userId)
+
+    AS -> TS : generateJWT(user)
+    TS --> AS : jwt
+
+    AS --> AC : { jwt, user }
+    note right of AC : The OAuth callback cannot\nreturn JSON directly,\nso it's a redirect
+    AC --> FE : 302 redirect
+
+    FE -> FE : Saves token from URL\nand stores it (localStorage / cookie)
+    FE --> User : Routes to /dashboard
+
+else Email / Password
+
+    User -> FE : Complete form\nand submit
+    FE -> AC : POST /auth/login\n{ email, password }
+
+    AC -> MW : validateBody(req)
+    note right of MW : Validates email format\nand checks that password is not empty
+    MW --> AC : ok | 400 { errors }
+
+    alt Error de validación
+        AC --> FE : 400 { errors: [...] }
+        FE --> User : Show errors in the form
+    end
+
+    AC -> AS : login({ email, password })
+
+    AS -> UR : findByEmail(email)
+    UR --> AS : User | null
+
+    AS -> AS : bcrypt.compare(password, hash)
+
+    alt Credenciales inválidas
+        AS --> AC : throw UnauthorizedException
+        AC --> FE : 401 { message: "Invalid credentials" }
+        FE --> User : Show error message
+    else Credenciales válidas
+
+        AS -> UR : updateLastActiveAt(userId)
+
+        AS -> TS : generateJWT(user)
+        TS --> AS : jwt
+
+        AS --> AC : { jwt, user }
+        AC --> FE : 200 { token: jwt, user: {...} }
+        FE -> FE : Saves token\n(localStorage / cookie)
+        FE --> User : Routes to /dashboard
+    end
+
+end
+
+@enduml

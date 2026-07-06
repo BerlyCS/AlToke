@@ -1,0 +1,80 @@
+@startuml
+title <size:18><b>CI de AlToke</b></size>\n<size:12>Validación, build independiente y publicación de artefactos</size>
+
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam ActivityBorderColor #334155
+skinparam ActivityBackgroundColor #F8FAFC
+skinparam ActivityDiamondBorderColor #334155
+skinparam ActivityDiamondBackgroundColor #E2E8F0
+skinparam PartitionBorderColor #CBD5E1
+skinparam PartitionBackgroundColor #FFFFFF
+skinparam NoteBackgroundColor #FEF3C7
+skinparam NoteBorderColor #F59E0B
+
+start
+
+partition "Trigger" {
+  :PR o push relevante;
+  :iniciar workflow de CI;
+}
+
+note right
+  El contexto de rama solo dispara el workflow.
+  La política de ramas se documenta fuera del diagrama.
+end note
+
+partition "Validación" {
+  :instalar dependencias;
+  :ejecutar lint;
+  :ejecutar pruebas automatizadas;
+}
+
+if (¿Validación correcta?) then (sí)
+else (no)
+  :marcar pipeline como fallido;
+  stop
+endif
+
+partition "Componentes afectados" {
+  :detectar cambios por ruta;
+  :resolver backend afectado;
+  :resolver frontend afectado;
+}
+
+fork
+  partition "Build backend" {
+    if (¿Backend afectado?) then (sí)
+      :build backend;
+      :crear imagen Docker backend;
+      :publicar backend:<sha>;
+    else (no)
+      :omitir build backend;
+    endif
+  }
+fork again
+  partition "Build frontend" {
+    if (¿Frontend afectado?) then (sí)
+      :build frontend;
+      :crear imagen Docker frontend;
+      :publicar frontend:<sha>;
+    else (no)
+      :omitir build frontend;
+    endif
+  }
+end fork
+
+partition "Registro de imágenes" {
+  :guardar únicamente imágenes afectadas;
+  :exponer tags trazables para CD;
+}
+
+note right
+  Regla explícita:
+  backend y frontend se compilan de forma independiente.
+  Un componente sin cambios no se reconstruye ni se publica.
+end note
+
+stop
+
+@enduml
