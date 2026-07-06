@@ -144,6 +144,7 @@ export abstract class TaskService {
       xpAwarded: xpResult.gainedXp,
       leveledUp: xpResult.leveledUp,
       newLevel: xpResult.currentLevel,
+      newStreak: xpResult.streakCount,
     }
   }
 

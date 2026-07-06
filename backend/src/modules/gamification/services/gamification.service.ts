@@ -43,9 +43,10 @@ export class GamificationService {
     xpAmount: number,
     taskPriority: string,
     completedOnTime: boolean,
-  ): Promise<{ totalXp: number; currentLevel: number; gainedXp: number; leveledUp: boolean }> {
+  ): Promise<{ totalXp: number; currentLevel: number; gainedXp: number; leveledUp: boolean; streakCount: number }> {
     if (!completedOnTime || xpAmount <= 0) {
-      return { totalXp: 0, currentLevel: 0, gainedXp: 0, leveledUp: false }
+      const user = await this.repo.findStatsByUserId(userId)
+      return { totalXp: user?.totalXp || 0, currentLevel: user?.currentLevel || 1, gainedXp: 0, leveledUp: false, streakCount: user?.streakCount || 0 }
     }
 
     const user = await this.repo.findStatsByUserId(userId)
@@ -61,6 +62,7 @@ export class GamificationService {
         currentLevel: user.currentLevel,
         gainedXp: 0,
         leveledUp: false,
+        streakCount: user.streakCount,
       }
     }
 
@@ -83,10 +85,10 @@ export class GamificationService {
       currentLevel,
     })
 
-    await this.verifyStreak(userId, new Date())
+    const streakCount = await this.verifyStreak(userId, new Date())
     await this.triggerAchievement(userId, `xp_${currentLevel}`)
 
-    return { totalXp, currentLevel, gainedXp, leveledUp }
+    return { totalXp, currentLevel, gainedXp, leveledUp, streakCount }
   }
 
   static async checkDailyXPLimit(userId: string, xpAmount: number): Promise<number> {
@@ -109,7 +111,7 @@ export class GamificationService {
     })
   }
 
-  static async verifyStreak(userId: string, completionDate: Date): Promise<void> {
+  static async verifyStreak(userId: string, completionDate: Date): Promise<number> {
     const user = await this.repo.findStatsByUserId(userId)
     if (!user) {
       throw status(404, 'User not found')
@@ -137,6 +139,8 @@ export class GamificationService {
       maxStreak: Math.max(user.maxStreak, streakCount),
       lastActiveDate: completionDate,
     })
+    
+    return streakCount
   }
 
   static async checkOverdueHighPriorityTasks(userId: string): Promise<void> {

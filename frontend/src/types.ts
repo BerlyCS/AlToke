@@ -114,4 +114,5 @@ export interface CompleteTaskResult extends Task {
   xpAwarded?: number
   leveledUp?: boolean
   newLevel?: number
+  newStreak?: number
 }
