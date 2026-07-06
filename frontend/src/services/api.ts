@@ -10,6 +10,7 @@ import type {
   TaskOverloadPrediction,
   TaskSuggestion,
   UseItemResult,
+  UserProfile,
 } from '@/types'
 
 type ApiResult<T> = Promise<{
@@ -90,6 +91,12 @@ type ApiClientContract = {
         use: {
           post: (body: { itemId: string }, options: AuthHeaders) => ApiResult<UseItemResult>
         }
+      }
+    }
+    users: {
+      profile: {
+        get: (options: AuthHeaders) => ApiResult<UserProfile>
+        patch: (body: Partial<UserProfile>, options: AuthHeaders) => ApiResult<UserProfile>
       }
     }
   }

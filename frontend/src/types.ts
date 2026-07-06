@@ -28,6 +28,25 @@ export interface User {
   avatarUrl?: string
 }
 
+export interface Privacy {
+  showLevel: boolean
+  showStreak: boolean
+  showAchievements: boolean
+}
+
+export interface UserProfile {
+  id: string
+  email: string
+  nickname: string
+  bio?: string | null
+  avatarUrl?: string | null
+  xp: number
+  level: number
+  currentStreak: number
+  maxStreak: number
+  privacy?: Privacy
+}
+
 export interface Credentials {
   email: string
   password: string
