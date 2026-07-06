@@ -50,4 +50,18 @@ export const taskService = {
     if (error) throw new ApiError(status, String(error.value) || 'Failed to complete task')
     return data as unknown as CompleteTaskResult
   },
+
+  getTrashedTasks: async (): Promise<Task[]> => {
+    const { data, error, status } = await api.api.tasks.trash.get({ headers: getHeaders() })
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch trashed tasks')
+    return data as unknown as Task[]
+  },
+
+  restoreTask: async (id: string): Promise<Task> => {
+    const { data, error, status } = await api.api
+      .tasks({ id })
+      .restore.patch(null as unknown as Record<string, never>, { headers: getHeaders() })
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to restore task')
+    return data as unknown as Task
+  },
 }

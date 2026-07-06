@@ -33,7 +33,7 @@ const router = createRouter({
           path: '/configuracion',
           name: 'configuration',
           component: () => import('../views/ConfigurationView.vue'),
-        }
+        },
       ],
     },
   ],

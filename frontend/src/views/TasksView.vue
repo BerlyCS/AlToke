@@ -260,7 +260,11 @@ function formatTime(val: string | Date) {
     <div class="flex items-center gap-2">
       <button
         class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200 flex items-center gap-2"
-        :class="!showTrash ? 'bg-primary text-primary-foreground shadow-lg' : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'"
+        :class="
+          !showTrash
+            ? 'bg-primary text-primary-foreground shadow-lg'
+            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+        "
         @click="showTrash = false"
       >
         <ListTodo class="w-4 h-4" />
@@ -268,8 +272,15 @@ function formatTime(val: string | Date) {
       </button>
       <button
         class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200 flex items-center gap-2"
-        :class="showTrash ? 'bg-destructive/20 text-destructive shadow-lg border border-destructive/30' : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'"
-        @click="showTrash = true; fetchTrashedTasks()"
+        :class="
+          showTrash
+            ? 'bg-destructive/20 text-destructive shadow-lg border border-destructive/30'
+            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+        "
+        @click="
+          showTrash = true
+          fetchTrashedTasks()
+        "
       >
         <Archive class="w-4 h-4" />
         Papelera
@@ -285,15 +296,20 @@ function formatTime(val: string | Date) {
             class="flex items-center justify-between p-4 rounded-xl border border-destructive/20 bg-destructive/5 transition-all min-w-0"
           >
             <div class="flex items-center gap-4 w-full min-w-0">
-              <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0 text-destructive">
+              <div
+                class="w-12 h-12 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0 text-destructive"
+              >
                 <Archive class="w-6 h-6" />
               </div>
               <div class="flex flex-col flex-1 min-w-0">
-                <span class="font-bold text-lg leading-tight truncate line-through text-muted-foreground">
+                <span
+                  class="font-bold text-lg leading-tight truncate line-through text-muted-foreground"
+                >
                   {{ task.title }}
                 </span>
                 <span class="text-xs text-muted-foreground font-medium mt-1">
-                  Eliminada {{ task.deletedAt ? new Date(task.deletedAt).toLocaleDateString() : '' }}
+                  Eliminada
+                  {{ task.deletedAt ? new Date(task.deletedAt).toLocaleDateString() : '' }}
                 </span>
               </div>
             </div>
@@ -318,372 +334,294 @@ function formatTime(val: string | Date) {
 
     <template v-if="!showTrash">
       <div class="flex items-center gap-3 flex-wrap">
-      <button
-        class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
-        :class="
-          filterStatus === 'ALL'
-            ? 'bg-primary text-primary-foreground shadow-lg'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterStatus = 'ALL'"
-      >
-        <div class="flex items-center gap-2">
-          <ListTodo class="w-4 h-4" />
-          Todas ({{ tasks.length }})
-        </div>
-      </button>
-      <button
-        class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
-        :class="
-          filterStatus === 'PENDING'
-            ? 'bg-warning/20 text-yellow-500 shadow-lg border border-yellow-500/30'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterStatus = 'PENDING'"
-      >
-        <div class="flex items-center gap-2">
-          <Clock class="w-4 h-4" />
-          Pendientes ({{ pendingCount }})
-        </div>
-      </button>
-      <button
-        class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
-        :class="
-          filterStatus === 'COMPLETED'
-            ? 'bg-success/20 text-green-500 shadow-lg border border-green-500/30'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterStatus = 'COMPLETED'"
-      >
-        <div class="flex items-center gap-2">
-          <CheckCircle class="w-4 h-4" />
-          Completadas ({{ completedCount }})
-        </div>
-      </button>
-    </div>
-
-    <div class="flex items-center gap-3 flex-wrap">
-      <div class="relative">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Buscar tareas..."
-          class="h-10 pl-10 pr-4 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all w-64"
-        />
-      </div>
-      <div class="w-px h-6 bg-border"></div>
-      <span class="text-sm text-muted-foreground font-semibold mr-1">Prioridad:</span>
-      <button
-        class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-        :class="
-          filterPriority === 'ALL'
-            ? 'bg-primary text-primary-foreground shadow-lg'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterPriority = 'ALL'"
-      >
-        Todas
-      </button>
-      <button
-        class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-        :class="
-          filterPriority === 'HIGH'
-            ? 'bg-red-500/20 text-red-500 shadow-lg border border-red-500/30'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterPriority = 'HIGH'"
-      >
-        <div class="flex items-center gap-1.5">
-          <AlertTriangle class="w-3.5 h-3.5" />
-          Alta
-        </div>
-      </button>
-      <button
-        class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-        :class="
-          filterPriority === 'MEDIUM'
-            ? 'bg-yellow-500/20 text-yellow-500 shadow-lg border border-yellow-500/30'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterPriority = 'MEDIUM'"
-      >
-        <div class="flex items-center gap-1.5">
-          <Minus class="w-3.5 h-3.5" />
-          Media
-        </div>
-      </button>
-      <button
-        class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-        :class="
-          filterPriority === 'LOW'
-            ? 'bg-green-500/20 text-green-500 shadow-lg border border-green-500/30'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterPriority = 'LOW'"
-      >
-        <div class="flex items-center gap-1.5">
-          <ArrowDown class="w-3.5 h-3.5" />
-          Baja
-        </div>
-      </button>
-    </div>
-
-    <div class="flex items-center gap-3 flex-wrap">
-      <span class="text-sm text-muted-foreground font-semibold mr-1">Tipo:</span>
-      <button
-        class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-        :class="
-          filterType === 'ALL'
-            ? 'bg-primary text-primary-foreground shadow-lg'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterType = 'ALL'"
-      >
-        Todos
-      </button>
-      <button
-        class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-        :class="
-          filterType === 'TASK'
-            ? 'bg-blue-500/20 text-blue-500 shadow-lg border border-blue-500/30'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterType = 'TASK'"
-      >
-        <div class="flex items-center gap-1.5">
-          <ListTodo class="w-3.5 h-3.5" />
-          Tarea
-        </div>
-      </button>
-      <button
-        class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-        :class="
-          filterType === 'MEETING'
-            ? 'bg-purple-500/20 text-purple-500 shadow-lg border border-purple-500/30'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterType = 'MEETING'"
-      >
-        <div class="flex items-center gap-1.5">
-          <Users class="w-3.5 h-3.5" />
-          Reunión
-        </div>
-      </button>
-      <button
-        class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-        :class="
-          filterType === 'EVENT'
-            ? 'bg-green-500/20 text-green-500 shadow-lg border border-green-500/30'
-            : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-        "
-        @click="filterType = 'EVENT'"
-      >
-        <div class="flex items-center gap-1.5">
-          <Calendar class="w-3.5 h-3.5" />
-          Evento
-        </div>
-      </button>
-    </div>
-
-    <div v-if="tags.length > 0" class="flex items-center gap-2 flex-wrap">
-      <span class="text-sm text-muted-foreground font-semibold mr-1">
-        <Filter class="w-3.5 h-3.5 inline mr-1" />
-        Tags:
-      </span>
-      <button
-        v-for="tag in tags"
-        :key="tag.id"
-        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all border-2"
-        :class="
-          selectedTagIds.has(tag.id)
-            ? `border-transparent text-white ${tag.color || 'bg-primary'}`
-            : 'border-border bg-transparent text-muted-foreground hover:border-muted'
-        "
-        @click="toggleTagFilter(tag.id)"
-      >
-        <component :is="IconMap[tag.icon || 'Tag']" class="w-3.5 h-3.5" />
-        {{ tag.name }}
-      </button>
-    </div>
-
-    <div v-if="loading" class="flex justify-center py-12">
-      <div
-        class="w-10 h-10 border-4 border-white/10 border-l-primary rounded-full animate-spin"
-      ></div>
-    </div>
-
-    <Card v-else class="border-border bg-card/60 backdrop-blur-xl shadow-2xl">
-      <CardContent class="grid gap-3 p-6">
-        <div
-          v-for="task in filteredTasks"
-          :key="task.id"
-          class="flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md min-w-0"
-          :class="[
-            getTaskColors(task).bg,
-            getTaskColors(task).border,
-            task.status === 'COMPLETED' ? 'opacity-50' : '',
-          ]"
-          @click="openTask(task)"
+        <button
+          class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
+          :class="
+            filterStatus === 'ALL'
+              ? 'bg-primary text-primary-foreground shadow-lg'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterStatus = 'ALL'"
         >
-          <div class="flex items-center gap-4 w-full min-w-0">
-            <button
-              @click.stop="toggleStatus(task)"
-              class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
-            >
-              <CheckCircle2 v-if="task.status === 'COMPLETED'" class="w-6 h-6 text-green-500" />
-              <Circle v-else class="w-6 h-6 text-muted-foreground" />
-            </button>
+          <div class="flex items-center gap-2">
+            <ListTodo class="w-4 h-4" />
+            Todas ({{ tasks.length }})
+          </div>
+        </button>
+        <button
+          class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
+          :class="
+            filterStatus === 'PENDING'
+              ? 'bg-warning/20 text-yellow-500 shadow-lg border border-yellow-500/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterStatus = 'PENDING'"
+        >
+          <div class="flex items-center gap-2">
+            <Clock class="w-4 h-4" />
+            Pendientes ({{ pendingCount }})
+          </div>
+        </button>
+        <button
+          class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
+          :class="
+            filterStatus === 'COMPLETED'
+              ? 'bg-success/20 text-green-500 shadow-lg border border-green-500/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterStatus = 'COMPLETED'"
+        >
+          <div class="flex items-center gap-2">
+            <CheckCircle class="w-4 h-4" />
+            Completadas ({{ completedCount }})
+          </div>
+        </button>
+      </div>
 
-            <div
-              class="w-12 h-12 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0"
-              :class="getTaskColors(task).text"
-            >
-              <component
-                :is="
-                  IconMap[task.tags && task.tags.length > 0 ? task.tags[0]?.icon || 'Tag' : 'Tag']
-                "
-                class="w-6 h-6"
-              />
-            </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="relative">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar tareas..."
+            class="h-10 pl-10 pr-4 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all w-64"
+          />
+        </div>
+        <div class="w-px h-6 bg-border"></div>
+        <span class="text-sm text-muted-foreground font-semibold mr-1">Prioridad:</span>
+        <button
+          class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+          :class="
+            filterPriority === 'ALL'
+              ? 'bg-primary text-primary-foreground shadow-lg'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterPriority = 'ALL'"
+        >
+          Todas
+        </button>
+        <button
+          class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+          :class="
+            filterPriority === 'HIGH'
+              ? 'bg-red-500/20 text-red-500 shadow-lg border border-red-500/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterPriority = 'HIGH'"
+        >
+          <div class="flex items-center gap-1.5">
+            <AlertTriangle class="w-3.5 h-3.5" />
+            Alta
+          </div>
+        </button>
+        <button
+          class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+          :class="
+            filterPriority === 'MEDIUM'
+              ? 'bg-yellow-500/20 text-yellow-500 shadow-lg border border-yellow-500/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterPriority = 'MEDIUM'"
+        >
+          <div class="flex items-center gap-1.5">
+            <Minus class="w-3.5 h-3.5" />
+            Media
+          </div>
+        </button>
+        <button
+          class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+          :class="
+            filterPriority === 'LOW'
+              ? 'bg-green-500/20 text-green-500 shadow-lg border border-green-500/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterPriority = 'LOW'"
+        >
+          <div class="flex items-center gap-1.5">
+            <ArrowDown class="w-3.5 h-3.5" />
+            Baja
+          </div>
+        </button>
+      </div>
 
-            <div class="flex flex-col flex-1 min-w-0">
-              <span
-                class="font-bold text-lg leading-tight truncate"
-                :class="{ 'line-through text-muted-foreground': task.status === 'COMPLETED' }"
+      <div class="flex items-center gap-3 flex-wrap">
+        <span class="text-sm text-muted-foreground font-semibold mr-1">Tipo:</span>
+        <button
+          class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+          :class="
+            filterType === 'ALL'
+              ? 'bg-primary text-primary-foreground shadow-lg'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterType = 'ALL'"
+        >
+          Todos
+        </button>
+        <button
+          class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+          :class="
+            filterType === 'TASK'
+              ? 'bg-blue-500/20 text-blue-500 shadow-lg border border-blue-500/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterType = 'TASK'"
+        >
+          <div class="flex items-center gap-1.5">
+            <ListTodo class="w-3.5 h-3.5" />
+            Tarea
+          </div>
+        </button>
+        <button
+          class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+          :class="
+            filterType === 'MEETING'
+              ? 'bg-purple-500/20 text-purple-500 shadow-lg border border-purple-500/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterType = 'MEETING'"
+        >
+          <div class="flex items-center gap-1.5">
+            <Users class="w-3.5 h-3.5" />
+            Reunión
+          </div>
+        </button>
+        <button
+          class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
+          :class="
+            filterType === 'EVENT'
+              ? 'bg-green-500/20 text-green-500 shadow-lg border border-green-500/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterType = 'EVENT'"
+        >
+          <div class="flex items-center gap-1.5">
+            <Calendar class="w-3.5 h-3.5" />
+            Evento
+          </div>
+        </button>
+      </div>
+
+      <div v-if="tags.length > 0" class="flex items-center gap-2 flex-wrap">
+        <span class="text-sm text-muted-foreground font-semibold mr-1">
+          <Filter class="w-3.5 h-3.5 inline mr-1" />
+          Tags:
+        </span>
+        <button
+          v-for="tag in tags"
+          :key="tag.id"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all border-2"
+          :class="
+            selectedTagIds.has(tag.id)
+              ? `border-transparent text-white ${tag.color || 'bg-primary'}`
+              : 'border-border bg-transparent text-muted-foreground hover:border-muted'
+          "
+          @click="toggleTagFilter(tag.id)"
+        >
+          <component :is="IconMap[tag.icon || 'Tag']" class="w-3.5 h-3.5" />
+          {{ tag.name }}
+        </button>
+      </div>
+
+      <div v-if="loading" class="flex justify-center py-12">
+        <div
+          class="w-10 h-10 border-4 border-white/10 border-l-primary rounded-full animate-spin"
+        ></div>
+      </div>
+
+      <Card v-else class="border-border bg-card/60 backdrop-blur-xl shadow-2xl">
+        <CardContent class="grid gap-3 p-6">
+          <div
+            v-for="task in filteredTasks"
+            :key="task.id"
+            class="flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md min-w-0"
+            :class="[
+              getTaskColors(task).bg,
+              getTaskColors(task).border,
+              task.status === 'COMPLETED' ? 'opacity-50' : '',
+            ]"
+            @click="openTask(task)"
+          >
+            <div class="flex items-center gap-4 w-full min-w-0">
+              <button
+                @click.stop="toggleStatus(task)"
+                class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
               >
-                {{ task.title }}
-              </span>
+                <CheckCircle2 v-if="task.status === 'COMPLETED'" class="w-6 h-6 text-green-500" />
+                <Circle v-else class="w-6 h-6 text-muted-foreground" />
+              </button>
+
               <div
-                class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground font-medium mt-1"
+                class="w-12 h-12 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0"
+                :class="getTaskColors(task).text"
               >
-                <span class="flex items-center gap-1.5" v-if="task.dueDate">
-                  <Clock class="w-4 h-4" />
-                  {{ formatTime(task.dueDate) }}
-                </span>
-                <span v-if="task.estimatedTime" class="flex items-center gap-1.5">
-                  • {{ task.estimatedTime }} min
-                </span>
-                <span v-if="task.dueDate" class="flex items-center gap-1.5">
-                  •
-                  {{
-                    new Date(task.dueDate).toLocaleDateString([], {
-                      day: 'numeric',
-                      month: 'short',
-                    })
-                  }}
-                </span>
+                <component
+                  :is="
+                    IconMap[task.tags && task.tags.length > 0 ? task.tags[0]?.icon || 'Tag' : 'Tag']
+                  "
+                  class="w-6 h-6"
+                />
               </div>
+
+              <div class="flex flex-col flex-1 min-w-0">
+                <span
+                  class="font-bold text-lg leading-tight truncate"
+                  :class="{ 'line-through text-muted-foreground': task.status === 'COMPLETED' }"
+                >
+                  {{ task.title }}
+                </span>
+                <div
+                  class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground font-medium mt-1"
+                >
+                  <span class="flex items-center gap-1.5" v-if="task.dueDate">
+                    <Clock class="w-4 h-4" />
+                    {{ formatTime(task.dueDate) }}
+                  </span>
+                  <span v-if="task.estimatedTime" class="flex items-center gap-1.5">
+                    • {{ task.estimatedTime }} min
+                  </span>
+                  <span v-if="task.dueDate" class="flex items-center gap-1.5">
+                    •
+                    {{
+                      new Date(task.dueDate).toLocaleDateString([], {
+                        day: 'numeric',
+                        month: 'short',
+                      })
+                    }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 pl-2">
+              <button
+                class="p-2 rounded-lg hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
+                @click.stop="deleteTask(task.id)"
+              >
+                <Trash2 class="w-5 h-5" />
+              </button>
             </div>
           </div>
 
-          <div class="flex items-center gap-2 pl-2">
-            <button
-              class="p-2 rounded-lg hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
-              @click.stop="deleteTask(task.id)"
-            >
-              <Trash2 class="w-5 h-5" />
-            </button>
+          <div v-if="filteredTasks.length === 0" class="text-center py-16 text-muted-foreground">
+            <div class="text-5xl mb-4 opacity-50">📋</div>
+            <h3 class="text-xl font-bold text-foreground mb-2">
+              {{
+                filterStatus === 'ALL'
+                  ? 'No hay tareas'
+                  : filterStatus === 'PENDING'
+                    ? 'No hay tareas pendientes'
+                    : 'No hay tareas completadas'
+              }}
+            </h3>
+            <p class="mb-6">Crea una nueva tarea para empezar</p>
+            <Button @click="showCreateModal = true">
+              <Plus class="w-4 h-4 mr-2" />
+              Crear tarea
+            </Button>
           </div>
-
-          <div class="flex items-center gap-3 flex-wrap">
-            <span class="text-sm text-muted-foreground font-semibold mr-1">Tipo:</span>
-            <button
-              class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-              :class="
-                filterType === 'ALL'
-                  ? 'bg-primary text-primary-foreground shadow-lg'
-                  : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-              "
-              @click="filterType = 'ALL'"
-            >
-              Todos
-            </button>
-            <button
-              class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-              :class="
-                filterType === 'TASK'
-                  ? 'bg-blue-500/20 text-blue-500 shadow-lg border border-blue-500/30'
-                  : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-              "
-              @click="filterType = 'TASK'"
-            >
-              <div class="flex items-center gap-1.5">
-                <ListTodo class="w-3.5 h-3.5" />
-                Tarea
-              </div>
-            </button>
-            <button
-              class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-              :class="
-                filterType === 'MEETING'
-                  ? 'bg-purple-500/20 text-purple-500 shadow-lg border border-purple-500/30'
-                  : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-              "
-              @click="filterType = 'MEETING'"
-            >
-              <div class="flex items-center gap-1.5">
-                <Users class="w-3.5 h-3.5" />
-                Reunión
-              </div>
-            </button>
-            <button
-              class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
-              :class="
-                filterType === 'EVENT'
-                  ? 'bg-green-500/20 text-green-500 shadow-lg border border-green-500/30'
-                  : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
-              "
-              @click="filterType = 'EVENT'"
-            >
-              <div class="flex items-center gap-1.5">
-                <Calendar class="w-3.5 h-3.5" />
-                Evento
-              </div>
-            </button>
-          </div>
-
-          <div v-if="tags.length > 0" class="flex items-center gap-2 flex-wrap">
-            <span class="text-sm text-muted-foreground font-semibold mr-1">
-              <Filter class="w-3.5 h-3.5 inline mr-1" />
-              Tags:
-            </span>
-            <button
-              v-for="tag in tags"
-              :key="tag.id"
-              class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all border-2"
-              :class="
-                selectedTagIds.has(tag.id)
-                  ? `border-transparent text-white ${tag.color || 'bg-primary'}`
-                  : 'border-border bg-transparent text-muted-foreground hover:border-muted'
-              "
-              @click="toggleTagFilter(tag.id)"
-            >
-              <component :is="IconMap[tag.icon || 'Tag']" class="w-3.5 h-3.5" />
-              {{ tag.name }}
-            </button>
-          </div>
-        </div>
-
-        <div v-if="filteredTasks.length === 0" class="text-center py-16 text-muted-foreground">
-          <div class="text-5xl mb-4 opacity-50">📋</div>
-          <h3 class="text-xl font-bold text-foreground mb-2">
-            {{
-              filterStatus === 'ALL'
-                ? 'No hay tareas'
-                : filterStatus === 'PENDING'
-                  ? 'No hay tareas pendientes'
-                  : 'No hay tareas completadas'
-            }}
-          </h3>
-          <p class="mb-6">Crea una nueva tarea para empezar</p>
-          <Button @click="showCreateModal = true">
-            <Plus class="w-4 h-4 mr-2" />
-            Crear tarea
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
     </template>
 
     <CreateTaskDialog

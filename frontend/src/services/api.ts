@@ -65,11 +65,17 @@ type ApiClientContract = {
     tasks: {
       get: (options: AuthHeaders) => ApiResult<Task[]>
       post: (body: Partial<Task>, options: AuthHeaders) => ApiResult<Task>
+      trash: {
+        get: (options: AuthHeaders) => ApiResult<Task[]>
+      }
     } & ((params: { id: string }) => {
       patch: (body: Partial<Task>, options: AuthHeaders) => ApiResult<Task>
       delete: (body: Record<string, never>, options: AuthHeaders) => ApiResult<Task>
       complete: {
         patch: (body: Record<string, never>, options: AuthHeaders) => ApiResult<CompleteTaskResult>
+      }
+      restore: {
+        patch: (body: Record<string, never>, options: AuthHeaders) => ApiResult<Task>
       }
     })
     gamification: {

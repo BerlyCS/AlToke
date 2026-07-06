@@ -16,6 +16,7 @@ export interface Task {
   dueDate?: string | Date
   recurrence?: string
   tags?: Tag[]
+  deletedAt?: string | Date | null
   createdAt: string | Date
   updatedAt: string | Date
 }
