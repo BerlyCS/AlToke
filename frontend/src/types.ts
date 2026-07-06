@@ -38,6 +38,7 @@ export interface Privacy {
 export interface UserProfile {
   id: string
   email: string
+  role: 'USER' | 'ADMIN'
   nickname: string
   bio?: string | null
   avatarUrl?: string | null
