@@ -12,7 +12,6 @@ import {
   unlockedAchievementsQueue,
   processAchievementsQueue,
 } from '@/composables/useGamification'
-import type { Task, Tag } from '@/types'
 import type { Task, Tag, TaskSuggestion } from '@/types'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -738,12 +737,12 @@ function formatTime(val: string | Date) {
             <Sparkles class="w-6 h-6 text-yellow-500" />
             Sugerencias IA
           </DialogTitle>
-          <DialogDescription>
-            Basado en tu historial de tareas y hábitos
-          </DialogDescription>
+          <DialogDescription> Basado en tu historial de tareas y hábitos </DialogDescription>
         </DialogHeader>
         <div v-if="aiLoading" class="flex justify-center py-8">
-          <div class="w-8 h-8 border-4 border-white/10 border-l-primary rounded-full animate-spin"></div>
+          <div
+            class="w-8 h-8 border-4 border-white/10 border-l-primary rounded-full animate-spin"
+          ></div>
         </div>
         <div v-else-if="aiError" class="text-center py-8 text-muted-foreground">
           <p>{{ aiError }}</p>
@@ -760,10 +759,12 @@ function formatTime(val: string | Date) {
             <h4 class="font-bold text-lg">{{ s.suggestedTitle }}</h4>
             <p class="text-sm text-muted-foreground">{{ s.explanation }}</p>
             <div class="flex gap-2 pt-2">
-              <Button size="sm" class="font-bold" @click="acceptSuggestion(s)">
-                Aceptar
-              </Button>
-              <Button size="sm" variant="ghost" @click="aiSuggestions = aiSuggestions.filter((x) => x.id !== s.id)">
+              <Button size="sm" class="font-bold" @click="acceptSuggestion(s)"> Aceptar </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                @click="aiSuggestions = aiSuggestions.filter((x) => x.id !== s.id)"
+              >
                 Descartar
               </Button>
             </div>

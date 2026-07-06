@@ -91,7 +91,11 @@ const xpProgress = computed(() => {
           <Avatar
             class="h-12 w-12 rounded-xl shadow-sm border border-primary-foreground/20 bg-primary-foreground/10 transition-transform duration-300 group-hover:scale-105"
           >
-            <AvatarImage class="rounded-xl" :src="authStore.profile?.avatarUrl || ''" alt="Avatar del usuario" />
+            <AvatarImage
+              class="rounded-xl"
+              :src="authStore.profile?.avatarUrl || ''"
+              alt="Avatar del usuario"
+            />
             <AvatarFallback class="rounded-xl font-bold text-primary bg-background">
               {{
                 authStore.profile?.nickname?.charAt(0)?.toUpperCase() ||

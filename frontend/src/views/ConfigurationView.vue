@@ -35,7 +35,7 @@ const originalProfile = ref<UserProfile | null>(null)
 const editProfile = ref({
   nickname: '',
   bio: '',
-  avatarUrl: ''
+  avatarUrl: '',
 })
 
 const editPrivacy = ref({
@@ -107,16 +107,16 @@ async function saveChanges() {
   if (!hasChanges.value) return
 
   try {
-    if (!profile.value) throw new Error('No profile loaded')
-    const updatedProfile: UserProfile = {
-      ...profile.value,
-      nickname: edition.value.nickname,
-      bio: edition.value.bio,
-      avatarUrl: edition.value.avatarUrl,
+    if (!originalProfile.value) throw new Error('No profile loaded')
+    const updatedProfile = {
+      ...originalProfile.value,
+      nickname: editProfile.value.nickname,
+      bio: editProfile.value.bio || undefined,
+      avatarUrl: editProfile.value.avatarUrl,
       privacy: {
-        showLevel: edition.value.showLevel,
-        showStreak: edition.value.showStreak,
-        showAchievements: edition.value.showAchievements,
+        showLevel: editPrivacy.value.showLevel,
+        showStreak: editPrivacy.value.showStreak,
+        showAchievements: editPrivacy.value.showAchievements,
       },
     }
     await userService.updateProfile(updatedProfile)
@@ -198,7 +198,7 @@ async function saveChanges() {
               <Label for="bio"> Descripción </Label>
               <Textarea
                 id="bio"
-                v-model="edition.bio"
+                v-model="editProfile.bio"
                 class="mt-2 resize-none"
                 rows="4"
                 placeholder="Cuéntanos algo sobre ti..."

@@ -22,5 +22,5 @@ export const userService = {
     })
     if (error) throw new ApiError(status, String(error.value) || 'Login failed')
     return data!
-  }
+  },
 }
