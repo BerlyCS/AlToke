@@ -32,6 +32,7 @@ export const TaskModel = {
       dueDate: DateType,
       recurrence: tasks.recurrence,
       deletedAt: DateType, // For restoring from trash
+      tagIds: t.Array(t.String()),
     }),
   ),
   taskResponse: t.Intersect([

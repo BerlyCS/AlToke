@@ -111,12 +111,28 @@ export abstract class TaskService {
   }
 
   static async update(userId: string, taskId: string, data: TaskModel['updateTaskBody']) {
+    const { tagIds, ...taskData } = data
+
     const [task] = await db
       .update(tasks)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...taskData, updatedAt: new Date() })
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
       .returning()
-    return task || null
+
+    if (!task) return null
+
+    if (tagIds) {
+      await db.delete(taskTags).where(eq(taskTags.taskId, taskId))
+      if (tagIds.length > 0) {
+        const taskTagsData = tagIds.map((tagId: string) => ({
+          taskId: task.id,
+          tagId,
+        }))
+        await db.insert(taskTags).values(taskTagsData)
+      }
+    }
+
+    return await this.findById(userId, task.id)
   }
 
   static async softDelete(userId: string, taskId: string) {
