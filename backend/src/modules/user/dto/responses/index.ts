@@ -9,6 +9,7 @@ export const PrivacyResponse = t.Object({
 export const ProfileResponse = t.Object({
   id: t.String(),
   email: t.String(),
+  role: t.Union([t.Literal('USER'), t.Literal('ADMIN')]),
   nickname: t.Union([t.String(), t.Null()]),
   bio: t.Union([t.String(), t.Null()]),
   avatarUrl: t.Union([t.String(), t.Null()]),

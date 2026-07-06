@@ -21,6 +21,7 @@ const buildSelfProfile = (
   email: user.email,
   nickname: user.nickname,
   bio: user.bio,
+  role: user.role,
   avatarUrl: user.avatarUrl,
   xp: user.xp,
   level: user.level,
