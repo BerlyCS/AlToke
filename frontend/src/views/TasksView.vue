@@ -138,7 +138,7 @@ const completedCount = computed(() => tasks.value.filter((t) => t.status === 'CO
 
 onMounted(async () => {
   if (!authStore.token) {
-    router.push('/')
+    router.push('/login')
     return
   }
   await Promise.all([fetchTasks(), fetchTags()])
@@ -277,10 +277,7 @@ function formatTime(val: string | Date) {
             ? 'bg-destructive/20 text-destructive shadow-lg border border-destructive/30'
             : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
         "
-        @click="
-          showTrash = true
-          fetchTrashedTasks()
-        "
+        @click="showTrash = true; fetchTrashedTasks()"
       >
         <Archive class="w-4 h-4" />
         Papelera
@@ -324,7 +321,7 @@ function formatTime(val: string | Date) {
             </div>
           </div>
           <div v-if="trashedTasks.length === 0" class="text-center py-16 text-muted-foreground">
-            <div class="text-5xl mb-4 opacity-50">🗑️</div>
+            <Archive class="w-12 h-12 mx-auto text-destructive/50 mb-4"></Archive>
             <h3 class="text-xl font-bold text-foreground mb-2">Papelera vacía</h3>
             <p>Las tareas eliminadas aparecerán aquí</p>
           </div>
@@ -332,7 +329,7 @@ function formatTime(val: string | Date) {
       </Card>
     </template>
 
-    <template v-if="!showTrash">
+    <template v-else>
       <div class="flex items-center gap-3 flex-wrap">
         <button
           class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
@@ -604,7 +601,7 @@ function formatTime(val: string | Date) {
           </div>
 
           <div v-if="filteredTasks.length === 0" class="text-center py-16 text-muted-foreground">
-            <div class="text-5xl mb-4 opacity-50">📋</div>
+            <ListTodo class="w-12 h-12 mx-auto text-muted-foreground/50 mb-4"></ListTodo>
             <h3 class="text-xl font-bold text-foreground mb-2">
               {{
                 filterStatus === 'ALL'
