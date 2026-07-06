@@ -161,6 +161,55 @@ export abstract class TaskService {
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
       .returning()
 
+    // Handle recurrence
+    if (task.recurrence && task.recurrence !== 'NONE') {
+      const nextStartDate = task.startDate ? new Date(task.startDate) : new Date()
+      const nextDueDate = task.dueDate ? new Date(task.dueDate) : new Date()
+
+      switch (task.recurrence) {
+        case 'DAILY':
+          nextStartDate.setDate(nextStartDate.getDate() + 1)
+          nextDueDate.setDate(nextDueDate.getDate() + 1)
+          break
+        case 'WEEKLY':
+          nextStartDate.setDate(nextStartDate.getDate() + 7)
+          nextDueDate.setDate(nextDueDate.getDate() + 7)
+          break
+        case 'MONTHLY':
+          nextStartDate.setMonth(nextStartDate.getMonth() + 1)
+          nextDueDate.setMonth(nextDueDate.getMonth() + 1)
+          break
+        case 'YEARLY':
+          nextStartDate.setFullYear(nextStartDate.getFullYear() + 1)
+          nextDueDate.setFullYear(nextDueDate.getFullYear() + 1)
+          break
+      }
+
+      const [newTask] = await db
+        .insert(tasks)
+        .values({
+          userId: task.userId,
+          title: task.title,
+          description: task.description,
+          type: task.type,
+          priority: task.priority,
+          status: 'PENDING',
+          estimatedTime: task.estimatedTime,
+          recurrence: task.recurrence,
+          startDate: nextStartDate,
+          dueDate: nextDueDate,
+        })
+        .returning()
+
+      if (newTask && task.tags && task.tags.length > 0) {
+        const taskTagsData = task.tags.map((tag) => ({
+          taskId: newTask.id,
+          tagId: tag.id,
+        }))
+        await db.insert(taskTags).values(taskTagsData)
+      }
+    }
+
     const xpResult = await GamificationService.addXP(
       userId,
       xpAmount,
