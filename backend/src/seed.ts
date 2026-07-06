@@ -2,7 +2,16 @@ import { eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { password as bunPassword } from 'bun'
 import { db } from './db'
-import { achievements, items, levelRewards, users, tags, tasks, taskTags, privacySettings } from './db/schema'
+import {
+  achievements,
+  items,
+  levelRewards,
+  users,
+  tags,
+  tasks,
+  taskTags,
+  privacySettings,
+} from './db/schema'
 
 const seedAchievements = [
   {
@@ -205,11 +214,7 @@ const seed = async () => {
 
   try {
     console.log('Seeding demo user...')
-    const [existingUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, SEED_EMAIL))
-      .limit(1)
+    const [existingUser] = await db.select().from(users).where(eq(users.email, SEED_EMAIL)).limit(1)
     let userId: string
     if (existingUser) {
       userId = existingUser.id
@@ -228,11 +233,7 @@ const seed = async () => {
     console.log('Seeding tags...')
     const tagIds: string[] = []
     for (const td of tagDefs) {
-      const [existingTag] = await db
-        .select()
-        .from(tags)
-        .where(eq(tags.name, td.name))
-        .limit(1)
+      const [existingTag] = await db.select().from(tags).where(eq(tags.name, td.name)).limit(1)
       if (existingTag) {
         tagIds.push(existingTag.id)
         continue

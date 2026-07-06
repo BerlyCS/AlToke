@@ -20,7 +20,9 @@ const tasks = ref<Task[]>([])
 const loading = ref(true)
 const showCreateModal = ref(false)
 const showViewModal = ref(false)
+const showEditModal = ref(false)
 const selectedTask = ref<Task | null>(null)
+const editingTask = ref<Task | null>(null)
 
 const completedTasksCount = computed(() => {
   return tasks.value.filter((t) => t.status === 'COMPLETED').length
@@ -82,7 +84,13 @@ function openTask(task: Task) {
 }
 
 function editTask(task: Task) {
-  alert('Editar tarea: Próximamente')
+  editingTask.value = task
+  showEditModal.value = true
+}
+
+function onTaskUpdated(updated: Task) {
+  const index = tasks.value.findIndex((t) => t.id === updated.id)
+  if (index !== -1) tasks.value[index] = updated
 }
 </script>
 
@@ -224,7 +232,17 @@ function editTask(task: Task) {
       </div>
     </template>
 
-    <CreateTaskDialog v-model:open="showCreateModal" @created="(t) => tasks.unshift(t)" />
+    <CreateTaskDialog
+      v-model:open="showCreateModal"
+      :task="null"
+      @created="(t) => tasks.unshift(t)"
+    />
+    <CreateTaskDialog
+      v-model:open="showEditModal"
+      :task="editingTask"
+      @updated="onTaskUpdated"
+      @update:open="showEditModal = false"
+    />
     <ViewTaskDialog
       v-model:open="showViewModal"
       :task="selectedTask"

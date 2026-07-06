@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { Component } from 'vue'
 import { useRouter } from 'vue-router'
 import { taskService } from '@/services/task.service'
@@ -95,14 +95,6 @@ const editingTask = ref<Task | null>(null)
 const filterStatus = ref<'ALL' | 'PENDING' | 'COMPLETED'>('ALL')
 const filterPriority = ref<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL')
 const searchQuery = ref('')
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
-
-watch(searchQuery, () => {
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    fetchTasks(searchQuery.value)
-  }, 700)
-})
 
 const filteredTasks = computed(() => {
   let result = tasks.value
@@ -111,6 +103,14 @@ const filteredTasks = computed(() => {
   }
   if (filterPriority.value !== 'ALL') {
     result = result.filter((t) => t.priority === filterPriority.value)
+  }
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        (t.description && t.description.toLowerCase().includes(q)),
+    )
   }
   return result
 })
@@ -126,10 +126,10 @@ onMounted(async () => {
   await fetchTasks()
 })
 
-async function fetchTasks(search?: string) {
+async function fetchTasks() {
   try {
     loading.value = true
-    tasks.value = await taskService.getAllTasks(search)
+    tasks.value = await taskService.getAllTasks()
   } catch (e) {
     console.error(e)
   } finally {

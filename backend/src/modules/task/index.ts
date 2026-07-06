@@ -1,4 +1,4 @@
-import { Elysia, status } from 'elysia'
+import { Elysia, status, t } from 'elysia'
 import { authPlugin } from '../../shared/utils/auth-plugin'
 import { TaskModel } from './model'
 import { TaskService } from './service'
@@ -7,11 +7,14 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
   .use(authPlugin)
   .get(
     '/',
-    async ({ requireAuth }) => {
+    async ({ requireAuth, query: { search } }) => {
       const userId = requireAuth()
-      return await TaskService.findAll(userId)
+      return await TaskService.findAll(userId, search)
     },
     {
+      query: t.Object({
+        search: t.Optional(t.String()),
+      }),
       response: TaskModel.tasksListResponse,
     },
   )
