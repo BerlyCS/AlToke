@@ -105,7 +105,7 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
     async ({ requireAuth, params }) => {
       const userId = requireAuth()
       const task = await TaskService.restore(userId, params.id)
-      if (!task) throw status(404, 'Task not found in trash' satisfies TaskModel['errorNotFound'])
+      if (!task) throw status(404, 'Task not found' satisfies TaskModel['errorNotFound'])
       return task
     },
     {
