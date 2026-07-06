@@ -9,7 +9,7 @@ import ModeToggle from '@/components/ModeToggle.vue'
     <AppSidebar />
     <SidebarInset>
       <header
-        class="flex justify-between h-14 shrink-0 items-center border-b bg-background/95 backdrop-blur px-4 sticky top-0 z-10"
+        class="flex justify-between h-14 shrink-0 items-center border-b bg-background/95 backdrop-blur px-4 sticky top-0 z-[5]"
       >
         <div class="flex items-center gap-2">
           <SidebarTrigger class="-ml-1" />
