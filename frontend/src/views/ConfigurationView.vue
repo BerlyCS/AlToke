@@ -82,6 +82,7 @@ async function saveChanges() {
     }
     await userService.updateProfile(updatedProfile)
     await getProfile()
+    authStore.updateProfile(updatedProfile)
     alert('Cambios guardados exitosamente.')
   } catch (e) {
     console.error(e)

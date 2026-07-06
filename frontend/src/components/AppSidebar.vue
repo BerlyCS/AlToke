@@ -29,7 +29,7 @@ const menuItems = [
   { title: 'Configuración', icon: Settings, url: '/configuracion' },
 ]
 
-const userXp = 10
+const userXp = authStore.profile?.xp || 0
 const nextLevelXp = 100
 </script>
 
@@ -80,11 +80,11 @@ const nextLevelXp = 100
           <Avatar
             class="h-12 w-12 rounded-xl shadow-sm border border-primary-foreground/20 bg-primary-foreground/10 transition-transform duration-300 group-hover:scale-105"
           >
-            <AvatarImage :src="authStore.user?.avatarUrl || ''" alt="Avatar del usuario" />
+            <AvatarImage :src="authStore.profile?.avatarUrl || ''" alt="Avatar del usuario" />
             <AvatarFallback class="rounded-xl font-bold text-primary bg-background">
               {{
-                authStore.user?.nickname?.charAt(0)?.toUpperCase() ||
-                authStore.user?.email?.charAt(0)?.toUpperCase() ||
+                authStore.profile?.nickname?.charAt(0)?.toUpperCase() ||
+                authStore.profile?.email?.charAt(0)?.toUpperCase() ||
                 'US'
               }}
             </AvatarFallback>
@@ -92,7 +92,7 @@ const nextLevelXp = 100
 
           <div class="flex flex-col min-w-0">
             <span class="font-bold text-base truncate">{{
-              authStore.user?.nickname || 'Jugador'
+              authStore.profile?.nickname || 'Jugador'
             }}</span>
             <span class="text-sm text-primary-foreground/80 font-bold">Nivel 1</span>
           </div>
