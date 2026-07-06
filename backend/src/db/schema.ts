@@ -209,3 +209,43 @@ export const taskSuggestions = pgTable('task_suggestions', {
   status: varchar('status', { length: 20 }).default('PENDING').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
+
+export const friendshipStatusEnum = pgEnum('friendship_status', ['PENDING', 'ACCEPTED', 'REJECTED'])
+
+export const friendships = pgTable(
+  'friendships',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    requesterId: uuid('requester_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    addresseeId: uuid('addressee_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    status: friendshipStatusEnum('status').default('PENDING').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('friendships_requester_addressee_idx').on(table.requesterId, table.addresseeId),
+    index('friendships_addressee_idx').on(table.addresseeId),
+  ],
+)
+
+export const friendshipsRelations = relations(friendships, ({ one }) => ({
+  requester: one(users, {
+    fields: [friendships.requesterId],
+    references: [users.id],
+    relationName: 'requestedFriendships',
+  }),
+  addressee: one(users, {
+    fields: [friendships.addresseeId],
+    references: [users.id],
+    relationName: 'receivedFriendships',
+  }),
+}))
+
+export const usersRelations = relations(users, ({ many }) => ({
+  requestedFriendships: many(friendships, { relationName: 'requestedFriendships' }),
+  receivedFriendships: many(friendships, { relationName: 'receivedFriendships' }),
+}))

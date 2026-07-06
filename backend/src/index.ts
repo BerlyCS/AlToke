@@ -10,6 +10,7 @@ import { userRoutes } from './modules/user'
 import { taskRoutes } from './modules/task'
 import { TaskService } from './modules/task/service'
 import { tagRoutes } from './modules/tag'
+import { friendshipRoutes } from './modules/friendship'
 
 export const app = new Elysia()
   .use(cors())
@@ -34,7 +35,8 @@ export const app = new Elysia()
       .use(tagRoutes)
       .use(gamificationModule)
       .use(notificationRoutes)
-      .use(aiModule),
+      .use(aiModule)
+      .use(friendshipRoutes),
   )
 
 export type App = typeof app

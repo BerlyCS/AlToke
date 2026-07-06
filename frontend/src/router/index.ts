@@ -44,6 +44,11 @@ const router = createRouter({
           name: 'ranking',
           component: () => import('../views/RankingView.vue'),
         },
+        {
+          path: '/amigos',
+          name: 'friends',
+          component: () => import('../views/FriendsView.vue'),
+        },
       ],
     },
   ],

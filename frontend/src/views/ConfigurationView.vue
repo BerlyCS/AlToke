@@ -6,6 +6,7 @@ import CardContent from '@/components/ui/card/CardContent.vue'
 import CardHeader from '@/components/ui/card/CardHeader.vue'
 import CardTitle from '@/components/ui/card/CardTitle.vue'
 import Input from '@/components/ui/input/Input.vue'
+import Textarea from '@/components/ui/textarea/Textarea.vue'
 import Label from '@/components/ui/label/Label.vue'
 import { useAuthStore } from '@/stores/auth'
 import { userService } from '@/services/user.service'
@@ -168,10 +169,11 @@ async function saveChanges() {
 
             <div>
               <Label for="bio"> Descripción </Label>
-              <Input
+              <Textarea
                 id="bio"
                 v-model="edition.bio"
-                class="mt-2"
+                class="mt-2 resize-none"
+                rows="4"
                 placeholder="Cuéntanos algo sobre ti..."
               />
             </div>

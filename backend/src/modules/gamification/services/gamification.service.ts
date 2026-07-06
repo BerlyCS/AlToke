@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { status } from 'elysia'
 import { GamificationRepository } from '../repositories/gamification.repository'
+import { FriendshipRepository } from '../../friendship/repositories/friendship.repository'
 import type { Achievement, LeaderboardEntry, UseItemResult } from '../domain/entities'
 
 const DAILY_XP_CAP = 500
@@ -209,17 +210,36 @@ export class GamificationService {
   }
 
   static async getFriendsLeaderboard(userId: string): Promise<LeaderboardEntry[]> {
-    // NOTE: requires a friends/follows table to be meaningful
-    // Currently returns all users except the current one as a fallback
-    const friends = await this.repo.getFriendsStats(userId)
-    return friends.map((friend, index) => ({
-      userId: friend.userId,
-      nickname: null,
-      avatarUrl: null,
-      currentLevel: friend.currentLevel,
-      totalXp: friend.totalXp,
-      streakCount: friend.streakCount,
-      maxStreak: friend.maxStreak,
+    const friends = await FriendshipRepository.getFriends(userId)
+    const currentUserStats = await this.repo.findStatsByUserId(userId)
+    const currentUser = await this.repo.findUserById(userId)
+    
+    const entries = friends.map(f => ({
+      userId: f.friend.id,
+      nickname: f.friend.nickname ?? null,
+      avatarUrl: f.friend.avatarUrl ?? null,
+      currentLevel: f.friend.level ?? 1,
+      totalXp: f.friend.xp ?? 0,
+      streakCount: f.friend.currentStreak ?? 0,
+      maxStreak: 0, // not returned by default friend profile, could fetch if needed
+    }))
+    
+    if (currentUserStats && currentUser) {
+      entries.push({
+        userId: currentUserStats.userId,
+        nickname: currentUser.nickname ?? null,
+        avatarUrl: currentUser.avatarUrl ?? null,
+        currentLevel: currentUserStats.currentLevel ?? 1,
+        totalXp: currentUserStats.totalXp,
+        streakCount: currentUserStats.streakCount,
+        maxStreak: currentUserStats.maxStreak,
+      })
+    }
+    
+    entries.sort((a, b) => b.totalXp - a.totalXp)
+    
+    return entries.map((entry, index) => ({
+      ...entry,
       rank: index + 1,
     }))
   }
