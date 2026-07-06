@@ -277,10 +277,7 @@ function formatTime(val: string | Date) {
             ? 'bg-destructive/20 text-destructive shadow-lg border border-destructive/30'
             : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
         "
-        @click="
-          showTrash = true
-          fetchTrashedTasks()
-        "
+        @click="((showTrash = true), fetchTrashedTasks())"
       >
         <Archive class="w-4 h-4" />
         Papelera
