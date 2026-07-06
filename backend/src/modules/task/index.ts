@@ -30,6 +30,16 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
     },
   )
   .get(
+    '/trash',
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+      return await TaskService.findTrashed(userId)
+    },
+    {
+      response: TaskModel.tasksListResponse,
+    },
+  )
+  .get(
     '/:id',
     async ({ requireAuth, params }) => {
       const userId = requireAuth()
@@ -86,6 +96,21 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
     {
       response: {
         200: TaskModel.completeTaskResponse,
+        404: TaskModel.errorNotFound,
+      },
+    },
+  )
+  .patch(
+    '/:id/restore',
+    async ({ requireAuth, params }) => {
+      const userId = requireAuth()
+      const task = await TaskService.restore(userId, params.id)
+      if (!task) throw status(404, 'Task not found in trash' satisfies TaskModel['errorNotFound'])
+      return task
+    },
+    {
+      response: {
+        200: TaskModel.taskResponse,
         404: TaskModel.errorNotFound,
       },
     },
