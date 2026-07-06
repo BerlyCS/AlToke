@@ -1,4 +1,4 @@
-import { Elysia, status } from 'elysia'
+import { Elysia, status, t } from 'elysia'
 import { authPlugin } from '../../shared/utils/auth-plugin'
 import { TaskModel } from './model'
 import { TaskService } from './service'
@@ -7,11 +7,14 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
   .use(authPlugin)
   .get(
     '/',
-    async ({ requireAuth }) => {
+    async ({ requireAuth, query: { search } }) => {
       const userId = requireAuth()
-      return await TaskService.findAll(userId)
+      return await TaskService.findAll(userId, search)
     },
     {
+      query: t.Object({
+        search: t.Optional(t.String()),
+      }),
       response: TaskModel.tasksListResponse,
     },
   )
@@ -24,6 +27,16 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
     {
       body: TaskModel.createTaskBody,
       response: TaskModel.taskResponse,
+    },
+  )
+  .get(
+    '/trash',
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+      return await TaskService.findTrashed(userId)
+    },
+    {
+      response: TaskModel.tasksListResponse,
     },
   )
   .get(
@@ -83,6 +96,21 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
     {
       response: {
         200: TaskModel.completeTaskResponse,
+        404: TaskModel.errorNotFound,
+      },
+    },
+  )
+  .patch(
+    '/:id/restore',
+    async ({ requireAuth, params }) => {
+      const userId = requireAuth()
+      const task = await TaskService.restore(userId, params.id)
+      if (!task) throw status(404, 'Task not found' satisfies TaskModel['errorNotFound'])
+      return task
+    },
+    {
+      response: {
+        200: TaskModel.taskResponse,
         404: TaskModel.errorNotFound,
       },
     },

@@ -1,4 +1,4 @@
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, isNotNull, ilike, or, lt } from 'drizzle-orm'
 import { db } from '../../db'
 import { tasks, taskTags } from '../../db/schema'
 import { GamificationService } from '../gamification/services'
@@ -47,9 +47,15 @@ export abstract class TaskService {
     return await this.findById(userId, task!.id)
   }
 
-  static async findAll(userId: string) {
+  static async findAll(userId: string, search?: string) {
     const tasksData = await db.query.tasks.findMany({
-      where: and(eq(tasks.userId, userId), isNull(tasks.deletedAt)),
+      where: and(
+        eq(tasks.userId, userId),
+        isNull(tasks.deletedAt),
+        search
+          ? or(ilike(tasks.title, `%${search}%`), ilike(tasks.description, `%${search}%`))
+          : undefined,
+      ),
       with: {
         taskTags: {
           with: {
@@ -139,5 +145,41 @@ export abstract class TaskService {
       leveledUp: xpResult.leveledUp,
       newLevel: xpResult.currentLevel,
     }
+  }
+
+  static async findTrashed(userId: string) {
+    const tasksData = await db.query.tasks.findMany({
+      where: and(eq(tasks.userId, userId), isNotNull(tasks.deletedAt)),
+      with: {
+        taskTags: {
+          with: { tag: true },
+        },
+      },
+      orderBy: (tasks, { desc }) => [desc(tasks.deletedAt)],
+    })
+
+    return tasksData.map((task) => {
+      const { taskTags, ...rest } = task
+      return { ...rest, tags: taskTags.map((tt) => tt.tag) }
+    })
+  }
+
+  static async restore(userId: string, taskId: string) {
+    const [task] = await db
+      .update(tasks)
+      .set({ deletedAt: null, updatedAt: new Date() })
+      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId), isNotNull(tasks.deletedAt)))
+      .returning()
+    return task || null
+  }
+
+  static async permanentlyDeleteOld() {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 30)
+    const result = await db
+      .delete(tasks)
+      .where(and(isNotNull(tasks.deletedAt), lt(tasks.deletedAt, cutoff)))
+      .returning({ id: tasks.id })
+    return result.length
   }
 }

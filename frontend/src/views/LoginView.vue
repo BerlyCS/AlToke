@@ -197,6 +197,7 @@ import logoUrl from '@/assets/images/logo.webp'
 import { Trophy, Target, Flame } from 'lucide-vue-next'
 import { ref, reactive, onMounted } from 'vue'
 import { authService } from '../services/auth.service'
+import { userService } from '../services/user.service'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 
@@ -232,7 +233,10 @@ const handleSubmit = async () => {
           nickname: form.nickname,
         })
 
-    authStore.setAuth(res.user, res.token)
+    // persist token first so getProfile() can use it
+    localStorage.setItem('token', res.token)
+    const profile = await userService.getProfile()
+    authStore.setAuth(res.user, profile, res.token)
     router.push('/dashboard')
   } catch (err: unknown) {
     if (err instanceof Error) errorMsg.value = err.message
@@ -247,7 +251,11 @@ const handleGoogleCallback = async (response: { credential: string }) => {
 
   try {
     const res = await authService.googleLogin(response.credential)
-    authStore.setAuth(res.user, res.token)
+
+    // persist token first so getProfile() can use it
+    localStorage.setItem('token', res.token)
+    const profile = await userService.getProfile()
+    authStore.setAuth(res.user, profile, res.token)
     router.push('/dashboard')
   } catch (err: unknown) {
     if (err instanceof Error) errorMsg.value = err.message

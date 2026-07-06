@@ -16,6 +16,7 @@ export interface Task {
   dueDate?: string | Date
   recurrence?: string
   tags?: Tag[]
+  deletedAt?: string | Date | null
   createdAt: string | Date
   updatedAt: string | Date
 }
@@ -25,6 +26,25 @@ export interface User {
   email: string
   nickname?: string
   avatarUrl?: string
+}
+
+export interface Privacy {
+  showLevel: boolean
+  showStreak: boolean
+  showAchievements: boolean
+}
+
+export interface UserProfile {
+  id: string
+  email: string
+  nickname: string
+  bio?: string | null
+  avatarUrl?: string | null
+  xp: number
+  level: number
+  currentStreak: number
+  maxStreak: number
+  privacy?: Privacy
 }
 
 export interface Credentials {

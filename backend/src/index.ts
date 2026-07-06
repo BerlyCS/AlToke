@@ -8,6 +8,7 @@ import { gamificationModule } from './modules/gamification'
 import { notificationRoutes } from './modules/notification'
 import { userRoutes } from './modules/user'
 import { taskRoutes } from './modules/task'
+import { TaskService } from './modules/task/service'
 import { tagRoutes } from './modules/tag'
 
 export const app = new Elysia()
@@ -42,4 +43,16 @@ if (import.meta.main) {
   const server = app.listen(serverConfig)
 
   console.log(`🦊 Elysia is running at ${server.server?.hostname}:${server.server?.port}`)
+
+  const runCleanup = async () => {
+    try {
+      const count = await TaskService.permanentlyDeleteOld()
+      if (count > 0) console.log(`Cleanup: removed ${count} expired trashed task(s)`)
+    } catch (e) {
+      console.error('Cleanup error:', e)
+    }
+  }
+
+  runCleanup()
+  setInterval(runCleanup, 60 * 60 * 1000)
 }

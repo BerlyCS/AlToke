@@ -20,14 +20,15 @@ const tasks = ref<Task[]>([])
 const loading = ref(true)
 const showCreateModal = ref(false)
 const showViewModal = ref(false)
+const showEditModal = ref(false)
 const selectedTask = ref<Task | null>(null)
+const editingTask = ref<Task | null>(null)
 
 const completedTasksCount = computed(() => {
   return tasks.value.filter((t) => t.status === 'COMPLETED').length
 })
 
 // Mock values for stats
-const xpEarned = ref(3500)
 const globalRanking = ref(8)
 const currentStreak = ref(14)
 
@@ -82,7 +83,13 @@ function openTask(task: Task) {
 }
 
 function editTask(task: Task) {
-  alert('Editar tarea: Próximamente')
+  editingTask.value = task
+  showEditModal.value = true
+}
+
+function onTaskUpdated(updated: Task) {
+  const index = tasks.value.findIndex((t) => t.id === updated.id)
+  if (index !== -1) tasks.value[index] = updated
 }
 </script>
 
@@ -91,7 +98,7 @@ function editTask(task: Task) {
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
       <div>
         <p class="text-muted-foreground font-semibold">Bienvenido de nuevo</p>
-        <h2 class="text-4xl font-black mt-2">Hola, {{ authStore.user?.nickname || 'Jugador' }}</h2>
+        <h2 class="text-4xl font-black mt-2">Hola, {{ authStore.profile?.nickname || 'Jugador' }}</h2>
       </div>
 
       <div class="flex gap-4">
@@ -129,7 +136,7 @@ function editTask(task: Task) {
         />
         <StatCard
           title="XP Ganada"
-          :value="xpEarned"
+          :value="authStore.profile?.xp || 0"
           :icon="Zap"
           complement-info="Nivel actual"
           bgColor="bg-warning/10"
@@ -224,7 +231,17 @@ function editTask(task: Task) {
       </div>
     </template>
 
-    <CreateTaskDialog v-model:open="showCreateModal" @created="(t) => tasks.unshift(t)" />
+    <CreateTaskDialog
+      v-model:open="showCreateModal"
+      :task="null"
+      @created="(t) => tasks.unshift(t)"
+    />
+    <CreateTaskDialog
+      v-model:open="showEditModal"
+      :task="editingTask"
+      @updated="onTaskUpdated"
+      @update:open="showEditModal = false"
+    />
     <ViewTaskDialog
       v-model:open="showViewModal"
       :task="selectedTask"

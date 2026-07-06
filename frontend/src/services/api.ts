@@ -10,6 +10,7 @@ import type {
   TaskOverloadPrediction,
   TaskSuggestion,
   UseItemResult,
+  UserProfile,
 } from '@/types'
 
 type ApiResult<T> = Promise<{
@@ -65,11 +66,17 @@ type ApiClientContract = {
     tasks: {
       get: (options: AuthHeaders) => ApiResult<Task[]>
       post: (body: Partial<Task>, options: AuthHeaders) => ApiResult<Task>
+      trash: {
+        get: (options: AuthHeaders) => ApiResult<Task[]>
+      }
     } & ((params: { id: string }) => {
       patch: (body: Partial<Task>, options: AuthHeaders) => ApiResult<Task>
       delete: (body: Record<string, never>, options: AuthHeaders) => ApiResult<Task>
       complete: {
         patch: (body: Record<string, never>, options: AuthHeaders) => ApiResult<CompleteTaskResult>
+      }
+      restore: {
+        patch: (body: Record<string, never>, options: AuthHeaders) => ApiResult<Task>
       }
     })
     gamification: {
@@ -84,6 +91,12 @@ type ApiClientContract = {
         use: {
           post: (body: { itemId: string }, options: AuthHeaders) => ApiResult<UseItemResult>
         }
+      }
+    }
+    users: {
+      profile: {
+        get: (options: AuthHeaders) => ApiResult<UserProfile>
+        patch: (body: Partial<UserProfile>, options: AuthHeaders) => ApiResult<UserProfile>
       }
     }
   }

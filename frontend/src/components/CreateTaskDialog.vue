@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { taskService } from '@/services/task.service'
 import { tagService } from '@/services/tag.service'
-import type { Tag } from '@/types'
+import type { Tag, Task } from '@/types'
 import type { Component } from 'vue'
 
 import {
@@ -66,11 +66,14 @@ const IconMap: Record<string, Component> = {
   AlignLeft,
 }
 
-defineProps<{
+const props = defineProps<{
   open: boolean
+  task: Task | null
 }>()
 
-const emit = defineEmits(['update:open', 'created'])
+const emit = defineEmits(['update:open', 'created', 'updated'])
+
+const isEditing = computed(() => !!props.task)
 
 const isSubmitting = ref(false)
 
@@ -140,6 +143,50 @@ onMounted(async () => {
   }
 })
 
+function resetForm() {
+  newTask.value = {
+    title: '',
+    description: '',
+    type: 'TASK',
+    priority: 'MEDIUM',
+    estimatedTime: '',
+    recurrence: 'NONE',
+  }
+  dueDate.value = getTomorrow()
+  dueTime.value = getCurrentTime()
+  selectedTags.value.clear()
+}
+
+watch(
+  () => props.task,
+  (task) => {
+    if (!task) {
+      if (!props.open) resetForm()
+      return
+    }
+    newTask.value.title = task.title
+    newTask.value.description = task.description || ''
+    newTask.value.type = task.type || 'TASK'
+    newTask.value.priority = task.priority || 'MEDIUM'
+    newTask.value.estimatedTime = task.estimatedTime?.toString() || ''
+    newTask.value.recurrence = task.recurrence || 'NONE'
+    if (task.dueDate) {
+      const d = new Date(task.dueDate)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      dueDate.value = today(getLocalTimeZone()).set({
+        year,
+        month: parseInt(month),
+        day: parseInt(day),
+      }) as unknown as DateValue
+      dueTime.value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    }
+    selectedTags.value = new Set(task.tags?.map((t) => t.id) || [])
+  },
+  { immediate: true, deep: true },
+)
+
 async function createNewTag() {
   if (!newTag.value.name) return
   try {
@@ -185,25 +232,19 @@ async function createTask() {
       ...(finalDueDate && { dueDate: finalDueDate }),
     }
 
-    const created = await taskService.createTask(payload)
-    emit('created', created)
-
-    // Reset form
-    newTask.value = {
-      title: '',
-      description: '',
-      type: 'TASK',
-      priority: 'MEDIUM',
-      estimatedTime: '',
-      recurrence: 'NONE',
+    if (isEditing.value && props.task) {
+      const updated = await taskService.updateTask(props.task.id, payload)
+      emit('updated', updated)
+    } else {
+      const created = await taskService.createTask(payload)
+      emit('created', created)
     }
-    dueDate.value = getTomorrow()
-    dueTime.value = getCurrentTime()
-    selectedTags.value.clear()
+
+    resetForm()
     emit('update:open', false)
   } catch (e) {
     console.error(e)
-    alert('Error al crear tarea')
+    alert(isEditing.value ? 'Error al actualizar tarea' : 'Error al crear tarea')
   } finally {
     isSubmitting.value = false
   }
@@ -214,9 +255,15 @@ async function createTask() {
   <Dialog :open="open" @update:open="$emit('update:open', $event)">
     <DialogContent class="sm:max-w-137.5 p-0 overflow-hidden border-border bg-background">
       <DialogHeader class="px-6 pt-6 pb-2">
-        <DialogTitle class="font-bold text-2xl">Nueva tarea</DialogTitle>
+        <DialogTitle class="font-bold text-2xl">{{
+          isEditing ? 'Editar tarea' : 'Nueva tarea'
+        }}</DialogTitle>
         <DialogDescription class="text-base">
-          Organiza tu proximo objetivo gana xp
+          {{
+            isEditing
+              ? 'Actualiza los detalles de tu tarea'
+              : 'Organiza tu proximo objetivo gana xp'
+          }}
         </DialogDescription>
       </DialogHeader>
       <ScrollArea class="max-h-[70vh] pr-4 -mr-4">
@@ -441,7 +488,15 @@ async function createTask() {
               :disabled="isSubmitting || !newTask.title"
               class="px-8 font-bold"
             >
-              {{ isSubmitting ? 'Creando...' : 'Guardar Tarea' }}
+              {{
+                isSubmitting
+                  ? isEditing
+                    ? 'Actualizando...'
+                    : 'Creando...'
+                  : isEditing
+                    ? 'Actualizar Tarea'
+                    : 'Guardar Tarea'
+              }}
             </Button>
           </DialogFooter>
         </Card>
