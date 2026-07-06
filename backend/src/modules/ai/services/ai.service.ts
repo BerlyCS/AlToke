@@ -161,7 +161,7 @@ export class AIService {
           recentTasks,
           recentHistory: recentHistory.slice(0, 5),
         },
-        maxTokens: 800,
+        maxTokens: 3000,
         schema: recommendationSchema,
       })
 
@@ -245,7 +245,7 @@ export class AIService {
           date: date.toISOString(),
           weekday,
         } satisfies OverloadContext,
-        maxTokens: 200,
+        maxTokens: 500,
         schema: overloadSchema,
       })
     } catch (error) {

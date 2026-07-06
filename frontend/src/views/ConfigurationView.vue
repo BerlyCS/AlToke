@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import Button from '@/components/ui/button/Button.vue'
 import Card from '@/components/ui/card/Card.vue'
 import CardContent from '@/components/ui/card/CardContent.vue'
@@ -29,18 +29,40 @@ const authStore = useAuthStore()
 
 // Local editable state
 const loading = ref(false)
-const profile = ref<UserProfile | null>(null)
+const saving = ref(false)
+const originalProfile = ref<UserProfile | null>(null)
 
-const edition = ref({
+const editProfile = ref({
   nickname: '',
   bio: '',
-  avatarUrl: '',
+  avatarUrl: ''
+})
+
+const editPrivacy = ref({
   showLevel: true,
   showStreak: true,
   showAchievements: true,
 })
 
 const avatarSeed = ref<string>('')
+
+const hasProfileChanges = computed(() => {
+  return (
+    editProfile.value.nickname !== originalProfile.value?.nickname ||
+    editProfile.value.bio !== originalProfile.value.bio ||
+    editProfile.value.avatarUrl !== originalProfile.value.avatarUrl
+  )
+})
+
+const hasPrivacyChanges = computed(() => {
+  return (
+    editPrivacy.value.showLevel !== originalProfile.value?.privacy?.showLevel ||
+    editPrivacy.value.showStreak !== originalProfile.value.privacy.showStreak ||
+    editPrivacy.value.showAchievements !== originalProfile.value.privacy.showAchievements
+  )
+})
+
+const hasChanges = computed(() => hasProfileChanges.value || hasPrivacyChanges.value)
 
 function buildAvatarUrl(seed: string) {
   const s = encodeURIComponent(seed || '')
@@ -53,7 +75,7 @@ function randomSeed() {
   avatarSeed.value = Array.from(arr)
     .map((n) => n.toString(36))
     .join('-')
-  edition.value.avatarUrl = buildAvatarUrl(avatarSeed.value)
+  editProfile.value.avatarUrl = buildAvatarUrl(avatarSeed.value)
 }
 
 onMounted(async () => {
@@ -67,13 +89,13 @@ onMounted(async () => {
 async function getProfile() {
   try {
     loading.value = true
-    profile.value = await userService.getProfile()
-    edition.value.nickname = profile.value.nickname ?? ''
-    edition.value.bio = profile.value.bio ?? ''
-    edition.value.avatarUrl = profile.value.avatarUrl ?? ''
-    edition.value.showLevel = profile.value.privacy?.showLevel ?? true
-    edition.value.showStreak = profile.value.privacy?.showStreak ?? true
-    edition.value.showAchievements = profile.value.privacy?.showAchievements ?? true
+    originalProfile.value = await userService.getProfile()
+    editProfile.value.nickname = originalProfile.value.nickname ?? ''
+    editProfile.value.bio = originalProfile.value.bio ?? ''
+    editProfile.value.avatarUrl = originalProfile.value.avatarUrl ?? ''
+    editPrivacy.value.showLevel = originalProfile.value.privacy?.showLevel ?? true
+    editPrivacy.value.showStreak = originalProfile.value.privacy?.showStreak ?? true
+    editPrivacy.value.showAchievements = originalProfile.value.privacy?.showAchievements ?? true
   } catch (e) {
     console.error(e)
   } finally {
@@ -82,6 +104,8 @@ async function getProfile() {
 }
 
 async function saveChanges() {
+  if (!hasChanges.value) return
+
   try {
     if (!profile.value) throw new Error('No profile loaded')
     const updatedProfile: UserProfile = {
@@ -105,7 +129,7 @@ async function saveChanges() {
       description: e?.message || 'Por favor, inténtalo de nuevo.',
     })
   } finally {
-    loading.value = false
+    saving.value = false
   }
 }
 </script>
@@ -124,7 +148,8 @@ async function saveChanges() {
       <Button
         class="h-12 px-5 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg flex items-center gap-3 hover:scale-[1.02] transition duration-300"
         @click="saveChanges"
-        :loading="loading"
+        :loading="saving"
+        :disabled="loading || saving || !hasChanges"
       >
         <Save class="w-5 h-5" />
         Guardar Cambios
@@ -144,7 +169,7 @@ async function saveChanges() {
           <div class="flex flex-col items-center">
             <div class="relative rounded-3xl overflow-hidden border-4 border-primary/20 shadow-xl">
               <img
-                :src="edition.avatarUrl"
+                :src="editProfile.avatarUrl"
                 alt="Avatar"
                 class="w-38 h-38 object-cover bg-background"
               />
@@ -163,7 +188,7 @@ async function saveChanges() {
               <Label htmlFor="nickname">Apodo</Label>
               <Input
                 id="nickname"
-                v-model="edition.nickname"
+                v-model="editProfile.nickname"
                 class="mt-2"
                 placeholder="Ingresa tu apodo"
               />
@@ -210,7 +235,15 @@ async function saveChanges() {
               </div>
             </div>
 
-            <input type="checkbox" v-model="edition.showLevel" class="h-5 w-5" />
+            <div class="flex items-center gap-2">
+              <Label for="show-level" class="sr-only">Mostrar nivel</Label>
+              <input
+                id="show-level"
+                type="checkbox"
+                v-model="editPrivacy.showLevel"
+                class="h-5 w-5"
+              />
+            </div>
           </div>
 
           <div
@@ -229,7 +262,15 @@ async function saveChanges() {
               </div>
             </div>
 
-            <input type="checkbox" v-model="edition.showStreak" class="h-5 w-5" />
+            <div class="flex items-center gap-2">
+              <Label for="show-streak" class="sr-only">Mostrar racha</Label>
+              <input
+                id="show-streak"
+                type="checkbox"
+                v-model="editPrivacy.showStreak"
+                class="h-5 w-5"
+              />
+            </div>
           </div>
 
           <div
@@ -248,7 +289,15 @@ async function saveChanges() {
               </div>
             </div>
 
-            <input type="checkbox" v-model="edition.showAchievements" class="h-5 w-5" />
+            <div class="flex items-center gap-2">
+              <Label for="show-achievements" class="sr-only">Mostrar logros</Label>
+              <input
+                id="show-achievements"
+                type="checkbox"
+                v-model="editPrivacy.showAchievements"
+                class="h-5 w-5"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

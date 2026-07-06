@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { taskService } from '@/services/task.service'
 import { tagService } from '@/services/tag.service'
 import { toast } from 'vue-sonner'
+import { aiService } from '@/services/ai.service'
 import { useAuthStore } from '@/stores/auth'
 import {
   useGamification,
@@ -12,10 +13,19 @@ import {
   processAchievementsQueue,
 } from '@/composables/useGamification'
 import type { Task, Tag } from '@/types'
+import type { Task, Tag, TaskSuggestion } from '@/types'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -33,6 +43,7 @@ import {
   Trash2,
   RefreshCw,
   Archive,
+  Sparkles,
   Tag as TagIcon,
   Briefcase,
   Home,
@@ -114,6 +125,10 @@ const filterPriority = ref<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL')
 const filterType = ref<'ALL' | 'TASK' | 'MEETING' | 'EVENT'>('ALL')
 const selectedTagIds = ref<Set<string>>(new Set())
 const searchQuery = ref('')
+const aiSuggestions = ref<TaskSuggestion[]>([])
+const aiLoading = ref(false)
+const aiError = ref('')
+const showAiDialog = ref(false)
 
 const filteredTasks = computed(() => {
   let result = tasks.value
@@ -194,6 +209,35 @@ async function restoreTask(id: string) {
   } catch (e: any) {
     console.error(e)
     toast.error('Error al restaurar tarea', { description: e?.message })
+  }
+}
+
+async function fetchAiSuggestions() {
+  aiError.value = ''
+  aiLoading.value = true
+  try {
+    const result = await aiService.getSuggestions()
+    aiSuggestions.value = result.suggestions
+    showAiDialog.value = true
+  } catch (e) {
+    aiError.value = 'No se pudieron obtener sugerencias'
+    console.error(e)
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+async function acceptSuggestion(s: TaskSuggestion) {
+  try {
+    const created = await taskService.createTask({
+      title: s.suggestedTitle,
+      estimatedTime: 30,
+      dueDate: s.suggestedTime,
+    })
+    tasks.value.unshift(created)
+    aiSuggestions.value = aiSuggestions.value.filter((x) => x.id !== s.id)
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -291,6 +335,20 @@ function formatTime(val: string | Date) {
       >
         <Plus class="w-5 h-5" />
         Nueva tarea
+      </Button>
+      <Button
+        variant="outline"
+        class="h-12 px-5 rounded-2xl font-bold border-border gap-2 relative overflow-hidden"
+        :disabled="aiLoading"
+        @click="fetchAiSuggestions()"
+      >
+        <div v-if="aiLoading" class="absolute inset-0 bg-primary/10">
+          <div class="h-full bg-primary/20 animate-pulse" style="width: 60%"></div>
+        </div>
+        <span class="relative z-10 flex items-center gap-2">
+          <Sparkles :class="aiLoading ? 'animate-spin' : ''" class="w-5 h-5 text-yellow-500" />
+          {{ aiLoading ? 'Analizando...' : 'Sugerencias IA' }}
+        </span>
       </Button>
     </div>
 
@@ -672,5 +730,49 @@ function formatTime(val: string | Date) {
       @toggle-status="toggleStatus"
       @edit-task="editTask"
     />
+
+    <Dialog v-model:open="showAiDialog">
+      <DialogContent class="sm:max-w-lg border-border bg-background">
+        <DialogHeader>
+          <DialogTitle class="font-bold text-2xl flex items-center gap-2">
+            <Sparkles class="w-6 h-6 text-yellow-500" />
+            Sugerencias IA
+          </DialogTitle>
+          <DialogDescription>
+            Basado en tu historial de tareas y hábitos
+          </DialogDescription>
+        </DialogHeader>
+        <div v-if="aiLoading" class="flex justify-center py-8">
+          <div class="w-8 h-8 border-4 border-white/10 border-l-primary rounded-full animate-spin"></div>
+        </div>
+        <div v-else-if="aiError" class="text-center py-8 text-muted-foreground">
+          <p>{{ aiError }}</p>
+        </div>
+        <div v-else-if="aiSuggestions.length === 0" class="text-center py-8 text-muted-foreground">
+          <p>No hay sugerencias disponibles en este momento.</p>
+        </div>
+        <div v-else class="grid gap-4 py-4">
+          <div
+            v-for="s in aiSuggestions"
+            :key="s.id"
+            class="p-4 rounded-xl border border-border bg-card space-y-2"
+          >
+            <h4 class="font-bold text-lg">{{ s.suggestedTitle }}</h4>
+            <p class="text-sm text-muted-foreground">{{ s.explanation }}</p>
+            <div class="flex gap-2 pt-2">
+              <Button size="sm" class="font-bold" @click="acceptSuggestion(s)">
+                Aceptar
+              </Button>
+              <Button size="sm" variant="ghost" @click="aiSuggestions = aiSuggestions.filter((x) => x.id !== s.id)">
+                Descartar
+              </Button>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showAiDialog = false">Cerrar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
