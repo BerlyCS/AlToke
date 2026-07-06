@@ -9,7 +9,16 @@ import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import { useAuthStore } from '@/stores/auth'
 import { userService } from '@/services/user.service'
-import { RefreshCw, Save, Settings2, Sparkles, Trophy, UserRound, BadgeIcon, Flame } from 'lucide-vue-next'
+import {
+  RefreshCw,
+  Save,
+  Settings2,
+  Sparkles,
+  Trophy,
+  UserRound,
+  BadgeIcon,
+  Flame,
+} from 'lucide-vue-next'
 import router from '@/router'
 import type { UserProfile } from '@/types'
 
@@ -38,7 +47,9 @@ function buildAvatarUrl(seed: string) {
 function randomSeed() {
   const arr = new Uint32Array(3)
   crypto.getRandomValues(arr)
-  avatarSeed.value = Array.from(arr).map((n) => n.toString(36)).join('-')
+  avatarSeed.value = Array.from(arr)
+    .map((n) => n.toString(36))
+    .join('-')
   edition.value.avatarUrl = buildAvatarUrl(avatarSeed.value)
 }
 
@@ -47,7 +58,7 @@ onMounted(async () => {
     router.push('/login')
     return
   }
-  await Promise.all([getProfile()])
+  await getProfile()
 })
 
 async function getProfile() {
@@ -69,8 +80,9 @@ async function getProfile() {
 
 async function saveChanges() {
   try {
-    loading.value = true
+    if (!profile.value) throw new Error('No profile loaded')
     const updatedProfile: UserProfile = {
+      ...profile.value,
       nickname: edition.value.nickname,
       bio: edition.value.bio,
       avatarUrl: edition.value.avatarUrl,
@@ -106,7 +118,9 @@ async function saveChanges() {
 
       <Button
         class="h-12 px-5 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg flex items-center gap-3 hover:scale-[1.02] transition duration-300"
-        @click="saveChanges" :loading="loading">
+        @click="saveChanges"
+        :loading="loading"
+      >
         <Save class="w-5 h-5" />
         Guardar Cambios
       </Button>
@@ -124,8 +138,16 @@ async function saveChanges() {
         <CardContent class="space-y-5 px-5">
           <div class="flex flex-col items-center">
             <div class="relative rounded-3xl overflow-hidden border-4 border-primary/20 shadow-xl">
-              <img :src="edition.avatarUrl" alt="Avatar" class="w-38 h-38 object-cover bg-background" />
-              <Button size="icon" class="absolute bottom-1 right-1 rounded-full shadow-lg" @click="randomSeed">
+              <img
+                :src="edition.avatarUrl"
+                alt="Avatar"
+                class="w-38 h-38 object-cover bg-background"
+              />
+              <Button
+                size="icon"
+                class="absolute bottom-1 right-1 rounded-full shadow-lg"
+                @click="randomSeed"
+              >
                 <RefreshCw class="w-4 h-4" />
               </Button>
             </div>
@@ -134,20 +156,30 @@ async function saveChanges() {
           <div class="space-y-5">
             <div>
               <Label htmlFor="nickname">Apodo</Label>
-              <Input id="nickname" v-model="edition.nickname" class="mt-2" placeholder="Ingresa tu apodo" />
+              <Input
+                id="nickname"
+                v-model="edition.nickname"
+                class="mt-2"
+                placeholder="Ingresa tu apodo"
+              />
             </div>
 
             <div>
-              <Label for="bio">
-                Descripción
-              </Label>
-              <Input id="bio" v-model="edition.bio" class="mt-2" placeholder="Cuéntanos algo sobre ti..." />
+              <Label for="bio"> Descripción </Label>
+              <Input
+                id="bio"
+                v-model="edition.bio"
+                class="mt-2"
+                placeholder="Cuéntanos algo sobre ti..."
+              />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card class="xl:col-span-2 rounded-3xl border shadow-sm hover:shadow-xl transition-all duration-300">
+      <Card
+        class="xl:col-span-2 rounded-3xl border shadow-sm hover:shadow-xl transition-all duration-300"
+      >
         <CardHeader>
           <CardTitle class="flex items-center gap-2">
             <Settings2 class="w-5 h-5 text-primary" />
@@ -156,7 +188,9 @@ async function saveChanges() {
         </CardHeader>
 
         <CardContent class="space-y-5">
-          <div class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition">
+          <div
+            class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition"
+          >
             <div class="flex gap-4 items-start">
               <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
                 <BadgeIcon class="w-5 h-5 text-primary" />
@@ -173,7 +207,9 @@ async function saveChanges() {
             <input type="checkbox" v-model="edition.showLevel" class="h-5 w-5" />
           </div>
 
-          <div class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition">
+          <div
+            class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition"
+          >
             <div class="flex gap-4 items-start">
               <div class="w-11 h-11 rounded-xl bg-orange-500/10 flex items-center justify-center">
                 <Flame class="w-5 h-5 text-orange-500" />
@@ -190,7 +226,9 @@ async function saveChanges() {
             <input type="checkbox" v-model="edition.showStreak" class="h-5 w-5" />
           </div>
 
-          <div class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition">
+          <div
+            class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition"
+          >
             <div class="flex gap-4 items-start">
               <div class="w-11 h-11 rounded-xl bg-yellow-500/10 flex items-center justify-center">
                 <Trophy class="w-5 h-5 text-yellow-500" />

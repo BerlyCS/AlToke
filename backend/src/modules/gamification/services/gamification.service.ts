@@ -1,14 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { status } from 'elysia'
 import { GamificationRepository } from '../repositories/gamification.repository'
-import type {
-  Achievement,
-  Inventory,
-  LeaderboardEntry,
-  UnlockedAchievement,
-  UseItemResult,
-  UserStats,
-} from '../domain/entities'
+import type { Achievement, LeaderboardEntry, UseItemResult } from '../domain/entities'
 
 const DAILY_XP_CAP = 500
 const XP_PER_LEVEL_STEP = 100
@@ -41,8 +34,6 @@ const nextDay = (date: Date) => {
 }
 
 const levelFromXp = (xp: number) => Math.max(1, Math.floor(Math.sqrt(xp / XP_PER_LEVEL_STEP)))
-
-const serializeInventory = (inventory: Inventory | null) => inventory
 
 export class GamificationService {
   private static repo = new GamificationRepository()

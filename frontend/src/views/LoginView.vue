@@ -236,7 +236,15 @@ const handleSubmit = async () => {
     // persist token first so getProfile() can use it
     localStorage.setItem('token', res.token)
     const profile = await userService.getProfile()
-    authStore.setAuth(res.user, profile, res.token)
+
+    const userToStore = {
+      id: res.user.id,
+      email: res.user.email,
+      nickname: res.user.nickname ?? undefined,
+      avatarUrl: res.user.avatarUrl ?? undefined,
+    }
+
+    authStore.setAuth(userToStore, profile, res.token)
     router.push('/dashboard')
   } catch (err: unknown) {
     if (err instanceof Error) errorMsg.value = err.message
@@ -255,7 +263,15 @@ const handleGoogleCallback = async (response: { credential: string }) => {
     // persist token first so getProfile() can use it
     localStorage.setItem('token', res.token)
     const profile = await userService.getProfile()
-    authStore.setAuth(res.user, profile, res.token)
+
+    const userToStore = {
+      id: res.user.id,
+      email: res.user.email,
+      nickname: res.user.nickname ?? undefined,
+      avatarUrl: res.user.avatarUrl ?? undefined,
+    }
+
+    authStore.setAuth(userToStore, profile, res.token)
     router.push('/dashboard')
   } catch (err: unknown) {
     if (err instanceof Error) errorMsg.value = err.message

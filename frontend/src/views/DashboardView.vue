@@ -98,7 +98,9 @@ function onTaskUpdated(updated: Task) {
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
       <div>
         <p class="text-muted-foreground font-semibold">Bienvenido de nuevo</p>
-        <h2 class="text-4xl font-black mt-2">Hola, {{ authStore.profile?.nickname || 'Jugador' }}</h2>
+        <h2 class="text-4xl font-black mt-2">
+          Hola, {{ authStore.profile?.nickname || 'Jugador' }}
+        </h2>
       </div>
 
       <div class="flex gap-4">

@@ -1,4 +1,4 @@
-import { and, asc, between, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { db } from '../../../db'
 import {
   achievements,
