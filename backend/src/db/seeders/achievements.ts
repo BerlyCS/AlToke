@@ -1,14 +1,7 @@
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import { achievements } from './schema'
-
-const sql = postgres(
-  process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/altoke',
-)
-const db = drizzle(sql)
+import { db } from '../index'
+import { achievements } from '../schema'
 
 const initialAchievements = [
-  // Firsts
   {
     code: 'first_login',
     title: '¡Bienvenido a bordo!',
@@ -31,7 +24,6 @@ const initialAchievements = [
     requiredXp: 0,
   },
 
-  // Tasks completed
   {
     code: 'tasks_10',
     title: 'Productividad en marcha',
@@ -54,34 +46,32 @@ const initialAchievements = [
     requiredXp: 0,
   },
 
-  // Levels
   {
     code: 'xp_5',
     title: 'Subiendo de nivel',
-    description: 'Alcanzaste el Nivel 5.',
+    description: 'Alcanzaste el nivel 5.',
     isSecret: false,
     requiredXp: 0,
   },
   {
     code: 'xp_10',
     title: 'Veterano',
-    description: 'Alcanzaste el Nivel 10.',
+    description: 'Alcanzaste el nivel 10.',
     isSecret: false,
     requiredXp: 0,
   },
   {
     code: 'xp_50',
-    title: 'Leyenda viviente',
-    description: 'Alcanzaste el Nivel 50.',
+    title: 'Leyenda',
+    description: 'Alcanzaste el nivel 50.',
     isSecret: true,
     requiredXp: 0,
   },
 
-  // Streaks
   {
     code: 'streak_3',
-    title: 'Calentando motores',
-    description: 'Mantuviste una racha de 3 días.',
+    title: 'En racha',
+    description: 'Mantuviste una racha de 3 días consecutivos.',
     isSecret: false,
     requiredXp: 0,
   },
@@ -101,13 +91,10 @@ const initialAchievements = [
   },
 ]
 
-async function seedAchievements() {
+export async function seedAchievements() {
   console.log('Seeding achievements...')
   for (const ach of initialAchievements) {
     await db.insert(achievements).values(ach).onConflictDoNothing({ target: achievements.code })
   }
-  console.log('Achievements seeded!')
-  process.exit(0)
+  console.log('Achievements seeded')
 }
-
-seedAchievements().catch(console.error)
