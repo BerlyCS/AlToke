@@ -11,7 +11,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json bun.lock ./
 COPY drizzle ./drizzle
 COPY src ./src
-COPY .env ./
 
 ENV HOST=0.0.0.0
 ENV PORT=3000
