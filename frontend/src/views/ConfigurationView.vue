@@ -19,6 +19,8 @@ import {
   BadgeIcon,
   Flame,
 } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 import router from '@/router'
 import type { UserProfile } from '@/types'
 
@@ -95,10 +97,10 @@ async function saveChanges() {
     await userService.updateProfile(updatedProfile)
     await getProfile()
     authStore.updateProfile(updatedProfile)
-    alert('Cambios guardados exitosamente.')
-  } catch (e) {
+    toast.success('Cambios guardados exitosamente')
+  } catch (e: any) {
     console.error(e)
-    alert('Error al guardar los cambios. Por favor, inténtalo de nuevo.')
+    toast.error('Error al guardar los cambios', { description: e?.message || 'Por favor, inténtalo de nuevo.' })
   } finally {
     loading.value = false
   }

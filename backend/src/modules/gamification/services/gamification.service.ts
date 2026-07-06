@@ -4,7 +4,7 @@ import { GamificationRepository } from '../repositories/gamification.repository'
 import type { Achievement, LeaderboardEntry, UseItemResult } from '../domain/entities'
 
 const DAILY_XP_CAP = 500
-const XP_PER_LEVEL_STEP = 100
+const XP_PER_LEVEL_STEP = 25
 
 const priorityMultipliers: Record<string, number> = {
   LOW: 1,

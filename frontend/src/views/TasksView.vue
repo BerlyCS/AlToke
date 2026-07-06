@@ -4,7 +4,9 @@ import type { Component } from 'vue'
 import { useRouter } from 'vue-router'
 import { taskService } from '@/services/task.service'
 import { tagService } from '@/services/tag.service'
+import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
+import { useGamification } from '@/composables/useGamification'
 import type { Task, Tag } from '@/types'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -90,6 +92,7 @@ function getTaskColors(task: Task) {
 }
 
 const authStore = useAuthStore()
+const { showReward } = useGamification()
 const router = useRouter()
 
 const tasks = ref<Task[]>([])
@@ -183,19 +186,33 @@ async function restoreTask(id: string) {
     await taskService.restoreTask(id)
     trashedTasks.value = trashedTasks.value.filter((t) => t.id !== id)
     await fetchTasks()
-  } catch (e) {
+    toast.success('Tarea restaurada con éxito')
+  } catch (e: any) {
     console.error(e)
+    toast.error('Error al restaurar tarea', { description: e?.message })
   }
 }
 
 async function toggleStatus(task: Task) {
   try {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-    const updated = await taskService.updateTask(task.id, { status: newStatus })
+    let updated: Task
+    if (newStatus === 'COMPLETED') {
+      const result = await taskService.completeTask(task.id)
+      updated = { ...task, ...result }
+      if (typeof result.xpAwarded === 'number') {
+        authStore.addXP(result.xpAwarded, result.newLevel)
+        showReward(result.xpAwarded, task.title, result.leveledUp ?? false, result.newLevel)
+      }
+    } else {
+      const result = await taskService.updateTask(task.id, { status: newStatus })
+      updated = { ...task, ...result }
+    }
     const index = tasks.value.findIndex((t) => t.id === task.id)
     if (index !== -1) tasks.value[index] = updated
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    toast.error('Error al completar la tarea', { description: e?.message })
   }
 }
 
@@ -204,8 +221,10 @@ async function deleteTask(id: string) {
   try {
     await taskService.deleteTask(id)
     tasks.value = tasks.value.filter((t) => t.id !== id)
-  } catch (e) {
+    toast.success('Tarea enviada a la papelera')
+  } catch (e: any) {
     console.error(e)
+    toast.error('Error al eliminar tarea', { description: e?.message })
   }
 }
 

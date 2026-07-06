@@ -200,6 +200,7 @@ import { authService } from '../services/auth.service'
 import { userService } from '../services/user.service'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -245,6 +246,7 @@ const handleSubmit = async () => {
     }
 
     authStore.setAuth(userToStore, profile, res.token)
+    toast.success('¡Bienvenido a AlToke!')
     router.push('/dashboard')
   } catch (err: unknown) {
     if (err instanceof Error) errorMsg.value = err.message
@@ -272,6 +274,7 @@ const handleGoogleCallback = async (response: { credential: string }) => {
     }
 
     authStore.setAuth(userToStore, profile, res.token)
+    toast.success('¡Bienvenido a AlToke!')
     router.push('/dashboard')
   } catch (err: unknown) {
     if (err instanceof Error) errorMsg.value = err.message

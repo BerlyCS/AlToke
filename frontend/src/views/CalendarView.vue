@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { taskService } from '@/services/task.service'
+import { useAuthStore } from '@/stores/auth'
+import { useGamification } from '@/composables/useGamification'
+import { toast } from 'vue-sonner'
 import type { Task } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -33,6 +36,9 @@ import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
 import CalendarWeekView from '@/components/calendar/CalendarWeekView.vue'
 import CalendarDayView from '@/components/calendar/CalendarDayView.vue'
 import CalendarMonthView from '@/components/calendar/CalendarMonthView.vue'
+
+const authStore = useAuthStore()
+const { showReward } = useGamification()
 
 const IconMap: Record<string, Component> = {
   Tag,
@@ -185,11 +191,23 @@ function handleSelectDay(day: Date) {
 async function toggleStatus(task: Task) {
   try {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-    const updated = await taskService.updateTask(task.id, { status: newStatus })
+    let updated: Task
+    if (newStatus === 'COMPLETED') {
+      const result = await taskService.completeTask(task.id)
+      updated = { ...task, ...result }
+      if (typeof result.xpAwarded === 'number') {
+        authStore.addXP(result.xpAwarded, result.newLevel)
+        showReward(result.xpAwarded, task.title, result.leveledUp ?? false, result.newLevel)
+      }
+    } else {
+      const result = await taskService.updateTask(task.id, { status: newStatus })
+      updated = { ...task, ...result }
+    }
     const index = tasks.value.findIndex((t) => t.id === task.id)
     if (index !== -1) tasks.value[index] = updated
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    toast.error('Error al cambiar estado de la tarea', { description: e?.message })
   }
 }
 
@@ -199,8 +217,10 @@ async function deleteTask(id: string) {
     await taskService.deleteTask(id)
     tasks.value = tasks.value.filter((t) => t.id !== id)
     showViewModal.value = false
-  } catch (e) {
+    toast.success('Tarea eliminada con éxito')
+  } catch (e: any) {
     console.error(e)
+    toast.error('Error al eliminar tarea', { description: e?.message })
   }
 }
 </script>
