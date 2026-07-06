@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { Home, ListTodo, Trophy, Medal, Users, Settings } from 'lucide-vue-next'
+import { Home, ListTodo, Trophy, Medal, Users, Settings, Calendar } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute } from 'vue-router'
 import logoUrl from '@/assets/images/logo.webp'
@@ -23,6 +23,7 @@ const route = useRoute()
 const menuItems = [
   { title: 'Dashboard', icon: Home, url: '/dashboard' },
   { title: 'Mis tareas', icon: ListTodo, url: '/tasks' },
+  { title: 'Calendario', icon: Calendar, url: '/calendar' },
   { title: 'Ranking', icon: Trophy, url: '/ranking' },
   { title: 'Logros', icon: Medal, url: '/logros' },
   { title: 'Amigos', icon: Users, url: '/amigos' },
