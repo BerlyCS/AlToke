@@ -2,6 +2,7 @@ import { eq, and, isNull, isNotNull, ilike, or, lt, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { tasks, taskTags } from '../../db/schema'
 import { GamificationService } from '../gamification/services'
+import { NotificationService } from '../notification/services'
 import type { TaskModel } from './model'
 
 const XP_BASE = 10
@@ -235,6 +236,13 @@ export abstract class TaskService {
       taskAchs.push(await GamificationService.triggerAchievement(userId, 'tasks_100'))
 
     const unlockedAchievements = [...xpResult.unlockedAchievements, ...taskAchs.filter(Boolean)]
+
+    NotificationService.recordNotification({
+      userId,
+      type: 'TASK_COMPLETED',
+      title: 'Tarea Completada',
+      message: `Completaste: "${task.title}"`,
+    }).catch(() => {})
 
     return {
       ...updated,

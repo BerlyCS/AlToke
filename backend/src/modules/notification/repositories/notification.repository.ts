@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { db } from '../../../db'
 import { notificationLogs, notificationSettings, users } from '../../../db/schema'
 import {
@@ -98,6 +98,15 @@ export abstract class NotificationRepository {
       .offset(offset)
 
     return rows.map(toLogDomain)
+  }
+
+  static async findExistingByType(userId: string, type: string): Promise<NotificationLog | null> {
+    const [log] = await db
+      .select()
+      .from(notificationLogs)
+      .where(and(eq(notificationLogs.userId, userId), eq(notificationLogs.type, type)))
+      .limit(1)
+    return log ? toLogDomain(log) : null
   }
 
   static async createLog(input: CreateNotificationInput): Promise<NotificationLog> {

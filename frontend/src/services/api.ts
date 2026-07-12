@@ -5,6 +5,8 @@ import type {
   Credentials,
   InventoryItem,
   LeaderboardEntry,
+  NotificationLog,
+  NotificationSettings,
   PrivacyUpdateBody,
   ProfileUpdateBody,
   Tag,
@@ -105,6 +107,20 @@ type ApiClientContract = {
         privacy: {
           patch: (body: Partial<PrivacyUpdateBody>, options: AuthHeaders) => ApiResult<UserProfile>
         }
+      }
+    }
+    notifications: {
+      settings: {
+        get: (options: AuthHeaders) => ApiResult<NotificationSettings>
+        patch: (
+          body: { emailEnabled?: boolean; pushEnabled?: boolean; isMuted?: boolean },
+          options: AuthHeaders,
+        ) => ApiResult<NotificationSettings>
+      }
+      history: {
+        get: (
+          options: AuthHeaders & { query: { limit?: number; offset?: number } },
+        ) => ApiResult<NotificationLog[]>
       }
     }
     friendships: {
