@@ -2,6 +2,7 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import AppSidebar from '@/components/AppSidebar.vue'
 import ModeToggle from '@/components/ModeToggle.vue'
+import NotificationsDrawer from '@/components/NotificationsDrawer.vue'
 </script>
 
 <template>
@@ -14,7 +15,10 @@ import ModeToggle from '@/components/ModeToggle.vue'
         <div class="flex items-center gap-2">
           <SidebarTrigger class="-ml-1" />
         </div>
-        <ModeToggle />
+        <div class="flex items-center gap-1">
+          <NotificationsDrawer />
+          <ModeToggle />
+        </div>
       </header>
       <main class="flex flex-1 flex-col p-4 md:p-6 lg:p-8 bg-background overflow-x-hidden">
         <router-view />

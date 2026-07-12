@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref, onMounted } from 'vue'
 import Button from '@/components/ui/button/Button.vue'
+import { Badge } from '@/components/ui/badge'
 import Card from '@/components/ui/card/Card.vue'
 import CardContent from '@/components/ui/card/CardContent.vue'
 import CardHeader from '@/components/ui/card/CardHeader.vue'
@@ -11,6 +12,8 @@ import Label from '@/components/ui/label/Label.vue'
 import { useAuthStore } from '@/stores/auth'
 import { userService } from '@/services/user.service'
 import {
+  Bell,
+  BellOff,
   RefreshCw,
   Save,
   Settings2,
@@ -19,11 +22,13 @@ import {
   UserRound,
   BadgeIcon,
   Flame,
+  BellPlus,
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import router from '@/router'
-import type { UserProfile } from '@/types'
+import { notificationService } from '@/services/notification.service'
+import type { NotificationSettings, UserProfile } from '@/types'
 
 const authStore = useAuthStore()
 
@@ -43,6 +48,25 @@ const editPrivacy = ref({
   showStreak: true,
   showAchievements: true,
 })
+
+const editNotification = ref({
+  isMuted: false,
+})
+
+const notificationLoading = ref(false)
+const browserPermission = ref(Notification.permission)
+
+const hasNotificationChanges = computed(() => {
+  return editNotification.value.isMuted !== (originalNotification.value?.isMuted ?? false)
+})
+
+const originalNotification = ref<NotificationSettings | null>(null)
+
+async function requestBrowserPermission() {
+  if (!('Notification' in window)) return
+  const result = await Notification.requestPermission()
+  browserPermission.value = result
+}
 
 const avatarSeed = ref<string>('')
 
@@ -84,6 +108,7 @@ onMounted(async () => {
     return
   }
   await getProfile()
+  await getNotificationSettings()
 })
 
 async function getProfile() {
@@ -103,25 +128,57 @@ async function getProfile() {
   }
 }
 
+async function getNotificationSettings() {
+  try {
+    notificationLoading.value = true
+    originalNotification.value = await notificationService.getSettings()
+    editNotification.value.isMuted = originalNotification.value.isMuted
+  } catch (e) {
+    console.error(e)
+  } finally {
+    notificationLoading.value = false
+  }
+}
+
+async function saveNotificationChanges() {
+  try {
+    const updated = await notificationService.updateSettings({
+      isMuted: editNotification.value.isMuted,
+    })
+    originalNotification.value = updated
+    toast.success('Preferencias de notificación guardadas')
+  } catch (e: any) {
+    toast.error('Error al guardar preferencias', {
+      description: e?.message || 'Por favor, inténtalo de nuevo.',
+    })
+  }
+}
+
 async function saveChanges() {
-  if (!hasChanges.value) return
+  if (!hasChanges.value && !hasNotificationChanges.value) return
 
   try {
-    if (!originalProfile.value) throw new Error('No profile loaded')
-    const updatedProfile = {
-      ...originalProfile.value,
-      nickname: editProfile.value.nickname,
-      bio: editProfile.value.bio || undefined,
-      avatarUrl: editProfile.value.avatarUrl,
-      privacy: {
-        showLevel: editPrivacy.value.showLevel,
-        showStreak: editPrivacy.value.showStreak,
-        showAchievements: editPrivacy.value.showAchievements,
-      },
+    if (hasProfileChanges.value && originalProfile.value) {
+      const updatedProfile = {
+        ...originalProfile.value,
+        nickname: editProfile.value.nickname,
+        bio: editProfile.value.bio || undefined,
+        avatarUrl: editProfile.value.avatarUrl,
+        privacy: {
+          showLevel: editPrivacy.value.showLevel,
+          showStreak: editPrivacy.value.showStreak,
+          showAchievements: editPrivacy.value.showAchievements,
+        },
+      }
+      await userService.updateProfile(updatedProfile)
+      await getProfile()
+      authStore.updateProfile(updatedProfile)
     }
-    await userService.updateProfile(updatedProfile)
-    await getProfile()
-    authStore.updateProfile(updatedProfile)
+
+    if (hasNotificationChanges.value) {
+      await saveNotificationChanges()
+    }
+
     toast.success('Cambios guardados exitosamente')
   } catch (e: any) {
     console.error(e)
@@ -302,5 +359,97 @@ async function saveChanges() {
         </CardContent>
       </Card>
     </div>
+
+    <Card class="rounded-3xl border shadow-sm hover:shadow-xl transition-all duration-300">
+      <CardHeader>
+        <CardTitle class="flex items-center gap-2">
+          <Bell class="w-5 h-5 text-primary" />
+          Notificaciones
+        </CardTitle>
+        <p class="text-sm text-muted-foreground">
+          Recibe notificaciones dentro de la aplicación y en tu navegador.
+        </p>
+      </CardHeader>
+
+      <CardContent class="space-y-5">
+        <div
+          class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition"
+        >
+          <div class="flex gap-4 items-start">
+            <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Bell class="w-5 h-5 text-primary" />
+            </div>
+
+            <div>
+              <h3 class="font-semibold">Notificaciones en la app</h3>
+              <p class="text-sm text-muted-foreground">
+                Recibe alertas de tareas, amigos y sistema directamente en la aplicación.
+              </p>
+            </div>
+          </div>
+
+          <Badge variant="secondary" class="text-xs"> Siempre activo </Badge>
+        </div>
+
+        <div
+          class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition"
+        >
+          <div class="flex gap-4 items-start">
+            <div class="w-11 h-11 rounded-xl bg-orange-500/10 flex items-center justify-center">
+              <BellPlus class="w-5 h-5 text-orange-500" />
+            </div>
+
+            <div>
+              <h3 class="font-semibold">Notificaciones del navegador</h3>
+              <p class="text-sm text-muted-foreground">
+                Recibe notificaciones incluso cuando no estés en la página.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <Button
+              v-if="browserPermission === 'default'"
+              size="sm"
+              variant="outline"
+              @click="requestBrowserPermission"
+            >
+              Activar
+            </Button>
+            <Badge v-else-if="browserPermission === 'granted'" variant="secondary" class="text-xs">
+              Activado
+            </Badge>
+            <Badge v-else variant="destructive" class="text-xs"> Bloqueado </Badge>
+          </div>
+        </div>
+
+        <div
+          class="flex items-center justify-between rounded-2xl border p-5 hover:bg-muted/40 transition"
+        >
+          <div class="flex gap-4 items-start">
+            <div class="w-11 h-11 rounded-xl bg-red-500/10 flex items-center justify-center">
+              <BellOff class="w-5 h-5 text-red-500" />
+            </div>
+
+            <div>
+              <h3 class="font-semibold">Modo silencio</h3>
+              <p class="text-sm text-muted-foreground">
+                Desactiva temporalmente todas las notificaciones de la plataforma.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <Label for="is-muted" class="sr-only">Modo silencio</Label>
+            <input
+              id="is-muted"
+              type="checkbox"
+              v-model="editNotification.isMuted"
+              class="h-5 w-5"
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   </div>
 </template>

@@ -130,3 +130,23 @@ export interface CompleteTaskResult extends Task {
   newStreak: number
   unlockedAchievements?: Achievement[]
 }
+
+export type NotificationChannel = 'EMAIL' | 'PUSH' | 'IN_APP' | 'SYSTEM'
+
+export interface NotificationSettings {
+  userId: string
+  emailEnabled: boolean
+  pushEnabled: boolean
+  isMuted: boolean
+  updatedAt: string
+}
+
+export interface NotificationLog {
+  id: string
+  userId: string
+  channel: NotificationChannel
+  type: string
+  title: string
+  message: string
+  createdAt: string
+}
