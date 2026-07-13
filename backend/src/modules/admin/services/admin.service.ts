@@ -35,10 +35,7 @@ export class AdminService {
   /**
    * Moderate user profile
    */
-  static async moderateProfile(
-    targetUserId: string,
-    request: ModerateProfileRequestType,
-  ) {
+  static async moderateProfile(targetUserId: string, request: ModerateProfileRequestType) {
     // Check if user exists
     const user = await AdminRepository.getUserById(targetUserId)
     if (!user) {
@@ -65,13 +62,12 @@ export class AdminService {
    * Get system metrics
    */
   static async getSystemMetrics(): Promise<SystemMetricsResponseType> {
-    const [totalUsers, activeUsersDaily, tasksCompletedToday, totalTasks] =
-      await Promise.all([
-        AdminRepository.getTotalUsersCount(),
-        AdminRepository.getActiveDailyUsers(),
-        AdminRepository.getTasksCompletedToday(),
-        AdminRepository.getTotalTasksCount(),
-      ])
+    const [totalUsers, activeUsersDaily, tasksCompletedToday, totalTasks] = await Promise.all([
+      AdminRepository.getTotalUsersCount(),
+      AdminRepository.getActiveDailyUsers(),
+      AdminRepository.getTasksCompletedToday(),
+      AdminRepository.getTotalTasksCount(),
+    ])
 
     return {
       totalUsers,

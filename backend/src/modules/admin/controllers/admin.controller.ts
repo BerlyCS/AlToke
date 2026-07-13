@@ -1,11 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { AdminService } from '../services'
 import { BanUserRequest, ModerateProfileRequest } from '../dto'
-import {
-  BanUserResponse,
-  ModerateProfileResponse,
-  SystemMetricsResponse,
-} from '../dto'
+import { BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from '../dto'
 
 /**
  * Admin Controller
@@ -190,10 +186,7 @@ export const adminController = new Elysia({ prefix: '/admin' })
     '/users/:id/moderate',
     async ({ params, body, set }) => {
       try {
-        const result = await AdminService.moderateProfile(
-          params.id,
-          body as any,
-        )
+        const result = await AdminService.moderateProfile(params.id, body as any)
         set.status = 200
         return {
           status: 200,
