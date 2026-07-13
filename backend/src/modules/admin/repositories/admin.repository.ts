@@ -49,11 +49,7 @@ export class AdminRepository {
       return this.getUserById(userId)
     }
 
-    const result = await db
-      .update(users)
-      .set(updates)
-      .where(eq(users.id, userId))
-      .returning()
+    const result = await db.update(users).set(updates).where(eq(users.id, userId)).returning()
 
     return result[0] || null
   }
@@ -62,9 +58,7 @@ export class AdminRepository {
    * Get total number of users
    */
   static async getTotalUsersCount() {
-    const result = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
+    const result = await db.select({ count: sql<number>`count(*)` }).from(users)
     return Number(result[0]?.count || 0)
   }
 
@@ -76,12 +70,7 @@ export class AdminRepository {
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(
-        and(
-          eq(users.role, 'USER'),
-          sql`${users.lastActiveAt} > ${oneDayAgo.toISOString()}`,
-        ),
-      )
+      .where(and(eq(users.role, 'USER'), sql`${users.lastActiveAt} > ${oneDayAgo.toISOString()}`))
     return Number(result[0]?.count || 0)
   }
 
@@ -95,12 +84,7 @@ export class AdminRepository {
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(tasks)
-      .where(
-        and(
-          eq(tasks.status, 'COMPLETED'),
-          sql`${tasks.completedAt} > ${today.toISOString()}`,
-        ),
-      )
+      .where(and(eq(tasks.status, 'COMPLETED'), sql`${tasks.completedAt} > ${today.toISOString()}`))
     return Number(result[0]?.count || 0)
   }
 
@@ -108,9 +92,7 @@ export class AdminRepository {
    * Get total number of tasks
    */
   static async getTotalTasksCount() {
-    const result = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(tasks)
+    const result = await db.select({ count: sql<number>`count(*)` }).from(tasks)
     return Number(result[0]?.count || 0)
   }
 

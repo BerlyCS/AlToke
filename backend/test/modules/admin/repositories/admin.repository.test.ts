@@ -12,9 +12,7 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
   let testUserId: string
 
   beforeAll(async () => {
-    await db.execute(
-      sql`DELETE FROM users WHERE email LIKE 'admin-test-repo-%'`,
-    )
+    await db.execute(sql`DELETE FROM users WHERE email LIKE 'admin-test-repo-%'`)
 
     const result = await db.execute(sql`
       INSERT INTO users (id, email, password_hash, nickname, bio, avatar_url, role, level, xp)
@@ -36,9 +34,7 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
   })
 
   afterAll(async () => {
-    await db.execute(
-      sql`DELETE FROM users WHERE email LIKE 'admin-test-repo-%'`,
-    )
+    await db.execute(sql`DELETE FROM users WHERE email LIKE 'admin-test-repo-%'`)
   })
 
   describe('getUserById', () => {
@@ -49,9 +45,7 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
     })
 
     it('should return null for non-existent user', async () => {
-      const user = await AdminRepository.getUserById(
-        '00000000-0000-0000-0000-000000000000',
-      )
+      const user = await AdminRepository.getUserById('00000000-0000-0000-0000-000000000000')
       expect(user).toBeNull()
     })
   })
@@ -129,9 +123,7 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
       const updatedUser = await AdminRepository.updateUserProfile(testUserId, {
         avatarUrl: 'https://example.com/new-avatar.png',
       })
-      expect(updatedUser?.avatarUrl).toBe(
-        'https://example.com/new-avatar.png',
-      )
+      expect(updatedUser?.avatarUrl).toBe('https://example.com/new-avatar.png')
     })
 
     it('should update multiple fields at once', async () => {
@@ -186,9 +178,7 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
     })
 
     it('should return 0 for a non-existent user', async () => {
-      const count = await AdminRepository.getUserTaskCount(
-        '00000000-0000-0000-0000-000000000000',
-      )
+      const count = await AdminRepository.getUserTaskCount('00000000-0000-0000-0000-000000000000')
       expect(count).toBe(0)
     })
   })

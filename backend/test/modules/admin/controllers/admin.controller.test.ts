@@ -47,16 +47,12 @@ async function request(
 
 describe.skipIf(!databaseAvailable)('Admin Controller', () => {
   beforeAll(async () => {
-    await db.execute(
-      sql`DELETE FROM users WHERE email LIKE 'admin-test-ctrl-%'`,
-    )
+    await db.execute(sql`DELETE FROM users WHERE email LIKE 'admin-test-ctrl-%'`)
     targetUserId = await createUser('admin-test-ctrl')
   })
 
   afterAll(async () => {
-    await db.execute(
-      sql`DELETE FROM users WHERE email LIKE 'admin-test-ctrl-%'`,
-    )
+    await db.execute(sql`DELETE FROM users WHERE email LIKE 'admin-test-ctrl-%'`)
   })
 
   beforeEach(async () => {
@@ -88,10 +84,7 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
     })
 
     it('should respect pagination parameters', async () => {
-      const { status, json } = await request(
-        'GET',
-        '/admin/users?limit=5&offset=0',
-      )
+      const { status, json } = await request('GET', '/admin/users?limit=5&offset=0')
       expect(status).toBe(200)
       expect(json.data.limit).toBe(5)
       expect(json.data.offset).toBe(0)
@@ -107,20 +100,14 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
 
   describe('GET /admin/users/:id', () => {
     it('should return 200 with user details for an existing user', async () => {
-      const { status, json } = await request(
-        'GET',
-        `/admin/users/${targetUserId}`,
-      )
+      const { status, json } = await request('GET', `/admin/users/${targetUserId}`)
       expect(status).toBe(200)
       expect(json.status).toBe(200)
       expect(json.data.userId).toBe(targetUserId)
     })
 
     it('should return 404 for a non-existent user', async () => {
-      const { status, json } = await request(
-        'GET',
-        `/admin/users/${NON_EXISTENT_ID}`,
-      )
+      const { status, json } = await request('GET', `/admin/users/${NON_EXISTENT_ID}`)
       expect(status).toBe(404)
       expect(json.status).toBe(404)
       expect(json.error).toBe('User not found')
@@ -129,11 +116,9 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
 
   describe('POST /admin/users/:id/ban', () => {
     it('should ban a user and return 200', async () => {
-      const { status, json } = await request(
-        'POST',
-        `/admin/users/${targetUserId}/ban`,
-        { reason: 'Test ban' },
-      )
+      const { status, json } = await request('POST', `/admin/users/${targetUserId}/ban`, {
+        reason: 'Test ban',
+      })
       expect(status).toBe(200)
       expect(json.status).toBe(200)
       expect(json.data.success).toBe(true)
@@ -144,22 +129,18 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
       await request('POST', `/admin/users/${targetUserId}/ban`, {
         reason: 'First ban',
       })
-      const { status, json } = await request(
-        'POST',
-        `/admin/users/${targetUserId}/ban`,
-        { reason: 'Second ban' },
-      )
+      const { status, json } = await request('POST', `/admin/users/${targetUserId}/ban`, {
+        reason: 'Second ban',
+      })
       expect(status).toBe(400)
       expect(json.status).toBe(400)
       expect(json.error).toBe('User is already banned')
     })
 
     it('should return 404 when the user does not exist', async () => {
-      const { status, json } = await request(
-        'POST',
-        `/admin/users/${NON_EXISTENT_ID}/ban`,
-        { reason: 'Test ban' },
-      )
+      const { status, json } = await request('POST', `/admin/users/${NON_EXISTENT_ID}/ban`, {
+        reason: 'Test ban',
+      })
       expect(status).toBe(404)
       expect(json.status).toBe(404)
       expect(json.error).toBe('User not found')
@@ -171,10 +152,7 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
       await request('POST', `/admin/users/${targetUserId}/ban`, {
         reason: 'Ban to unban',
       })
-      const { status, json } = await request(
-        'POST',
-        `/admin/users/${targetUserId}/unban`,
-      )
+      const { status, json } = await request('POST', `/admin/users/${targetUserId}/unban`)
       expect(status).toBe(200)
       expect(json.status).toBe(200)
       expect(json.data.success).toBe(true)
@@ -182,10 +160,7 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
     })
 
     it('should return 404 when the user does not exist', async () => {
-      const { status, json } = await request(
-        'POST',
-        `/admin/users/${NON_EXISTENT_ID}/unban`,
-      )
+      const { status, json } = await request('POST', `/admin/users/${NON_EXISTENT_ID}/unban`)
       expect(status).toBe(404)
       expect(json.status).toBe(404)
       expect(json.error).toBe('User not found')
@@ -194,16 +169,12 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
 
   describe('POST /admin/users/:id/moderate', () => {
     it('should moderate a user profile and return 200', async () => {
-      const { status, json } = await request(
-        'POST',
-        `/admin/users/${targetUserId}/moderate`,
-        {
-          nickname: 'Moderated User',
-          bio: 'Moderated bio',
-          avatarUrl: 'https://example.com/avatar.png',
-          reason: 'Test moderation',
-        },
-      )
+      const { status, json } = await request('POST', `/admin/users/${targetUserId}/moderate`, {
+        nickname: 'Moderated User',
+        bio: 'Moderated bio',
+        avatarUrl: 'https://example.com/avatar.png',
+        reason: 'Test moderation',
+      })
       expect(status).toBe(200)
       expect(json.status).toBe(200)
       expect(json.data.success).toBe(true)
@@ -211,11 +182,9 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
     })
 
     it('should return 404 when the user does not exist', async () => {
-      const { status, json } = await request(
-        'POST',
-        `/admin/users/${NON_EXISTENT_ID}/moderate`,
-        { reason: 'Test moderation' },
-      )
+      const { status, json } = await request('POST', `/admin/users/${NON_EXISTENT_ID}/moderate`, {
+        reason: 'Test moderation',
+      })
       expect(status).toBe(404)
       expect(json.status).toBe(404)
       expect(json.error).toBe('User not found')

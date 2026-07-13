@@ -13,9 +13,7 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
   let testUserId: string
 
   beforeAll(async () => {
-    await db.execute(
-      sql`DELETE FROM users WHERE email LIKE 'admin-test-service-%'`,
-    )
+    await db.execute(sql`DELETE FROM users WHERE email LIKE 'admin-test-service-%'`)
 
     const result = await db.execute(sql`
       INSERT INTO users (id, email, password_hash, nickname, bio, avatar_url, role, level, xp)
@@ -37,9 +35,7 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
   })
 
   afterAll(async () => {
-    await db.execute(
-      sql`DELETE FROM users WHERE email LIKE 'admin-test-service-%'`,
-    )
+    await db.execute(sql`DELETE FROM users WHERE email LIKE 'admin-test-service-%'`)
   })
 
   beforeEach(async () => {
@@ -159,10 +155,9 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
 
     it('should throw error when user not found', async () => {
       try {
-        await AdminService.moderateProfile(
-          '00000000-0000-0000-0000-000000000000',
-          { reason: 'Test' },
-        )
+        await AdminService.moderateProfile('00000000-0000-0000-0000-000000000000', {
+          reason: 'Test',
+        })
         expect.unreachable()
       } catch (error) {
         expect((error as Error).message).toBe('User not found')
