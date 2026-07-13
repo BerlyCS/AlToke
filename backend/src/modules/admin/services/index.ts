@@ -1,1 +1,1 @@
-export {}
+export { AdminService } from './admin.service'
