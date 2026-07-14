@@ -21,15 +21,22 @@ import logoUrl from '@/assets/images/logo.webp'
 const authStore = useAuthStore()
 const route = useRoute()
 
-const menuItems = [
-  { title: 'Dashboard', icon: Home, url: '/dashboard' },
-  { title: 'Mis tareas', icon: ListTodo, url: '/tasks' },
-  { title: 'Calendario', icon: Calendar, url: '/calendar' },
-  { title: 'Ranking', icon: Trophy, url: '/ranking' },
-  { title: 'Logros', icon: Medal, url: '/logros' },
-  { title: 'Amigos', icon: Users, url: '/amigos' },
-  { title: 'Configuración', icon: Settings, url: '/configuracion' },
+const menuAllItems = [
+  { title: 'Dashboard', icon: Home, url: '/dashboard', roles: ['ADMIN', 'USER'] },
+  { title: 'Mis tareas', icon: ListTodo, url: '/tasks', roles: ['USER'] },
+  { title: 'Calendario', icon: Calendar, url: '/calendar', roles: ['USER'] },
+  { title: 'Ranking', icon: Trophy, url: '/ranking', roles: ['USER'] },
+  { title: 'Logros', icon: Medal, url: '/logros', roles: ['USER'] },
+  { title: 'Amigos', icon: Users, url: '/amigos', roles: ['USER'] },
+  { title: 'Configuración', icon: Settings, url: '/configuracion', roles: ['ADMIN', 'USER'] },
 ]
+
+const menuItems = computed(() => {
+  return menuAllItems.filter(item => {
+    if (!item.roles || item.roles.length === 0) return true
+    return item.roles.includes(authStore.profile?.role || 'USER')
+  })
+})
 
 const userXp = computed(() => authStore.profile?.xp || 0)
 const currentLevel = computed(() => authStore.profile?.level || 1)
