@@ -18,10 +18,22 @@ export const gamificationController = new Elysia({ prefix: '/gamification' })
   )
   .use(authPlugin)
   .get(
+    '/leaderboard/friends',
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+      return await GamificationService.getFriendsLeaderboard(userId)
+    },
+    {
+      response: {
+        200: GamificationModel.leaderboardResponse,
+      },
+    },
+  )
+  .get(
     '/achievements',
     async ({ requireAuth }) => {
       const userId = requireAuth()
-      return await GamificationService.getUnlockedAchievements(userId)
+      return await GamificationService.getAllAchievements(userId)
     },
     {
       response: {

@@ -1,65 +1,140 @@
-import { desc, eq } from 'drizzle-orm'
-import { status } from 'elysia'
-import { db } from '../../../db'
-import { privacySettings, users } from '../../../db/schema'
-import { UserRepository } from '../../user/repositories'
-import type { AdminUserResponse } from '../dto'
+import { AdminRepository } from '../repositories'
+import type {
+  BanUserRequestType,
+  ModerateProfileRequestType,
+  SystemMetricsResponseType,
+} from '../dto'
 
 export class AdminService {
-  static async listUsers(userId: string): Promise<AdminUserResponse[]> {
-    const currentUser = await UserRepository.findById(userId)
-
-    if (!currentUser) {
-      throw status(401, 'Unauthorized')
+  /**
+   * Ban a user
+   */
+  static async banUser(targetUserId: string, request: BanUserRequestType) {
+    // Check if user exists
+    const user = await AdminRepository.getUserById(targetUserId)
+    if (!user) {
+      throw new Error('User not found')
     }
 
-    if (currentUser.role !== 'ADMIN') {
-      throw status(403, 'Forbidden')
+    // Check if already banned
+    const isBanned = await AdminRepository.isUserBanned(targetUserId)
+    if (isBanned) {
+      throw new Error('User is already banned')
     }
 
-    const rows = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        role: users.role,
-        nickname: users.nickname,
-        bio: users.bio,
-        avatarUrl: users.avatarUrl,
-        xp: users.xp,
-        level: users.level,
-        currentStreak: users.currentStreak,
-        maxStreak: users.maxStreak,
-        lastActiveAt: users.lastActiveAt,
-        createdAt: users.createdAt,
-        showLevel: privacySettings.showLevel,
-        showStreak: privacySettings.showStreak,
-        showAchievements: privacySettings.showAchievements,
-      })
-      .from(users)
-      .leftJoin(privacySettings, eq(users.id, privacySettings.userId))
-      .orderBy(desc(users.createdAt))
+    // Ban the user
+    await AdminRepository.banUser(targetUserId, request.reason)
 
-    return rows.map((row) => ({
-      id: row.id,
-      email: row.email,
-      role: row.role === 'ADMIN' ? 'ADMIN' : 'USER',
-      nickname: row.nickname,
-      bio: row.bio,
-      avatarUrl: row.avatarUrl,
-      xp: row.xp ?? 0,
-      level: row.level ?? null,
-      currentStreak: row.currentStreak ?? null,
-      maxStreak: row.maxStreak ?? null,
-      lastActiveAt: row.lastActiveAt,
-      createdAt: row.createdAt,
-      privacy:
-        row.showLevel === null && row.showStreak === null && row.showAchievements === null
-          ? undefined
-          : {
-              showLevel: row.showLevel,
-              showStreak: row.showStreak,
-              showAchievements: row.showAchievements,
-            },
-    }))
+    return {
+      success: true,
+      message: `User ${targetUserId} has been banned`,
+      userId: targetUserId,
+    }
+  }
+
+  /**
+   * Moderate user profile
+   */
+  static async moderateProfile(targetUserId: string, request: ModerateProfileRequestType) {
+    // Check if user exists
+    const user = await AdminRepository.getUserById(targetUserId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    // Prepare updates
+    const updates: Record<string, any> = {}
+    if (request.nickname) updates.nickname = request.nickname
+    if (request.bio) updates.bio = request.bio
+    if (request.avatarUrl) updates.avatarUrl = request.avatarUrl
+
+    // Update user profile
+    await AdminRepository.updateUserProfile(targetUserId, updates)
+
+    return {
+      success: true,
+      message: `User profile for ${targetUserId} has been moderated`,
+      userId: targetUserId,
+    }
+  }
+
+  /**
+   * Get system metrics
+   */
+  static async getSystemMetrics(): Promise<SystemMetricsResponseType> {
+    const [totalUsers, activeUsersDaily, tasksCompletedToday, totalTasks] = await Promise.all([
+      AdminRepository.getTotalUsersCount(),
+      AdminRepository.getActiveDailyUsers(),
+      AdminRepository.getTasksCompletedToday(),
+      AdminRepository.getTotalTasksCount(),
+    ])
+
+    return {
+      totalUsers,
+      activeUsersDaily,
+      tasksCompletedToday,
+      totalTasks,
+    }
+  }
+
+  /**
+   * Get user summary
+   */
+  static async getUserSummary(targetUserId: string) {
+    const user = await AdminRepository.getUserById(targetUserId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    return {
+      userId: user.id,
+      nickname: user.nickname,
+      level: user.level,
+      xp: user.xp,
+      lastActiveAt: user.lastActiveAt?.toISOString(),
+      createdAt: user.createdAt.toISOString(),
+    }
+  }
+
+  /**
+   * Get all users with pagination
+   */
+  static async listUsers(limit: number = 10, offset: number = 0) {
+    const users = await AdminRepository.getAllUsers(limit, offset)
+    const total = await AdminRepository.getTotalUsersCount()
+
+    return {
+      users: users.map((user) => ({
+        id: user.id,
+        email: user.email,
+        nickname: user.nickname,
+        role: user.role,
+        level: user.level,
+        xp: user.xp,
+        lastActiveAt: user.lastActiveAt?.toISOString(),
+        createdAt: user.createdAt.toISOString(),
+      })),
+      total,
+      limit,
+      offset,
+    }
+  }
+
+  /**
+   * Unban a user
+   */
+  static async unbanUser(targetUserId: string) {
+    const user = await AdminRepository.getUserById(targetUserId)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    await AdminRepository.unbanUser(targetUserId)
+
+    return {
+      success: true,
+      message: `User ${targetUserId} has been unbanned`,
+      userId: targetUserId,
+    }
   }
 }

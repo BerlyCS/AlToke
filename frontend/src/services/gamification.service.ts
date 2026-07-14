@@ -18,6 +18,15 @@ export const gamificationService = {
     return data as unknown as LeaderboardEntry[]
   },
 
+  getFriendsLeaderboard: async (): Promise<LeaderboardEntry[]> => {
+    const { data, error, status } = await api.api.gamification.leaderboard.friends.get({
+      headers: getHeaders(),
+    })
+    if (error)
+      throw new ApiError(status, String(error.value) || 'Failed to fetch friends leaderboard')
+    return data as unknown as LeaderboardEntry[]
+  },
+
   getAchievements: async (): Promise<Achievement[]> => {
     const { data, error, status } = await api.api.gamification.achievements.get({
       headers: getHeaders(),

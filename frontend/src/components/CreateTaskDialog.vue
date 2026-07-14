@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { taskService } from '@/services/task.service'
+import { toast } from 'vue-sonner'
 import { tagService } from '@/services/tag.service'
 import type { Tag, Task } from '@/types'
 import type { Component } from 'vue'
@@ -235,16 +236,20 @@ async function createTask() {
     if (isEditing.value && props.task) {
       const updated = await taskService.updateTask(props.task.id, payload)
       emit('updated', updated)
+      toast.success('Tarea actualizada con éxito')
     } else {
       const created = await taskService.createTask(payload)
       emit('created', created)
+      toast.success('Tarea creada con éxito')
     }
 
     resetForm()
     emit('update:open', false)
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
-    alert(isEditing.value ? 'Error al actualizar tarea' : 'Error al crear tarea')
+    toast.error(isEditing.value ? 'Error al actualizar tarea' : 'Error al crear tarea', {
+      description: e?.message || 'Error desconocido',
+    })
   } finally {
     isSubmitting.value = false
   }

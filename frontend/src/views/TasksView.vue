@@ -4,8 +4,14 @@ import type { Component } from 'vue'
 import { useRouter } from 'vue-router'
 import { taskService } from '@/services/task.service'
 import { tagService } from '@/services/tag.service'
+import { toast } from 'vue-sonner'
 import { aiService } from '@/services/ai.service'
 import { useAuthStore } from '@/stores/auth'
+import {
+  useGamification,
+  unlockedAchievementsQueue,
+  processAchievementsQueue,
+} from '@/composables/useGamification'
 import type { Task, Tag, TaskSuggestion } from '@/types'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -100,6 +106,7 @@ function getTaskColors(task: Task) {
 }
 
 const authStore = useAuthStore()
+const { showReward } = useGamification()
 const router = useRouter()
 
 const tasks = ref<Task[]>([])
@@ -197,8 +204,10 @@ async function restoreTask(id: string) {
     await taskService.restoreTask(id)
     trashedTasks.value = trashedTasks.value.filter((t) => t.id !== id)
     await fetchTasks()
-  } catch (e) {
+    toast.success('Tarea restaurada con éxito')
+  } catch (e: any) {
     console.error(e)
+    toast.error('Error al restaurar tarea', { description: e?.message })
   }
 }
 
@@ -234,11 +243,29 @@ async function acceptSuggestion(s: TaskSuggestion) {
 async function toggleStatus(task: Task) {
   try {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-    const updated = await taskService.updateTask(task.id, { status: newStatus })
+    let updated: Task
+    if (newStatus === 'COMPLETED') {
+      const result = await taskService.completeTask(task.id)
+      updated = { ...task, ...result }
+      if (typeof result.xpAwarded === 'number') {
+        authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
+        showReward(
+          result.xpAwarded,
+          task.title,
+          result.leveledUp ?? false,
+          result.newLevel,
+          result.unlockedAchievements,
+        )
+      }
+    } else {
+      const result = await taskService.updateTask(task.id, { status: newStatus })
+      updated = { ...task, ...result }
+    }
     const index = tasks.value.findIndex((t) => t.id === task.id)
     if (index !== -1) tasks.value[index] = updated
-  } catch (e) {
+  } catch (e: any) {
     console.error(e)
+    toast.error('Error al completar la tarea', { description: e?.message })
   }
 }
 
@@ -247,8 +274,10 @@ async function deleteTask(id: string) {
   try {
     await taskService.deleteTask(id)
     tasks.value = tasks.value.filter((t) => t.id !== id)
-  } catch (e) {
+    toast.success('Tarea enviada a la papelera')
+  } catch (e: any) {
     console.error(e)
+    toast.error('Error al eliminar tarea', { description: e?.message })
   }
 }
 
@@ -265,6 +294,14 @@ function editTask(task: Task) {
 function onTaskUpdated(updated: Task) {
   const index = tasks.value.findIndex((t) => t.id === updated.id)
   if (index !== -1) tasks.value[index] = updated
+}
+
+function onTaskCreated(created: Task) {
+  tasks.value.unshift(created)
+  if (created.unlockedAchievements?.length) {
+    unlockedAchievementsQueue.value.push(...created.unlockedAchievements)
+    processAchievementsQueue()
+  }
 }
 
 function formatTime(val: string | Date) {
@@ -678,11 +715,7 @@ function formatTime(val: string | Date) {
       </Card>
     </template>
 
-    <CreateTaskDialog
-      v-model:open="showCreateModal"
-      :task="null"
-      @created="(t) => tasks.unshift(t)"
-    />
+    <CreateTaskDialog v-model:open="showCreateModal" :task="null" @created="onTaskCreated" />
     <CreateTaskDialog
       v-model:open="showEditModal"
       :task="editingTask"
@@ -704,12 +737,12 @@ function formatTime(val: string | Date) {
             <Sparkles class="w-6 h-6 text-yellow-500" />
             Sugerencias IA
           </DialogTitle>
-          <DialogDescription>
-            Basado en tu historial de tareas y hábitos
-          </DialogDescription>
+          <DialogDescription> Basado en tu historial de tareas y hábitos </DialogDescription>
         </DialogHeader>
         <div v-if="aiLoading" class="flex justify-center py-8">
-          <div class="w-8 h-8 border-4 border-white/10 border-l-primary rounded-full animate-spin"></div>
+          <div
+            class="w-8 h-8 border-4 border-white/10 border-l-primary rounded-full animate-spin"
+          ></div>
         </div>
         <div v-else-if="aiError" class="text-center py-8 text-muted-foreground">
           <p>{{ aiError }}</p>
@@ -726,10 +759,12 @@ function formatTime(val: string | Date) {
             <h4 class="font-bold text-lg">{{ s.suggestedTitle }}</h4>
             <p class="text-sm text-muted-foreground">{{ s.explanation }}</p>
             <div class="flex gap-2 pt-2">
-              <Button size="sm" class="font-bold" @click="acceptSuggestion(s)">
-                Aceptar
-              </Button>
-              <Button size="sm" variant="ghost" @click="aiSuggestions = aiSuggestions.filter((x) => x.id !== s.id)">
+              <Button size="sm" class="font-bold" @click="acceptSuggestion(s)"> Aceptar </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                @click="aiSuggestions = aiSuggestions.filter((x) => x.id !== s.id)"
+              >
                 Descartar
               </Button>
             </div>

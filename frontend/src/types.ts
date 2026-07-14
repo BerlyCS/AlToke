@@ -16,6 +16,7 @@ export interface Task {
   dueDate?: string | Date
   recurrence?: string
   tags?: Tag[]
+  unlockedAchievements?: Achievement[]
   deletedAt?: string | Date | null
   createdAt: string | Date
   updatedAt: string | Date
@@ -102,7 +103,7 @@ export interface Achievement {
   description: string
   isSecret: boolean
   requiredXp: number
-  unlockedAt: string
+  unlockedAt?: string
 }
 
 export interface InventoryItem {
@@ -124,7 +125,29 @@ export interface UseItemResult {
 }
 
 export interface CompleteTaskResult extends Task {
-  xpAwarded?: number
-  leveledUp?: boolean
-  newLevel?: number
+  xpAwarded: number
+  leveledUp: boolean
+  newLevel: number
+  newStreak: number
+  unlockedAchievements?: Achievement[]
+}
+
+export type NotificationChannel = 'EMAIL' | 'PUSH' | 'IN_APP' | 'SYSTEM'
+
+export interface NotificationSettings {
+  userId: string
+  emailEnabled: boolean
+  pushEnabled: boolean
+  isMuted: boolean
+  updatedAt: string
+}
+
+export interface NotificationLog {
+  id: string
+  userId: string
+  channel: NotificationChannel
+  type: string
+  title: string
+  message: string
+  createdAt: string
 }

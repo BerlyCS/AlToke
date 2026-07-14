@@ -40,5 +40,21 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('profile')
   }
 
-  return { user, profile, token, setAuth, logout, updateProfile }
+  const addXP = (amount: number, newLevel?: number, newStreak?: number) => {
+    if (profile.value) {
+      profile.value.xp += amount
+      if (newLevel !== undefined) {
+        profile.value.level = newLevel
+      }
+      if (newStreak !== undefined) {
+        profile.value.currentStreak = newStreak
+        if (newStreak > profile.value.maxStreak) {
+          profile.value.maxStreak = newStreak
+        }
+      }
+      localStorage.setItem('profile', JSON.stringify(profile.value))
+    }
+  }
+
+  return { user, profile, token, setAuth, logout, updateProfile, addXP }
 })

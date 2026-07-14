@@ -39,6 +39,21 @@ const router = createRouter({
           name: 'configuration',
           component: () => import('../views/ConfigurationView.vue'),
         },
+        {
+          path: '/ranking',
+          name: 'ranking',
+          component: () => import('../views/RankingView.vue'),
+        },
+        {
+          path: '/amigos',
+          name: 'friends',
+          component: () => import('../views/FriendsView.vue'),
+        },
+        {
+          path: '/logros',
+          name: 'achievements',
+          component: () => import('../views/AchievementsView.vue'),
+        },
       ],
     },
   ],

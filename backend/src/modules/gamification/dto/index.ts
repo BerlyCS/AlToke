@@ -18,7 +18,7 @@ export const AchievementResponse = t.Object({
   description: t.String(),
   isSecret: t.Boolean(),
   requiredXp: t.Number(),
-  unlockedAt: t.String(),
+  unlockedAt: t.Optional(t.String()),
 })
 
 export const InventoryItemResponse = t.Object({

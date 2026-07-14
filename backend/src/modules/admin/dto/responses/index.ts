@@ -1,34 +1,61 @@
-import { t, type UnwrapSchema } from 'elysia'
+import { t } from 'elysia'
 
-export const AdminUserPrivacyResponse = t.Object({
-	showLevel: t.Union([t.Boolean(), t.Null()]),
-	showStreak: t.Union([t.Boolean(), t.Null()]),
-	showAchievements: t.Union([t.Boolean(), t.Null()]),
+export const UserDetailResponse = t.Object({
+  id: t.String(),
+  email: t.String(),
+  nickname: t.Optional(t.String()),
+  role: t.String(),
+  level: t.Number(),
+  xp: t.Number(),
+  lastActiveAt: t.Optional(t.String()),
+  createdAt: t.String(),
 })
 
-export const AdminUserResponse = t.Object({
-	id: t.String(),
-	email: t.String(),
-	role: t.Union([t.Literal('USER'), t.Literal('ADMIN')]),
-	nickname: t.Union([t.String(), t.Null()]),
-	bio: t.Union([t.String(), t.Null()]),
-	avatarUrl: t.Union([t.String(), t.Null()]),
-	xp: t.Number(),
-	level: t.Union([t.Number(), t.Null()]),
-	currentStreak: t.Union([t.Number(), t.Null()]),
-	maxStreak: t.Union([t.Number(), t.Null()]),
-	lastActiveAt: t.Union([t.Date(), t.Null()]),
-	createdAt: t.Date(),
-	privacy: t.Union([AdminUserPrivacyResponse, t.Undefined()]),
+export const SystemMetricsResponse = t.Object({
+  totalUsers: t.Number(),
+  activeUsersDaily: t.Number(),
+  tasksCompletedToday: t.Number(),
+  totalTasks: t.Number(),
 })
 
-export const AdminUsersResponse = t.Array(AdminUserResponse)
+export const UserSummaryResponse = t.Object({
+  userId: t.String(),
+  nickname: t.Optional(t.String()),
+  level: t.Number(),
+  xp: t.Number(),
+  lastActiveAt: t.Optional(t.String()),
+  createdAt: t.String(),
+})
 
-export const UnauthorizedResponse = t.Literal('Unauthorized')
-export const ForbiddenResponse = t.Literal('Forbidden')
+export const ActivityLogResponse = t.Object({
+  id: t.String(),
+  adminId: t.String(),
+  targetId: t.String(),
+  targetType: t.String(),
+  action: t.String(),
+  createdAt: t.String(),
+})
 
-export type AdminUserPrivacyResponse = UnwrapSchema<typeof AdminUserPrivacyResponse>
-export type AdminUserResponse = UnwrapSchema<typeof AdminUserResponse>
-export type AdminUsersResponse = UnwrapSchema<typeof AdminUsersResponse>
-export type UnauthorizedResponse = UnwrapSchema<typeof UnauthorizedResponse>
-export type ForbiddenResponse = UnwrapSchema<typeof ForbiddenResponse>
+export const BanUserResponse = t.Object({
+  success: t.Boolean(),
+  message: t.String(),
+  userId: t.String(),
+})
+
+export const ModerateProfileResponse = t.Object({
+  success: t.Boolean(),
+  message: t.String(),
+  userId: t.String(),
+})
+
+export const AssignTaskResponse = t.Object({
+  success: t.Boolean(),
+  message: t.String(),
+  taskId: t.String(),
+  assignedToUserId: t.String(),
+})
+
+export type UserDetailResponseType = typeof UserDetailResponse.static
+export type SystemMetricsResponseType = typeof SystemMetricsResponse.static
+export type UserSummaryResponseType = typeof UserSummaryResponse.static
+export type ActivityLogResponseType = typeof ActivityLogResponse.static

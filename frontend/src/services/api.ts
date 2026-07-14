@@ -5,6 +5,8 @@ import type {
   Credentials,
   InventoryItem,
   LeaderboardEntry,
+  NotificationLog,
+  NotificationSettings,
   PrivacyUpdateBody,
   ProfileUpdateBody,
   Tag,
@@ -84,6 +86,9 @@ type ApiClientContract = {
     gamification: {
       leaderboard: {
         get: (options: { query?: { limit?: number } }) => ApiResult<LeaderboardEntry[]>
+        friends: {
+          get: (options: AuthHeaders) => ApiResult<LeaderboardEntry[]>
+        }
       }
       achievements: {
         get: (options: AuthHeaders) => ApiResult<Achievement[]>
@@ -104,6 +109,42 @@ type ApiClientContract = {
         }
       }
     }
+    notifications: {
+      settings: {
+        get: (options: AuthHeaders) => ApiResult<NotificationSettings>
+        patch: (
+          body: { emailEnabled?: boolean; pushEnabled?: boolean; isMuted?: boolean },
+          options: AuthHeaders,
+        ) => ApiResult<NotificationSettings>
+      }
+      history: {
+        get: (
+          options: AuthHeaders & { query: { limit?: number; offset?: number } },
+        ) => ApiResult<NotificationLog[]>
+      }
+    }
+    friendships: {
+      '': {
+        get: (options: AuthHeaders) => ApiResult<any[]>
+      }
+      pending: {
+        get: (options: AuthHeaders) => ApiResult<any[]>
+      }
+      request: {
+        post: (body: { addresseeId: string }, options?: AuthHeaders) => ApiResult<any>
+      }
+      accept: {
+        post: (body: { friendshipId: string }, options?: AuthHeaders) => ApiResult<any>
+      }
+      reject: {
+        post: (body: { friendshipId: string }, options?: AuthHeaders) => ApiResult<any>
+      }
+      search: {
+        get: (options: AuthHeaders & { query: { query: string } }) => ApiResult<any[]>
+      }
+    } & ((params: { id: string }) => {
+      delete: (body?: any, options?: AuthHeaders) => ApiResult<any>
+    })
   }
 }
 

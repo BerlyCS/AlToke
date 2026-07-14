@@ -6,6 +6,7 @@ import { env } from '../../config/env'
 import type { AuthModel } from './model'
 import { password as bunPassword } from 'bun'
 import { OAuth2Client } from 'google-auth-library'
+import { GamificationService } from '../gamification/services'
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID)
 
@@ -30,6 +31,8 @@ export abstract class AuthService {
     await db.insert(privacySettings).values({
       userId: user!.id,
     })
+
+    await GamificationService.triggerAchievement(user!.id, 'first_login')
 
     return {
       id: user!.id,

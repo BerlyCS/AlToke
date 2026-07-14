@@ -89,6 +89,11 @@ export class GamificationRepository {
     return user ? toUserStats(user) : null
   }
 
+  async findUserById(userId: string) {
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+    return user || null
+  }
+
   async getDailyXPTotal(userId: string, date: Date): Promise<number> {
     const [result] = await db
       .select({ total: sql<number>`coalesce(sum(${xpTransactions.amount}), 0)` })
@@ -220,7 +225,7 @@ export class GamificationRepository {
     return nextQuantity
   }
 
-  async unlockAchievement(userId: string, achievementId: string): Promise<void> {
+  async unlockAchievement(userId: string, achievementId: string): Promise<boolean> {
     const [existing] = await db
       .select()
       .from(userAchievements)
@@ -229,9 +234,10 @@ export class GamificationRepository {
       )
       .limit(1)
 
-    if (existing) return
+    if (existing) return false
 
     await db.insert(userAchievements).values({ userId, achievementId })
+    return true
   }
 
   async findUnlockedAchievements(userId: string): Promise<UnlockedAchievement[]> {

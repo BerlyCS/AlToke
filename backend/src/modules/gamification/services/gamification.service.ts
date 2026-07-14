@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { status } from 'elysia'
 import { GamificationRepository } from '../repositories/gamification.repository'
+import { FriendshipRepository } from '../../friendship/repositories/friendship.repository'
 import type { Achievement, LeaderboardEntry, UseItemResult } from '../domain/entities'
 
 const DAILY_XP_CAP = 500
-const XP_PER_LEVEL_STEP = 100
+const XP_PER_LEVEL_STEP = 25
 
 const priorityMultipliers: Record<string, number> = {
   LOW: 1,
@@ -43,9 +44,24 @@ export class GamificationService {
     xpAmount: number,
     taskPriority: string,
     completedOnTime: boolean,
-  ): Promise<{ totalXp: number; currentLevel: number; gainedXp: number; leveledUp: boolean }> {
+  ): Promise<{
+    totalXp: number
+    currentLevel: number
+    gainedXp: number
+    leveledUp: boolean
+    streakCount: number
+    unlockedAchievements: Achievement[]
+  }> {
     if (!completedOnTime || xpAmount <= 0) {
-      return { totalXp: 0, currentLevel: 0, gainedXp: 0, leveledUp: false }
+      const user = await this.repo.findStatsByUserId(userId)
+      return {
+        totalXp: user?.totalXp || 0,
+        currentLevel: user?.currentLevel || 1,
+        gainedXp: 0,
+        leveledUp: false,
+        streakCount: user?.streakCount || 0,
+        unlockedAchievements: [],
+      }
     }
 
     const user = await this.repo.findStatsByUserId(userId)
@@ -61,6 +77,8 @@ export class GamificationService {
         currentLevel: user.currentLevel,
         gainedXp: 0,
         leveledUp: false,
+        streakCount: user.streakCount,
+        unlockedAchievements: [],
       }
     }
 
@@ -83,10 +101,14 @@ export class GamificationService {
       currentLevel,
     })
 
-    await this.verifyStreak(userId, new Date())
-    await this.triggerAchievement(userId, `xp_${currentLevel}`)
+    const streakCount = await this.verifyStreak(userId, new Date())
 
-    return { totalXp, currentLevel, gainedXp, leveledUp }
+    const unlockedAchievements: Achievement[] = []
+
+    const levelAch = await this.triggerAchievement(userId, `xp_${currentLevel}`)
+    if (levelAch) unlockedAchievements.push(levelAch)
+
+    return { totalXp, currentLevel, gainedXp, leveledUp, streakCount, unlockedAchievements }
   }
 
   static async checkDailyXPLimit(userId: string, xpAmount: number): Promise<number> {
@@ -109,7 +131,7 @@ export class GamificationService {
     })
   }
 
-  static async verifyStreak(userId: string, completionDate: Date): Promise<void> {
+  static async verifyStreak(userId: string, completionDate: Date): Promise<number> {
     const user = await this.repo.findStatsByUserId(userId)
     if (!user) {
       throw status(404, 'User not found')
@@ -137,6 +159,8 @@ export class GamificationService {
       maxStreak: Math.max(user.maxStreak, streakCount),
       lastActiveDate: completionDate,
     })
+
+    return streakCount
   }
 
   static async checkOverdueHighPriorityTasks(userId: string): Promise<void> {
@@ -182,10 +206,10 @@ export class GamificationService {
     })
   }
 
-  static async triggerAchievement(userId: string, code: string): Promise<void> {
+  static async triggerAchievement(userId: string, code: string): Promise<Achievement | null> {
     const achievement = await this.repo.findAchievementByCode(code)
     if (!achievement) {
-      return
+      return null
     }
 
     const user = await this.repo.findStatsByUserId(userId)
@@ -194,10 +218,11 @@ export class GamificationService {
     }
 
     if (user.totalXp < achievement.requiredXp) {
-      return
+      return null
     }
 
-    await this.repo.unlockAchievement(userId, achievement.id)
+    const newlyUnlocked = await this.repo.unlockAchievement(userId, achievement.id)
+    return newlyUnlocked ? achievement : null
   }
 
   static async getGlobalLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
@@ -205,28 +230,53 @@ export class GamificationService {
   }
 
   static async getFriendsLeaderboard(userId: string): Promise<LeaderboardEntry[]> {
-    // NOTE: requires a friends/follows table to be meaningful
-    // Currently returns all users except the current one as a fallback
-    const friends = await this.repo.getFriendsStats(userId)
-    return friends.map((friend, index) => ({
-      userId: friend.userId,
-      nickname: null,
-      avatarUrl: null,
-      currentLevel: friend.currentLevel,
-      totalXp: friend.totalXp,
-      streakCount: friend.streakCount,
-      maxStreak: friend.maxStreak,
+    const friends = await FriendshipRepository.getFriends(userId)
+    const currentUserStats = await this.repo.findStatsByUserId(userId)
+    const currentUser = await this.repo.findUserById(userId)
+
+    const entries = friends.map((f) => ({
+      userId: f.friend.id,
+      nickname: f.friend.nickname ?? null,
+      avatarUrl: f.friend.avatarUrl ?? null,
+      currentLevel: f.friend.level ?? 1,
+      totalXp: f.friend.xp ?? 0,
+      streakCount: f.friend.currentStreak ?? 0,
+      maxStreak: 0, // not returned by default friend profile, could fetch if needed
+    }))
+
+    if (currentUserStats && currentUser) {
+      entries.push({
+        userId: currentUserStats.userId,
+        nickname: currentUser.nickname ?? null,
+        avatarUrl: currentUser.avatarUrl ?? null,
+        currentLevel: currentUserStats.currentLevel ?? 1,
+        totalXp: currentUserStats.totalXp,
+        streakCount: currentUserStats.streakCount,
+        maxStreak: currentUserStats.maxStreak,
+      })
+    }
+
+    entries.sort((a, b) => b.totalXp - a.totalXp)
+
+    return entries.map((entry, index) => ({
+      ...entry,
       rank: index + 1,
     }))
   }
 
-  static async getUnlockedAchievements(
+  static async getAllAchievements(
     userId: string,
-  ): Promise<Array<Achievement & { unlockedAt: string }>> {
-    return (await this.repo.findUnlockedAchievements(userId)).map((entry) => ({
-      ...entry.achievement,
-      unlockedAt: entry.unlockedAt.toISOString(),
-    }))
+  ): Promise<Array<Achievement & { unlockedAt?: string }>> {
+    const all = await this.repo.listAchievements()
+    const unlocked = await this.repo.findUnlockedAchievements(userId)
+
+    return all.map((ach) => {
+      const u = unlocked.find((u) => u.achievement.id === ach.id)
+      return {
+        ...ach,
+        unlockedAt: u ? u.unlockedAt.toISOString() : undefined,
+      }
+    })
   }
 
   static async getInventory(userId: string) {

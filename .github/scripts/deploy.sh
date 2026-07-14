@@ -26,6 +26,7 @@ if [[ -z "$compose_file" ]]; then
 fi
 
 echo "Validated remote deploy directory and compose file: $compose_file"
+docker compose -f "$compose_file" down -v
 docker compose -f "$compose_file" pull
 docker compose -f "$compose_file" up -d
 docker compose -f "$compose_file" ps

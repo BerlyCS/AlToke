@@ -32,11 +32,15 @@ export const TaskModel = {
       dueDate: DateType,
       recurrence: tasks.recurrence,
       deletedAt: DateType, // For restoring from trash
+      tagIds: t.Array(t.String()),
     }),
   ),
   taskResponse: t.Intersect([
     t.Object(dbModel.select.tasks as any),
-    t.Object({ tags: t.Optional(t.Array(t.Object(dbModel.select.tags as any))) }),
+    t.Object({
+      tags: t.Optional(t.Array(t.Object(dbModel.select.tags as any))),
+      unlockedAchievements: t.Optional(t.Array(t.Any())),
+    }),
   ]),
   tasksListResponse: t.Array(
     t.Intersect([
@@ -52,6 +56,8 @@ export const TaskModel = {
       xpAwarded: t.Number(),
       leveledUp: t.Boolean(),
       newLevel: t.Number(),
+      newStreak: t.Optional(t.Number()),
+      unlockedAchievements: t.Optional(t.Array(t.Any())),
     }),
   ]),
 } as const

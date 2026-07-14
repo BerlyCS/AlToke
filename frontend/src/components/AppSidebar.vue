@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   Sidebar,
   SidebarContent,
@@ -30,8 +31,17 @@ const menuItems = [
   { title: 'Configuración', icon: Settings, url: '/configuracion' },
 ]
 
-const userXp = authStore.profile?.xp || 0
-const nextLevelXp = 100
+const userXp = computed(() => authStore.profile?.xp || 0)
+const currentLevel = computed(() => authStore.profile?.level || 1)
+const currentLevelBaseXp = computed(() =>
+  currentLevel.value === 1 ? 0 : Math.pow(currentLevel.value, 2) * 25,
+)
+const nextLevelXp = computed(() => Math.pow(currentLevel.value + 1, 2) * 25)
+const xpProgress = computed(() => {
+  const current = userXp.value - currentLevelBaseXp.value
+  const target = nextLevelXp.value - currentLevelBaseXp.value
+  return Math.max(0, Math.min(100, (current / target) * 100))
+})
 </script>
 
 <template>
@@ -81,7 +91,11 @@ const nextLevelXp = 100
           <Avatar
             class="h-12 w-12 rounded-xl shadow-sm border border-primary-foreground/20 bg-primary-foreground/10 transition-transform duration-300 group-hover:scale-105"
           >
-            <AvatarImage class="rounded-xl" :src="authStore.profile?.avatarUrl || ''" alt="Avatar del usuario" />
+            <AvatarImage
+              class="rounded-xl"
+              :src="authStore.profile?.avatarUrl || ''"
+              alt="Avatar del usuario"
+            />
             <AvatarFallback class="rounded-xl font-bold text-primary bg-background">
               {{
                 authStore.profile?.nickname?.charAt(0)?.toUpperCase() ||
@@ -95,7 +109,9 @@ const nextLevelXp = 100
             <span class="font-bold text-base truncate">{{
               authStore.profile?.nickname || 'Jugador'
             }}</span>
-            <span class="text-sm text-primary-foreground/80 font-bold">Nivel 1</span>
+            <span class="text-sm text-primary-foreground/80 font-bold"
+              >Nivel {{ currentLevel }}</span
+            >
           </div>
         </div>
 
@@ -107,7 +123,7 @@ const nextLevelXp = 100
             <span>{{ userXp }} / {{ nextLevelXp }}</span>
           </div>
           <Progress
-            :model-value="(userXp / nextLevelXp) * 100"
+            :model-value="xpProgress"
             class="h-3 rounded-full bg-primary-foreground/20 overflow-hidden"
           />
         </div>
@@ -118,6 +134,6 @@ const nextLevelXp = 100
 
 <style scoped>
 :deep([role='progressbar'] > div) {
-  background-color: hsl(var(--primary-foreground)) !important;
+  background-color: var(--primary-foreground) !important;
 }
 </style>
