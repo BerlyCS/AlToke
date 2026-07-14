@@ -83,6 +83,13 @@ describe.skipIf(!databaseAvailable)('UserRepository', () => {
         passwordHash: 'hash',
         role: 'USER',
         nickname: 'Saved User',
+        bio: '',
+        avatarUrl: '',
+        level: 1,
+        xp: 0,
+        currentStreak: 0,
+        maxStreak: 0,
+        lastActiveAt: new Date(),
       })
 
       expect(saved).toBeDefined()
