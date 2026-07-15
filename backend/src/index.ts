@@ -12,6 +12,7 @@ import { TaskService } from './modules/task/service'
 import { tagRoutes } from './modules/tag'
 import { friendshipRoutes } from './modules/friendship'
 import { checkDueTasks } from './modules/notification'
+import { adminController } from './modules/admin'
 
 export const app = new Elysia()
   .use(cors())
@@ -37,7 +38,8 @@ export const app = new Elysia()
       .use(gamificationModule)
       .use(notificationRoutes)
       .use(aiModule)
-      .use(friendshipRoutes),
+      .use(friendshipRoutes)
+      .use(adminController),
   )
 
 export type App = typeof app

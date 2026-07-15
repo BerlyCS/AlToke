@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { AdminService } from '../services'
+import { authPlugin } from '../../../shared/utils/auth-plugin'
 import { BanUserRequest, ModerateProfileRequest } from '../dto'
 import { BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from '../dto'
 
@@ -8,34 +9,20 @@ import { BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from 
  * Handles admin panel operations like user management, metrics, and moderation
  */
 export const adminController = new Elysia({ prefix: '/admin' })
+  .use(authPlugin)
   .get(
     '/metrics',
-    async ({ set }) => {
-      try {
-        const metrics = await AdminService.getSystemMetrics()
-        set.status = 200
-        return {
-          status: 200,
-          data: metrics,
-        }
-      } catch {
-        set.status = 500
-        return {
-          status: 500,
-          error: 'Failed to fetch metrics',
-        }
-      }
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+
+      return await AdminService.getSystemMetrics()
     },
     {
       detail: {
         tags: ['Admin'],
         description: 'Get system metrics and statistics',
       },
-      response: t.Object({
-        status: t.Number(),
-        data: t.Optional(SystemMetricsResponse),
-        error: t.Optional(t.String()),
-      }),
+      response: SystemMetricsResponse,
     },
   )
 
