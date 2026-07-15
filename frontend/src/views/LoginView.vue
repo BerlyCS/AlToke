@@ -40,8 +40,8 @@
             <Card
               class="flex items-center gap-3 px-5 py-4 rounded-2xl bg-success-500/10 border-success-500/20 shadow-none"
             >
-              <Target class="w-6 h-6 text-success-500" />
-              <span class="font-bold text-success-500">Retos</span>
+              <Users class="w-6 h-6 text-success-500" />
+              <span class="font-bold text-success-500">Amigos</span>
             </Card>
             <Card
               class="flex items-center gap-3 px-5 py-4 rounded-2xl bg-warning-500/10 border-warning-500/20 shadow-none"
@@ -194,7 +194,7 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import ModeToggle from '@/components/ModeToggle.vue'
 import logoUrl from '@/assets/images/logo.webp'
-import { Trophy, Target, Flame } from 'lucide-vue-next'
+import { Trophy, Users, Flame } from 'lucide-vue-next'
 import { ref, reactive, onMounted } from 'vue'
 import { authService } from '../services/auth.service'
 import { userService } from '../services/user.service'

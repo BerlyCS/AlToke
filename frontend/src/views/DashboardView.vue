@@ -17,7 +17,17 @@ import UpcomingTasks from '@/components/UpcomingTasks.vue'
 import StatCard from '@/components/StatCard.vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Zap, Trophy, Flame, Plus, Target, Users, ArrowRight } from 'lucide-vue-next'
+import {
+  CheckCircle,
+  Zap,
+  Trophy,
+  Flame,
+  Plus,
+  Target,
+  Users,
+  ArrowRight,
+  Award,
+} from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const { showReward } = useGamification()
@@ -242,24 +252,27 @@ function onTaskCreated(created: Task) {
                 </button>
 
                 <button
-                  class="h-28 rounded-3xl bg-green-500/10 hover:scale-[1.03] transition flex flex-col items-center justify-center gap-3"
+                  class="h-28 rounded-3xl bg-pink-500/10 hover:scale-[1.03] transition flex flex-col items-center justify-center gap-3"
+                  @click="router.push('/amigos')"
                 >
-                  <Target class="text-green-500" />
-                  <span class="font-bold text-green-500">Nuevo reto</span>
+                  <Users class="text-pink-500" />
+                  <span class="font-bold text-pink-500">Amigos</span>
                 </button>
 
                 <button
                   class="h-28 rounded-3xl bg-yellow-500/10 hover:scale-[1.03] transition flex flex-col items-center justify-center gap-3"
+                  @click="router.push('/ranking')"
                 >
                   <Trophy class="text-yellow-500" />
                   <span class="font-bold text-yellow-500">Ranking</span>
                 </button>
 
                 <button
-                  class="h-28 rounded-3xl bg-pink-500/10 hover:scale-[1.03] transition flex flex-col items-center justify-center gap-3"
+                  class="h-28 rounded-3xl bg-green-500/10 hover:scale-[1.03] transition flex flex-col items-center justify-center gap-3"
+                  @click="router.push('/logros')"
                 >
-                  <Users class="text-pink-500" />
-                  <span class="font-bold text-pink-500">Amigos</span>
+                  <Award class="text-green-500" />
+                  <span class="font-bold text-green-500">Logros</span>
                 </button>
               </div>
             </CardContent>
