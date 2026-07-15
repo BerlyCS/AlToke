@@ -1,6 +1,7 @@
 import { treaty } from '@elysiajs/eden'
 import type {
   Achievement,
+  AdminMetrics,
   CompleteTaskResult,
   Credentials,
   InventoryItem,
@@ -145,6 +146,11 @@ type ApiClientContract = {
     } & ((params: { id: string }) => {
       delete: (body?: any, options?: AuthHeaders) => ApiResult<any>
     })
+    admin: {
+      metrics: {
+        get: (options: AuthHeaders) => ApiResult<AdminMetrics>
+      }
+    }
   }
 }
 

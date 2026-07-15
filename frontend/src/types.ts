@@ -151,3 +151,11 @@ export interface NotificationLog {
   message: string
   createdAt: string
 }
+
+export interface AdminMetrics {
+  totalUsers: number
+  activeUsersDaily: number
+  tasksCompletedToday: number
+  totalTasks: number
+}
+
