@@ -3,7 +3,9 @@ import { t } from 'elysia'
 export const UserDetailResponse = t.Object({
   id: t.String(),
   email: t.String(),
+  avatarUrl: t.Union([t.String(), t.Null()]),
   nickname: t.Optional(t.String()),
+  bio: t.Union([t.String(), t.Null()]),
   role: t.String(),
   level: t.Number(),
   xp: t.Number(),

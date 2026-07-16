@@ -140,8 +140,8 @@ function deleteUser(userId: string) {
 
 function getRoleBadge(role: string) {
   const badges = {
-    'Jugador': 'bg-green-500/10 text-green-500',
-    'Admin': 'bg-orange-500/10 text-orange-500'
+    'USER': 'bg-green-500/10 text-green-500',
+    'ADMIN': 'bg-orange-500/10 text-orange-500'
   }
   return badges[role as keyof typeof badges] || 'bg-gray-500/10 text-gray-500'
 }
