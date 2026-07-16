@@ -27,16 +27,16 @@
 
     <div v-else class="space-y-12">
       <Card class="rounded-2xl shadow-xl border-border bg-card">
-        <CardContent class="p-6 pt-0">
+        <CardContent class="px-6">
           <div class="space-y-4">
             <div v-for="user in filteredUsers" :key="user.id"
               class="flex items-center justify-between p-3 rounded-xl hover:bg-primary/5 transition group">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-                  {{ user.name.charAt(0) }}
+                  {{ user.nickname.charAt(0) }}
                 </div>
                 <div>
-                  <p class="font-semibold">{{ user.name }}</p>
+                  <p class="font-semibold">{{ user.nickname }}</p>
                   <p class="text-xs text-muted-foreground">{{ user.email }}</p>
                 </div>
               </div>
@@ -74,31 +74,26 @@ import {
   Filter,
   Eye,
   Trash2,
-  Edit
+  Edit,
+  Users
 } from 'lucide-vue-next'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users } from '@lucide/vue'
+import { adminService } from '@/services/admin.service'
+import type { UsersList } from '@/types'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 const loading = ref(true)
 const searchQuery = ref('')
-
-const recentUsers = ref([
-  { id: 1, name: 'Ana García', email: 'ana@empresa.com', role: 'Admin', tasks: 12, xp: 3420, joined: '2024-01-15' },
-  { id: 2, name: 'Luis Fernández', email: 'luis@empresa.com', role: 'Jugador', tasks: 8, xp: 2150, joined: '2024-01-14' },
-  { id: 3, name: 'María López', email: 'maria@empresa.com', role: 'Jugador', tasks: 4, xp: 890, joined: '2024-01-13' },
-  { id: 4, name: 'Pedro Ramírez', email: 'pedro@empresa.com', role: 'Jugador', tasks: 15, xp: 5670, joined: '2024-01-12' },
-  { id: 5, name: 'Laura Torres', email: 'laura@empresa.com', role: 'Jugador', tasks: 6, xp: 1450, joined: '2024-01-11' },
-])
+const usersList = ref<UsersList>()
 
 const filteredUsers = computed(() => {
-  if (!searchQuery.value) return recentUsers.value
-  return recentUsers.value.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+  if (!searchQuery.value) return usersList.value?.users
+  return usersList.value?.users.filter(user =>
+    user.nickname.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
@@ -108,13 +103,13 @@ onMounted(async () => {
     router.push('/')
     return
   }
-  await loadDashboardData()
+  await fetchUsers()
 })
 
-async function loadDashboardData() {
+async function fetchUsers() {
   try {
     loading.value = true
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    usersList.value = await adminService.getUsers(10)
   } catch (error) {
     console.error('Error loading dashboard:', error)
     toast.error('Error al cargar el dashboard')
@@ -123,15 +118,15 @@ async function loadDashboardData() {
   }
 }
 
-function viewUser(userId: number) {
+function viewUser(userId: string) {
   router.push(`/admin/users/${userId}`)
 }
 
-function editUser(userId: number) {
+function editUser(userId: string) {
   router.push(`/admin/users/${userId}/edit`)
 }
 
-function deleteUser(userId: number) {
+function deleteUser(userId: string) {
   if (confirm('¿Estás seguro de eliminar este usuario?')) {
     toast.success('Usuario eliminado')
   }

@@ -55,7 +55,15 @@ export const AssignTaskResponse = t.Object({
   assignedToUserId: t.String(),
 })
 
+export const UsersResponse = t.Object({
+  users: t.Array(UserDetailResponse),
+  total: t.Number(),
+  limit: t.Number(),
+  offset: t.Number(),
+})
+
 export type UserDetailResponseType = typeof UserDetailResponse.static
 export type SystemMetricsResponseType = typeof SystemMetricsResponse.static
 export type UserSummaryResponseType = typeof UserSummaryResponse.static
 export type ActivityLogResponseType = typeof ActivityLogResponse.static
+export type UsersResponseType = typeof UsersResponse.static

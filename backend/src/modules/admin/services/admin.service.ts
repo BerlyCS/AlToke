@@ -3,6 +3,7 @@ import type {
   BanUserRequestType,
   ModerateProfileRequestType,
   SystemMetricsResponseType,
+  UsersResponseType,
 } from '../dto'
 
 export class AdminService {
@@ -99,7 +100,7 @@ export class AdminService {
   /**
    * Get all users with pagination
    */
-  static async listUsers(limit: number = 10, offset: number = 0) {
+  static async listUsers(limit: number = 10, offset: number = 0): Promise<UsersResponseType> {
     const users = await AdminRepository.getAllUsers(limit, offset)
     const total = await AdminRepository.getTotalUsersCount()
 
@@ -107,10 +108,10 @@ export class AdminService {
       users: users.map((user) => ({
         id: user.id,
         email: user.email,
-        nickname: user.nickname,
+        nickname: user.nickname ?? undefined,
         role: user.role,
-        level: user.level,
-        xp: user.xp,
+        level: user.level ?? 0,
+        xp: user.xp ?? 0,
         lastActiveAt: user.lastActiveAt?.toISOString(),
         createdAt: user.createdAt.toISOString(),
       })),

@@ -16,6 +16,12 @@ export const AssignTaskRequest = t.Object({
   reason: t.Optional(t.String()),
 })
 
+export const UsersQueryRequest = t.Object({
+  limit: t.Optional(t.Numeric()),
+  offset: t.Optional(t.Numeric()),
+})
+
 export type BanUserRequestType = typeof BanUserRequest.static
 export type ModerateProfileRequestType = typeof ModerateProfileRequest.static
 export type AssignTaskRequestType = typeof AssignTaskRequest.static
+export type UsersQueryRequestType = typeof UsersQueryRequest.static

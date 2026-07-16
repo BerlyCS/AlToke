@@ -16,6 +16,7 @@ import type {
   TaskSuggestion,
   UseItemResult,
   UserProfile,
+  UsersList,
 } from '@/types'
 
 type ApiResult<T> = Promise<{
@@ -155,6 +156,9 @@ type ApiClientContract = {
     admin: {
       metrics: {
         get: (options: AuthHeaders) => ApiResult<AdminMetrics>
+      }
+      users: {
+        get: (options: AuthHeaders & { query?: { limit?: number; offset?: number } }) => ApiResult<UsersList>
       }
     }
   }
