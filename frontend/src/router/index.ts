@@ -64,6 +64,11 @@ const router = createRouter({
           name: 'achievements',
           component: () => import('../views/AchievementsView.vue'),
         },
+        {
+          path: '/usuarios',
+          name: 'users',
+          component: () => import('../views/UsersView.vue'),
+        }
       ],
     },
   ],
