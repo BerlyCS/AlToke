@@ -162,7 +162,9 @@ export interface AdminMetrics {
 export interface UserSummary {
   id: string
   email: string
+  avatarUrl?: string | null
   nickname: string
+  bio?: string | null
   role: 'USER' | 'ADMIN'
   level: number
   xp: number
