@@ -159,3 +159,21 @@ export interface AdminMetrics {
   totalTasks: number
 }
 
+export interface UserSummary {
+  id: string
+  email: string
+  nickname: string
+  role: 'USER' | 'ADMIN'
+  level: number
+  xp: number
+  lastActiveAt: string
+  createdAt: string
+}
+
+export interface UsersList {
+  users: UserSummary[]
+  total: number
+  limit: number
+  offset: number
+}
+

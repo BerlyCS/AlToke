@@ -1,8 +1,9 @@
 import { Elysia, t } from 'elysia'
 import { AdminService } from '../services'
 import { authPlugin } from '../../../shared/utils/auth-plugin'
-import { BanUserRequest, ModerateProfileRequest } from '../dto'
-import { BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from '../dto'
+import { UsersQueryRequest } from '../dto/requests'
+import { UsersResponse } from '../dto/responses'
+import { BanUserRequest, ModerateProfileRequest, BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from '../dto'
 
 /**
  * Admin Controller
@@ -25,43 +26,17 @@ export const adminController = new Elysia({ prefix: '/admin' })
       response: SystemMetricsResponse,
     },
   )
-
   .get(
     '/users',
-    async ({ query, set }) => {
-      try {
-        const limit = query?.limit ? parseInt(query.limit as string) : 10
-        const offset = query?.offset ? parseInt(query.offset as string) : 0
-
-        const result = await AdminService.listUsers(limit, offset)
-        set.status = 200
-        return {
-          status: 200,
-          data: result,
-        }
-      } catch {
-        set.status = 500
-        return {
-          status: 500,
-          error: 'Failed to fetch users',
-        }
-      }
+    async ({ requireAuth, query }) => {
+      //const userId = requireAuth()
+      
+      return await AdminService.listUsers(query.limit ?? 10, query.offset ?? 0)
     },
     {
-      detail: {
-        tags: ['Admin'],
-        description: 'List all users with pagination',
-      },
-      query: t.Object({
-        limit: t.Optional(t.String()),
-        offset: t.Optional(t.String()),
-      }),
-      response: t.Object({
-        status: t.Number(),
-        data: t.Optional(t.Any()),
-        error: t.Optional(t.String()),
-      }),
-    },
+      query: UsersQueryRequest,
+      response: UsersResponse,
+    }
   )
 
   .get(
