@@ -45,7 +45,7 @@
                   {{ user.role }}
                 </span>
                 <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                  <Button variant="ghost" size="sm" class="h-8 w-8 p-0" @click="viewUser(user.id)">
+                  <Button variant="ghost" size="sm" class="h-8 w-8 p-0" @click="viewUser(user)">
                     <Eye class="w-4 h-4" />
                   </Button>
                   <Button variant="ghost" size="sm" class="h-8 w-8 p-0" @click="editUser(user.id)">
@@ -62,6 +62,8 @@
       </Card>
     </div>
   </div>
+
+  <ViewUserDialog v-model:open="showUserInfo" :user="selectedUser" @delete-task="deleteUser" />
 
 </template>
 <script setup lang="ts">
@@ -81,14 +83,17 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { adminService } from '@/services/admin.service'
-import type { UsersList } from '@/types'
+import type { UsersList, UserSummary } from '@/types'
+import ViewUserDialog from '@/components/ViewUserDialog.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 const loading = ref(true)
+const showUserInfo = ref(false)
 const searchQuery = ref('')
 const usersList = ref<UsersList>()
+const selectedUser = ref<UserSummary | null>(null)
 
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return usersList.value?.users
@@ -118,8 +123,9 @@ async function fetchUsers() {
   }
 }
 
-function viewUser(userId: string) {
-  router.push(`/admin/users/${userId}`)
+function viewUser(user: UserSummary) {
+  showUserInfo.value = true
+  selectedUser.value = user
 }
 
 function editUser(userId: string) {
