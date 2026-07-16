@@ -28,6 +28,7 @@ const menuAllItems = [
   { title: 'Ranking', icon: Trophy, url: '/ranking', roles: ['USER'] },
   { title: 'Logros', icon: Medal, url: '/logros', roles: ['USER'] },
   { title: 'Amigos', icon: Users, url: '/amigos', roles: ['USER'] },
+  { title: 'Usuarios', icon: Users, url: '/usuarios', roles: ['ADMIN'] },
   { title: 'Configuración', icon: Settings, url: '/configuracion', roles: ['ADMIN', 'USER'] },
 ]
 
