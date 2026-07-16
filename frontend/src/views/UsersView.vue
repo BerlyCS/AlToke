@@ -32,9 +32,17 @@
             <div v-for="user in filteredUsers" :key="user.id"
               class="flex items-center justify-between p-3 rounded-xl hover:bg-primary/5 transition group">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-                  {{ user.nickname.charAt(0) }}
-                </div>
+                <Avatar
+                  class="h-12 w-12 rounded-xl shadow-sm border border-primary-foreground/20 bg-primary-foreground/10 transition-transform duration-300 group-hover:scale-105">
+                  <AvatarImage class="rounded-xl" :src="user.avatarUrl || ''" alt="Avatar del usuario" />
+                  <AvatarFallback class="rounded-xl font-bold text-primary bg-background">
+                    {{
+                      user.nickname?.charAt(0)?.toUpperCase() ||
+                      user.email?.charAt(0)?.toUpperCase() ||
+                      'US'
+                    }}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <p class="font-semibold">{{ user.nickname }}</p>
                   <p class="text-xs text-muted-foreground">{{ user.email }}</p>
@@ -85,6 +93,9 @@ import { Button } from '@/components/ui/button'
 import { adminService } from '@/services/admin.service'
 import type { UsersList, UserSummary } from '@/types'
 import ViewUserDialog from '@/components/ViewUserDialog.vue'
+import Avatar from '@/components/ui/avatar/Avatar.vue'
+import AvatarImage from '@/components/ui/avatar/AvatarImage.vue'
+import AvatarFallback from '@/components/ui/avatar/AvatarFallback.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()

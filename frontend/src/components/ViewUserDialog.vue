@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -10,8 +9,7 @@ import {
   TrendingUp,
   Award,
   Calendar,
-  Trash2,
-  Edit,
+  User,
 } from 'lucide-vue-next'
 import type { UserSummary } from '@/types'
 
@@ -22,7 +20,6 @@ defineProps<{
 
 defineEmits(['update:open', 'delete-task', 'edit-task', 'toggle-status'])
 
-// Funciones de utilidad
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -56,39 +53,16 @@ function formatDate(date: string | Date): string {
     day: 'numeric',
   })
 }
-
-function getLevelColor(level: number): string {
-  if (level >= 80) return 'text-purple-500 bg-purple-50 dark:bg-purple-500/10'
-  if (level >= 60) return 'text-blue-500 bg-blue-50 dark:bg-blue-500/10'
-  if (level >= 40) return 'text-green-500 bg-green-50 dark:bg-green-500/10'
-  if (level >= 20) return 'text-yellow-500 bg-yellow-50 dark:bg-yellow-500/10'
-  return 'text-gray-500 bg-gray-50 dark:bg-gray-500/10'
-}
-
-function getLevelLabel(level: number): string {
-  if (level >= 80) return 'Experto'
-  if (level >= 60) return 'Avanzado'
-  if (level >= 40) return 'Intermedio'
-  if (level >= 20) return 'Principiante'
-  return 'Novato'
-}
 </script>
 
 <template>
   <Dialog :open="open" @update:open="$emit('update:open', $event)">
-    <DialogContent
-      v-if="user"
-      class="sm:max-w-2xl border-border bg-background p-0 overflow-hidden shadow-2xl"
-    >
+    <DialogContent v-if="user" class="sm:max-w-2xl border-border bg-background p-0 overflow-hidden shadow-2xl">
       <DialogHeader class="px-6 py-6 border-b border-border bg-linear-to-br from-primary/5 to-transparent">
         <div class="flex items-start gap-4">
-          <Avatar class="w-20 h-20 ring-4 ring-primary/10 shadow-xl shrink-0">
-            <AvatarImage 
-              :src="user.avatar" 
-              :alt="user.nickname"
-              class="object-cover"
-            />
-            <AvatarFallback class="text-2xl font-bold bg-primary/10 text-primary">
+          <Avatar class="w-20 h-20 shadow-sm border border-primary-foreground/20 shrink-0 rounded-xl">
+            <AvatarImage :src="user.avatarUrl || ''" :alt="user.nickname" class="rounded-xl" />
+            <AvatarFallback class="text-2xl font-bold bg-primary/10 text-primary rounded-xl">
               {{ getInitials(user.nickname) }}
             </AvatarFallback>
           </Avatar>
@@ -99,8 +73,9 @@ function getLevelLabel(level: number): string {
                 <DialogTitle class="text-2xl font-bold leading-tight text-foreground truncate">
                   {{ user.nickname }}
                 </DialogTitle>
-                <p class="text-xs text-muted-foreground font-medium">Activo hace: {{ formatDate(user.lastActiveAt) }}</p>
-                
+                <p class="text-xs text-muted-foreground font-medium">Activo hace: {{ formatDate(user.lastActiveAt) }}
+                </p>
+
                 <div class="flex flex-wrap items-center gap-2 my-2">
                   <Badge :variant="getRoleBadgeVariant(user.role)" class="font-medium">
                     <Shield class="w-3 h-3 mr-1" />
@@ -114,12 +89,25 @@ function getLevelLabel(level: number): string {
       </DialogHeader>
 
       <ScrollArea class="max-h-150 px-6 py-4">
+        <div v-if="user.bio" class="space-y-4 mb-5">
+          <h4 class="flex text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <User class="w-4 h-4 text-muted-foreground mr-2" />
+            Descripción Personal
+          </h4>
+
+          <div class="space-y-3">
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+              <p class="text-sm font-semibold text-foreground truncate mt-1">{{ user.bio }}</p>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-4">
             <h4 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Información Personal
             </h4>
-            
+
             <div class="space-y-3">
               <div class="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                 <Mail class="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -143,7 +131,7 @@ function getLevelLabel(level: number): string {
             <h4 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Estadísticas
             </h4>
-            
+
             <div class="space-y-3">
               <div class="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                 <TrendingUp class="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
