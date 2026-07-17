@@ -103,6 +103,7 @@
                     <Label for="nickname">Apodo (opcional)</Label>
                     <Input
                       id="nickname"
+                      data-cy="register-nickname"
                       v-model="form.nickname"
                       type="text"
                       placeholder="Tu apodo"
@@ -114,6 +115,7 @@
                     <Label for="email">Correo electrónico</Label>
                     <Input
                       id="email"
+                      data-cy="auth-email"
                       v-model="form.email"
                       type="email"
                       placeholder="ejemplo@correo.com"
@@ -136,6 +138,7 @@
                     </div>
                     <Input
                       id="password"
+                      data-cy="auth-password"
                       v-model="form.password"
                       type="password"
                       required
@@ -151,6 +154,7 @@
 
                   <Button
                     type="submit"
+                    data-cy="auth-submit"
                     class="w-full h-11 text-base font-bold shadow-lg"
                     :disabled="isLoading"
                   >
@@ -163,6 +167,7 @@
                 {{ isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?' }}
                 <button
                   type="button"
+                  data-cy="auth-mode-toggle"
                   @click="toggleMode"
                   class="underline underline-offset-4 text-foreground font-bold hover:text-primary transition-colors ml-1"
                 >

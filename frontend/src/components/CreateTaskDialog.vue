@@ -258,7 +258,10 @@ async function createTask() {
 
 <template>
   <Dialog :open="open" @update:open="$emit('update:open', $event)">
-    <DialogContent class="sm:max-w-137.5 p-0 overflow-hidden border-border bg-background">
+    <DialogContent
+      data-cy="task-form-dialog"
+      class="sm:max-w-137.5 p-0 overflow-hidden border-border bg-background"
+    >
       <DialogHeader class="px-6 pt-6 pb-2">
         <DialogTitle class="font-bold text-2xl">{{
           isEditing ? 'Editar tarea' : 'Nueva tarea'
@@ -283,6 +286,7 @@ async function createTask() {
                 <Label for="title">Nombre de la tarea</Label>
                 <Input
                   id="title"
+                  data-cy="task-title"
                   v-model="newTask.title"
                   placeholder="Ej: Terminar el reporte mensual"
                   class="bg-background"
@@ -293,6 +297,7 @@ async function createTask() {
                 <Label for="description">Descripción</Label>
                 <Textarea
                   id="description"
+                  data-cy="task-description"
                   v-model="newTask.description"
                   placeholder="Añade más detalles..."
                   class="resize-none bg-background"
@@ -321,6 +326,7 @@ async function createTask() {
                     <Clock class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="estimatedTime"
+                      data-cy="task-estimated-time"
                       type="number"
                       v-model="newTask.estimatedTime"
                       placeholder="Ej: 30"
@@ -381,6 +387,7 @@ async function createTask() {
                 <div class="grid grid-cols-3 gap-3">
                   <div
                     @click="newTask.priority = 'LOW'"
+                    data-cy="task-priority-low"
                     class="flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all"
                     :class="
                       newTask.priority === 'LOW'
@@ -401,6 +408,7 @@ async function createTask() {
                   </div>
                   <div
                     @click="newTask.priority = 'MEDIUM'"
+                    data-cy="task-priority-medium"
                     class="flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all"
                     :class="
                       newTask.priority === 'MEDIUM'
@@ -421,6 +429,7 @@ async function createTask() {
                   </div>
                   <div
                     @click="newTask.priority = 'HIGH'"
+                    data-cy="task-priority-high"
                     class="flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all"
                     :class="
                       newTask.priority === 'HIGH'
@@ -490,6 +499,7 @@ async function createTask() {
             <Button variant="ghost" @click="$emit('update:open', false)">Cancelar</Button>
             <Button
               @click="createTask"
+              data-cy="task-submit"
               :disabled="isSubmitting || !newTask.title"
               class="px-8 font-bold"
             >

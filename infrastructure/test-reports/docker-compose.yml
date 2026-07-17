@@ -1,0 +1,15 @@
+services:
+  reports:
+    image: nginx:1.27-alpine
+    container_name: altoke-e2e-reports
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./runs:/usr/share/nginx/html/runs:ro
+    networks:
+      - nginx
+
+networks:
+  nginx:
+    external: true
