@@ -102,7 +102,32 @@ function formatDate(date: string | Date): string {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div v-if="user.role == 'ADMIN'" class="grid grid-cols-1 gap-6">
+          <div class="space-y-4">
+            <h4 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Información Personal
+            </h4>
+
+            <div class="space-y-3">
+              <div class="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <Mail class="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground font-medium">Correo electrónico</p>
+                  <p class="text-sm font-semibold text-foreground truncate mt-1">{{ user.email }}</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <Calendar class="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div class="min-w-0">
+                  <p class="text-xs text-muted-foreground font-medium">Fecha de registro</p>
+                  <p class="text-sm font-semibold text-foreground mt-1">{{ formatDate(user.createdAt) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-4">
             <h4 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Información Personal
