@@ -127,8 +127,9 @@
                       <Label for="password">Contraseña</Label>
                       <a
                         v-if="isLogin"
-                        href="#"
+                        href="/forgot-password"
                         class="ml-auto inline-block text-sm underline-offset-4 hover:underline text-muted-foreground"
+                        @click.prevent="router.push('/forgot-password')"
                       >
                         ¿Olvidaste tu contraseña?
                       </a>

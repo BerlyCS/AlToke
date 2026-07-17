@@ -26,4 +26,16 @@ export const authService = {
     if (error) throw new ApiError(status, String(error.value) || 'Google login failed')
     return data!
   },
+
+  requestPasswordReset: async (email: string) => {
+    const { data, error, status } = await api.api.auth['forgot-password'].post({ email })
+    if (error) throw new ApiError(status, String(error.value) || 'Could not send instructions')
+    return data!
+  },
+
+  resetPassword: async (token: string, password: string) => {
+    const { data, error, status } = await api.api.auth['reset-password'].post({ token, password })
+    if (error) throw new ApiError(status, String(error.value) || 'Could not reset password')
+    return data!
+  },
 }

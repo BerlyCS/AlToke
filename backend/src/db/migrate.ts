@@ -8,6 +8,12 @@ const journalPath = fileURLToPath(new URL('../../drizzle/meta/_journal.json', im
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+const errorMessage = (error: unknown): string => {
+  if (!(error instanceof Error)) return String(error)
+  const cause = 'cause' in error ? error.cause : undefined
+  return cause ? `${error.message}: ${errorMessage(cause)}` : error.message
+}
+
 const runStatement = async (statement: string) => {
   const trimmed = statement.trim()
   if (!trimmed) return
@@ -21,7 +27,7 @@ const runStatement = async (statement: string) => {
   try {
     await db.execute(sql.raw(trimmed))
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
+    const msg = errorMessage(e)
     if (msg.includes('already exists') || msg.includes('duplicate')) return
     throw e
   }
@@ -53,7 +59,7 @@ const runMigrations = async () => {
       console.log('Database migrations completed successfully.')
       return
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error)
+      const msg = errorMessage(error)
 
       if (
         msg.includes('ECONNREFUSED') ||

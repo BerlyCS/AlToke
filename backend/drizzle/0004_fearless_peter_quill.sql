@@ -1,0 +1,1 @@
+ALTER TABLE "notification_logs" ALTER COLUMN "type" SET DATA TYPE varchar(100);
