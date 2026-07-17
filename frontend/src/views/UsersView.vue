@@ -44,7 +44,8 @@
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p class="font-semibold">{{ user.nickname }}</p>
+                  <p v-if="user.role == 'BANNED'" class="font-bold line-through">{{ user.nickname }}</p>
+                  <p v-else class="font-semibold">{{ user.nickname }}</p>
                   <p class="text-xs text-muted-foreground">{{ user.email }}</p>
                 </div>
               </div>
@@ -56,10 +57,10 @@
                   <Button variant="ghost" size="sm" class="h-8 w-8 p-0" @click="viewUser(user)">
                     <Eye class="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" class="h-8 w-8 p-0" @click="editUser(user.id)">
-                    <Edit class="w-4 h-4" />
+                  <Button variant="ghost" size="sm" class="h-8 w-8 p-0 text-red-500" @click="banUser(user.id)">
+                    <CircleOff class="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" class="h-8 w-8 p-0 text-red-500" @click="deleteUser(user.id)">
+                  <Button variant="ghost" size="sm" class="h-8 w-8 p-0 text-purple-500" @click="deleteUser(user.id)">
                     <Trash2 class="w-4 h-4" />
                   </Button>
                 </div>
@@ -84,8 +85,8 @@ import {
   Filter,
   Eye,
   Trash2,
-  Edit,
-  Users
+  Users,
+  CircleOff
 } from 'lucide-vue-next'
 
 import { Card, CardContent } from '@/components/ui/card'
@@ -139,8 +140,18 @@ function viewUser(user: UserSummary) {
   selectedUser.value = user
 }
 
-function editUser(userId: string) {
-  router.push(`/admin/users/${userId}/edit`)
+async function banUser(userId: string) {
+  try {
+    loading.value = true
+    const response = await adminService.banUser(userId)
+    fetchUsers()
+    toast.success(response.message || 'Usuario baneado')
+  } catch (error) {
+    console.error('Error al banear al usuario:', error)
+    toast.error('Error al banear al usuario')
+  } finally {
+    loading.value = false
+  }
 }
 
 function deleteUser(userId: string) {
@@ -152,7 +163,8 @@ function deleteUser(userId: string) {
 function getRoleBadge(role: string) {
   const badges = {
     'USER': 'bg-green-500/10 text-green-500',
-    'ADMIN': 'bg-orange-500/10 text-orange-500'
+    'ADMIN': 'bg-purple-500/10 text-purple-500',
+    'BANNED': 'bg-gray-500/10 text-gray-500'
   }
   return badges[role as keyof typeof badges] || 'bg-gray-500/10 text-gray-500'
 }

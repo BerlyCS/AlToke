@@ -160,6 +160,11 @@ type ApiClientContract = {
       users: {
         get: (options: AuthHeaders & { query?: { limit?: number; offset?: number } }) => ApiResult<UsersList>
       }
+      & ((params: { userId: string }) => {
+        ban: {
+          post: (options: AuthHeaders, body: string ) => ApiResult<void>
+        }
+      })
     }
   }
 }

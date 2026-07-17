@@ -3,7 +3,7 @@ import { AdminService } from '../services'
 import { authPlugin } from '../../../shared/utils/auth-plugin'
 import { UsersQueryRequest } from '../dto/requests'
 import { UsersResponse } from '../dto/responses'
-import { BanUserRequest, ModerateProfileRequest, BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from '../dto'
+import { ModerateProfileRequest, BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from '../dto'
 
 /**
  * Admin Controller
@@ -29,7 +29,7 @@ export const adminController = new Elysia({ prefix: '/admin' })
   .get(
     '/users',
     async ({ requireAuth, query }) => {
-      //const userId = requireAuth()
+      const userId = requireAuth()
       
       return await AdminService.listUsers(query.limit ?? 10, query.offset ?? 0)
     },
@@ -75,37 +75,16 @@ export const adminController = new Elysia({ prefix: '/admin' })
 
   .post(
     '/users/:id/ban',
-    async ({ params, body, set }) => {
-      try {
-        const result = await AdminService.banUser(params.id, body as any)
-        set.status = 200
-        return {
-          status: 200,
-          data: result,
-        }
-      } catch (error) {
-        const message = (error as Error).message
-        set.status = message === 'User not found' ? 404 : 400
-        return {
-          status: set.status,
-          error: message,
-        }
-      }
+    async ({ requireAuth, params: { id } }) => {
+      //const userId = requireAuth()
+
+      return await AdminService.banUser(id)
     },
     {
-      detail: {
-        tags: ['Admin'],
-        description: 'Ban a user from the system',
-      },
       params: t.Object({
-        id: t.String({ description: 'User ID' }),
+        id: t.String(),
       }),
-      body: BanUserRequest,
-      response: t.Object({
-        status: t.Number(),
-        data: t.Optional(BanUserResponse),
-        error: t.Optional(t.String()),
-      }),
+      response: BanUserResponse,
     },
   )
 

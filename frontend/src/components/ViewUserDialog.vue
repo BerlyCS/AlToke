@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -29,19 +28,21 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-function getRoleBadgeVariant(role: string): string {
-  const variants: Record<string, string> = {
-    ADMIN: 'destructive',
-    MODERATOR: 'warning',
-    USER: 'default',
+const getColorByRole = (role: string) => {
+  const roleColors: Record<string, string> = {
+    'ADMIN': 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+    'USER': 'bg-green-500/10 text-green-500 border-green-500/20',
+    'BANNED': 'bg-gray-500/10 text-gray-500 border-gray-500/20',
   }
-  return variants[role] || 'default'
+  
+  return roleColors[role] || roleColors['USER']
 }
 
 function getRoleLabel(role: string): string {
   const labels: Record<string, string> = {
     ADMIN: 'ADMINISTRADOR',
     USER: 'USUARIO',
+    BANNED: 'BANEADO',
   }
   return labels[role] || role
 }
@@ -77,10 +78,10 @@ function formatDate(date: string | Date): string {
                 </p>
 
                 <div class="flex flex-wrap items-center gap-2 my-2">
-                  <Badge :variant="getRoleBadgeVariant(user.role)" class="font-medium">
-                    <Shield class="w-3 h-3 mr-1" />
+                  <div class="font-bold text-xs px-2 py-1 rounded-full bg-accent/10 text-accent flex items-center gap-1" :class="getColorByRole(user.role)">
+                    <Shield class="w-4 h-4" />
                     {{ getRoleLabel(user.role) }}
-                  </Badge>
+                  </div>
                 </div>
               </div>
             </div>
