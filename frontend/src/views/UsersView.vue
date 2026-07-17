@@ -57,8 +57,11 @@
                   <Button variant="ghost" size="sm" class="h-8 w-8 p-0" @click="viewUser(user)">
                     <Eye class="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" class="h-8 w-8 p-0 text-red-500" @click="banUser(user.id)">
+                  <Button v-if="user.role != 'BANNED'" variant="ghost" size="sm" class="h-8 w-8 p-0" @click="banUser(user.id)">
                     <CircleOff class="w-4 h-4" />
+                  </Button>
+                  <Button v-else variant="ghost" size="sm" class="h-8 w-8 p-0" @click="unBanUser(user.id)">
+                    <UserRoundCheck class="w-4 h-4" />
                   </Button>
                   <Button variant="ghost" size="sm" class="h-8 w-8 p-0 text-purple-500" @click="deleteUser(user.id)">
                     <Trash2 class="w-4 h-4" />
@@ -86,7 +89,8 @@ import {
   Eye,
   Trash2,
   Users,
-  CircleOff
+  CircleOff,
+  UserRoundCheck
 } from 'lucide-vue-next'
 
 import { Card, CardContent } from '@/components/ui/card'
@@ -149,6 +153,20 @@ async function banUser(userId: string) {
   } catch (error) {
     console.error('Error al banear al usuario:', error)
     toast.error('Error al banear al usuario')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function unBanUser(userId: string) {
+  try {
+    loading.value = true
+    const response = await adminService.unBanUser(userId)
+    fetchUsers()
+    toast.success(response.message || 'Usuario reactivado')
+  } catch (error) {
+    console.error('Error al unbanear al usuario:', error)
+    toast.error('Error al unbanear al usuario')
   } finally {
     loading.value = false
   }

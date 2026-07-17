@@ -123,7 +123,7 @@ export class AdminService {
   /**
    * Unban a user
    */
-  static async unbanUser(targetUserId: string) {
+  static async unbanUser(targetUserId: string) : Promise<BanUserResponseType> {
     const user = await AdminRepository.getUserById(targetUserId)
     if (!user) {
       throw new Error('User not found')
