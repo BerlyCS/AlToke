@@ -3,14 +3,7 @@ import { env } from '../../config/env'
 import { renderPasswordResetEmail } from './password-reset-email'
 
 const getEmailConfig = () => {
-  const required = [
-    env.APP_BASE_URL,
-    env.SMTP_HOST,
-    env.SMTP_PORT,
-    env.SMTP_USER,
-    env.SMTP_PASSWORD,
-    env.EMAIL_FROM_ADDRESS,
-  ]
+  const required = [env.APP_BASE_URL, env.SMTP_HOST, env.SMTP_PORT, env.EMAIL_FROM_ADDRESS]
 
   if (required.some((value) => !value)) {
     throw new Error('Password recovery email is not configured')
@@ -26,8 +19,8 @@ const getEmailConfig = () => {
     host: env.SMTP_HOST!,
     port,
     secure: env.SMTP_SECURE === 'true',
-    user: env.SMTP_USER!,
-    password: env.SMTP_PASSWORD!,
+    user: env.SMTP_USER,
+    password: env.SMTP_PASSWORD,
     from: env.EMAIL_FROM_NAME
       ? `${env.EMAIL_FROM_NAME} <${env.EMAIL_FROM_ADDRESS!}>`
       : env.EMAIL_FROM_ADDRESS!,
@@ -50,8 +43,10 @@ export abstract class EmailService {
       host: config.host,
       port: config.port,
       secure: config.secure,
-      requireTLS: !config.secure,
-      auth: { user: config.user, pass: config.password },
+      requireTLS: !config.secure && Boolean(config.user && config.password),
+      ...(config.user && config.password
+        ? { auth: { user: config.user, pass: config.password } }
+        : {}),
     })
 
     await transport.sendMail({

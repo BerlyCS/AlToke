@@ -329,6 +329,7 @@ function formatTime(val: string | Date) {
       </div>
 
       <Button
+        data-cy="create-task"
         class="h-12 px-5 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg flex items-center gap-3 hover:scale-[1.02] transition duration-300"
         @click="showCreateModal = true"
       >
@@ -353,6 +354,7 @@ function formatTime(val: string | Date) {
 
     <div class="flex items-center gap-2">
       <button
+        data-cy="tasks-tab"
         class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200 flex items-center gap-2"
         :class="
           !showTrash
@@ -365,6 +367,7 @@ function formatTime(val: string | Date) {
         Tareas
       </button>
       <button
+        data-cy="trash-tab"
         class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200 flex items-center gap-2"
         :class="
           showTrash
@@ -384,6 +387,7 @@ function formatTime(val: string | Date) {
           <div
             v-for="task in trashedTasks"
             :key="task.id"
+            :data-cy="`trashed-task-${task.id}`"
             class="flex items-center justify-between p-4 rounded-xl border border-destructive/20 bg-destructive/5 transition-all min-w-0"
           >
             <div class="flex items-center gap-4 w-full min-w-0">
@@ -406,6 +410,7 @@ function formatTime(val: string | Date) {
             </div>
             <div class="flex items-center gap-2 pl-2">
               <button
+                :data-cy="`task-restore-${task.id}`"
                 class="p-2 rounded-lg hover:bg-success/10 text-success/50 hover:text-success transition-colors shrink-0"
                 @click="restoreTask(task.id)"
                 title="Restaurar"
@@ -625,6 +630,7 @@ function formatTime(val: string | Date) {
           <div
             v-for="task in filteredTasks"
             :key="task.id"
+            :data-cy="`task-row-${task.id}`"
             class="flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md min-w-0"
             :class="[
               getTaskColors(task).bg,
@@ -635,6 +641,7 @@ function formatTime(val: string | Date) {
           >
             <div class="flex items-center gap-4 w-full min-w-0">
               <button
+                :data-cy="`task-toggle-${task.id}`"
                 @click.stop="toggleStatus(task)"
                 class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
               >
@@ -686,6 +693,7 @@ function formatTime(val: string | Date) {
 
             <div class="flex items-center gap-2 pl-2">
               <button
+                :data-cy="`task-delete-${task.id}`"
                 class="p-2 rounded-lg hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
                 @click.stop="deleteTask(task.id)"
               >

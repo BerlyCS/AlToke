@@ -90,6 +90,7 @@
                     <Label for="recovery-email">Correo electrónico</Label>
                     <Input
                       id="recovery-email"
+                      data-cy="recovery-email"
                       v-model="email"
                       type="email"
                       autocomplete="email"
@@ -103,6 +104,7 @@
                   </p>
                   <Button
                     type="submit"
+                    data-cy="recovery-submit"
                     class="h-11 w-full text-base font-bold shadow-lg"
                     :disabled="isLoading"
                   >
@@ -139,6 +141,7 @@
                   <Label for="new-password">Nueva contraseña</Label>
                   <Input
                     id="new-password"
+                    data-cy="reset-password"
                     v-model="password"
                     type="password"
                     autocomplete="new-password"
@@ -153,6 +156,7 @@
                   <Label for="confirm-password">Confirma tu contraseña</Label>
                   <Input
                     id="confirm-password"
+                    data-cy="reset-password-confirmation"
                     v-model="confirmPassword"
                     type="password"
                     autocomplete="new-password"
@@ -168,6 +172,7 @@
                 </p>
                 <Button
                   type="submit"
+                  data-cy="reset-submit"
                   class="h-11 w-full text-base font-bold shadow-lg"
                   :disabled="isLoading"
                 >

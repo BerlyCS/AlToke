@@ -71,13 +71,11 @@ const runMigrations = async () => {
         continue
       }
 
-      console.error(`Migration failed: ${msg}`)
-      console.log('Continuing despite migration error...')
-      return
+      throw new Error(`Migration failed: ${msg}`, { cause: error })
     }
   }
 
-  console.log('PostgreSQL never became available, continuing anyway...')
+  throw new Error('PostgreSQL did not become available after 30 attempts')
 }
 
 try {

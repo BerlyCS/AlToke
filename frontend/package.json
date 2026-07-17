@@ -12,6 +12,7 @@
     "test:unit:watch": "vitest",
     "prepare": "cypress install",
     "test:e2e": "start-server-and-test preview http://localhost:4173 'cypress run --e2e'",
+    "test:e2e:ci": "cypress run --e2e --reporter junit --reporter-options mochaFile=../e2e-results/junit/results-[hash].xml,toConsole=true",
     "test:e2e:dev": "start-server-and-test 'vite dev --port 4173' http://localhost:4173 'cypress open --e2e'",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
