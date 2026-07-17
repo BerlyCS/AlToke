@@ -17,6 +17,7 @@ import type {
   UseItemResult,
   UserProfile,
   UsersList,
+  BanUserResponse
 } from '@/types'
 
 type ApiResult<T> = Promise<{
@@ -156,7 +157,10 @@ type ApiClientContract = {
       }
       & ((params: { userId: string }) => {
         ban: {
-          post: (options: AuthHeaders, body: string ) => ApiResult<void>
+          post: (options: AuthHeaders, body: string ) => ApiResult<BanUserResponse>
+        }
+        unban: {
+          post: (options: AuthHeaders, body: string ) => ApiResult<BanUserResponse>
         }
       })
     }

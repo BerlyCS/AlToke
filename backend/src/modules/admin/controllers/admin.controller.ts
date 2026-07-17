@@ -90,36 +90,16 @@ export const adminController = new Elysia({ prefix: '/admin' })
 
   .post(
     '/users/:id/unban',
-    async ({ params, set }) => {
-      try {
-        const result = await AdminService.unbanUser(params.id)
-        set.status = 200
-        return {
-          status: 200,
-          data: result,
-        }
-      } catch (error) {
-        const message = (error as Error).message
-        set.status = message === 'User not found' ? 404 : 400
-        return {
-          status: set.status,
-          error: message,
-        }
-      }
+    async ({ requireAuth, params: { id } }) => {
+      //const userId = requireAuth()
+      
+      return await AdminService.unbanUser(id)
     },
     {
-      detail: {
-        tags: ['Admin'],
-        description: 'Unban a previously banned user',
-      },
       params: t.Object({
-        id: t.String({ description: 'User ID' }),
+        id: t.String(),
       }),
-      response: t.Object({
-        status: t.Number(),
-        data: t.Optional(BanUserResponse),
-        error: t.Optional(t.String()),
-      }),
+      response: BanUserResponse,
     },
   )
 

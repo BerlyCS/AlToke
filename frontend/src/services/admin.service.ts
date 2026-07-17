@@ -32,5 +32,13 @@ export const adminService = {
           .ban.post({ headers: getHeaders() }, userId)
     if (error) throw new ApiError(status, String(error.value) || 'Failed to ban user')
     return data as unknown as BanUserResponse
+  },
+
+  unBanUser: async (userId: string): Promise<BanUserResponse> => {
+    const { data, error, status } = await api.api
+          .admin.users({ userId })
+          .unban.post({ headers: getHeaders() }, userId)
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to unban user')
+    return data as unknown as BanUserResponse
   }
 }
