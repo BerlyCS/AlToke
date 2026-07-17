@@ -56,3 +56,16 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       },
     },
   )
+  .post('/forgot-password', async ({ body }) => AuthService.requestPasswordReset(body), {
+    body: AuthModel.forgotPasswordBody,
+    response: {
+      200: AuthModel.forgotPasswordResponse,
+    },
+  })
+  .post('/reset-password', async ({ body }) => AuthService.resetPassword(body), {
+    body: AuthModel.resetPasswordBody,
+    response: {
+      200: AuthModel.resetPasswordResponse,
+      400: AuthModel.resetPasswordError,
+    },
+  })

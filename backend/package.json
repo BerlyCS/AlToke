@@ -25,11 +25,13 @@
     "drizzle-typebox": "^0.3.3",
     "elysia": "latest",
     "google-auth-library": "^10.9.0",
+    "nodemailer": "^9.0.3",
     "openai": "^6.45.0",
     "postgres": "^3.4.9",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/nodemailer": "^8.0.1",
     "bun-types": "latest",
     "drizzle-kit": "^0.31.10",
     "oxfmt": "^0.45.0",

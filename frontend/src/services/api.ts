@@ -45,6 +45,12 @@ type ApiClientContract = {
       login: { post: (body: Credentials) => ApiResult<AuthResponse> }
       register: { post: (body: Credentials) => ApiResult<AuthResponse> }
       google: { post: (body: { idToken: string }) => ApiResult<AuthResponse> }
+      'forgot-password': {
+        post: (body: { email: string }) => ApiResult<{ message: string }>
+      }
+      'reset-password': {
+        post: (body: { token: string; password: string }) => ApiResult<{ message: string }>
+      }
     }
     ai: {
       suggestions: {

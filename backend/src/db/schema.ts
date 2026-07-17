@@ -30,6 +30,24 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+    expiresAt: timestamp('expires_at').notNull(),
+    usedAt: timestamp('used_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('password_reset_tokens_user_id_created_at_idx').on(table.userId, table.createdAt),
+    index('password_reset_tokens_expires_at_idx').on(table.expiresAt),
+  ],
+)
+
 export const privacySettings = pgTable('privacy_settings', {
   userId: uuid('user_id')
     .references(() => users.id)
@@ -121,7 +139,7 @@ export const notificationLogs = pgTable(
       .references(() => users.id)
       .notNull(),
     channel: notificationChannelEnum('channel').default('IN_APP').notNull(),
-    type: varchar('type', { length: 50 }).notNull(),
+    type: varchar('type', { length: 100 }).notNull(),
     title: varchar('title', { length: 150 }).notNull(),
     message: text('message').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
