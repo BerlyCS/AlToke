@@ -28,7 +28,7 @@ export class AdminRepository {
   /**
    * Ban a user by setting their role
    */
-  static async banUser(userId: string, _reason?: string) {
+  static async banUser(userId: string) {
     const result = await db
       .update(users)
       .set({ role: 'BANNED' })

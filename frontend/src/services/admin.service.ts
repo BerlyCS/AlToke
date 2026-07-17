@@ -1,6 +1,6 @@
 import { api, ApiError } from './api'
 import { useAuthStore } from '@/stores/auth'
-import type { AdminMetrics, UsersList } from '@/types'
+import type { AdminMetrics, BanUserResponse, UsersList } from '@/types'
 
 // Helper to get auth headers automatically
 const getHeaders = () => {
@@ -18,10 +18,19 @@ export const adminService = {
   },
 
   getUsers: async (limit = 10, offset = 0): Promise<UsersList> => {
-      const { data, error, status } = await api.api.admin.users.get({
-        query: { limit, offset },
-      })
-      if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch users list')
-      return data as unknown as UsersList
-    },
+    const { data, error, status } = await api.api.admin.users.get({
+      headers: getHeaders(),
+      query: { limit, offset },
+    })
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch users list')
+    return data as unknown as UsersList
+  },
+
+  banUser: async (userId: string): Promise<BanUserResponse> => {
+    const { data, error, status } = await api.api
+          .admin.users({ userId })
+          .ban.post({ headers: getHeaders() }, userId)
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to ban user')
+    return data as unknown as BanUserResponse
+  }
 }

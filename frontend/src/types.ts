@@ -165,7 +165,7 @@ export interface UserSummary {
   avatarUrl?: string | null
   nickname: string
   bio?: string | null
-  role: 'USER' | 'ADMIN'
+  role: 'USER' | 'ADMIN' | 'BANNED'
   level: number
   xp: number
   lastActiveAt: string
@@ -179,3 +179,8 @@ export interface UsersList {
   offset: number
 }
 
+export interface BanUserResponse {
+  success: boolean
+  message: string
+  userId: string
+}

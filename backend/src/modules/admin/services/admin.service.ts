@@ -1,6 +1,6 @@
 import { AdminRepository } from '../repositories'
 import type {
-  BanUserRequestType,
+  BanUserResponseType,
   ModerateProfileRequestType,
   SystemMetricsResponseType,
   UsersResponseType,
@@ -10,21 +10,18 @@ export class AdminService {
   /**
    * Ban a user
    */
-  static async banUser(targetUserId: string, request: BanUserRequestType) {
-    // Check if user exists
+  static async banUser(targetUserId: string) : Promise<BanUserResponseType> {
     const user = await AdminRepository.getUserById(targetUserId)
     if (!user) {
       throw new Error('User not found')
     }
 
-    // Check if already banned
     const isBanned = await AdminRepository.isUserBanned(targetUserId)
     if (isBanned) {
       throw new Error('User is already banned')
     }
 
-    // Ban the user
-    await AdminRepository.banUser(targetUserId, request.reason)
+    await AdminRepository.banUser(targetUserId)
 
     return {
       success: true,
