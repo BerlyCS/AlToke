@@ -510,4 +510,282 @@ describe('GamificationService', () => {
       expect(frozenUntil.getTime()).toBe(tomorrow.getTime())
     })
   })
+
+  describe('triggerAchievement', () => {
+    it('returns null when achievement code does not exist', async () => {
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(null)
+
+      const result = await GamificationService.triggerAchievement('user-1', 'nonexistent')
+
+      expect(result).toBeNull()
+    })
+
+    it('throws 404 when user does not exist', async () => {
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(makeAchievement())
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(null)
+
+      try {
+        await GamificationService.triggerAchievement('missing-user', 'xp_5')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+      }
+    })
+
+    it('returns null when user has insufficient XP', async () => {
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(makeAchievement({ requiredXp: 500 }))
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats({ totalXp: 100 }))
+
+      const result = await GamificationService.triggerAchievement('user-1', 'xp_5')
+
+      expect(result).toBeNull()
+    })
+
+    it('returns null when achievement is already unlocked', async () => {
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(makeAchievement({ requiredXp: 100 }))
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats({ totalXp: 200 }))
+      spyOn(repo, 'unlockAchievement').mockResolvedValue(false)
+
+      const result = await GamificationService.triggerAchievement('user-1', 'xp_5')
+
+      expect(result).toBeNull()
+    })
+
+    it('returns achievement when newly unlocked', async () => {
+      const ach = makeAchievement({ requiredXp: 100 })
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(ach)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats({ totalXp: 200 }))
+      spyOn(repo, 'unlockAchievement').mockResolvedValue(true)
+
+      const result = await GamificationService.triggerAchievement('user-1', 'xp_5')
+
+      expect(result).toEqual(ach)
+    })
+
+    it('calls unlockAchievement with correct ids', async () => {
+      const ach = makeAchievement({ id: 'ach-42', requiredXp: 0 })
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(ach)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats({ totalXp: 10 }))
+      const unlockSpy = spyOn(repo, 'unlockAchievement').mockResolvedValue(true)
+
+      await GamificationService.triggerAchievement('user-1', 'xp_5')
+
+      expect(unlockSpy).toHaveBeenCalledWith('user-1', 'ach-42')
+    })
+  })
+
+  describe('getGlobalLeaderboard', () => {
+    it('delegates to repository with default limit of 10', async () => {
+      const leaderboard = [{ userId: 'u1', rank: 1, totalXp: 500, nickname: null, avatarUrl: null, currentLevel: 1, streakCount: 0, maxStreak: 0 }]
+      const spy = spyOn(repo, 'getTopUsersByXp').mockResolvedValue(leaderboard as never)
+
+      const result = await GamificationService.getGlobalLeaderboard()
+
+      expect(spy).toHaveBeenCalledWith(10)
+      expect(result).toEqual(leaderboard)
+    })
+
+    it('passes custom limit to repository', async () => {
+      const spy = spyOn(repo, 'getTopUsersByXp').mockResolvedValue([])
+
+      await GamificationService.getGlobalLeaderboard(5)
+
+      expect(spy).toHaveBeenCalledWith(5)
+    })
+  })
+
+  describe('getFriendsLeaderboard', () => {
+    it('combines friends and current user, sorted by XP descending', async () => {
+      spyOn(FriendshipRepository, 'getFriends').mockResolvedValue([
+        {
+          friendshipId: 'f1',
+          friend: {
+            id: 'friend-1',
+            nickname: 'Alice',
+            avatarUrl: null,
+            level: 3,
+            xp: 300,
+            currentStreak: 2,
+          },
+        },
+      ] as never)
+      spyOn(repo, 'findStatsByUserId')
+        .mockResolvedValueOnce(
+          makeUserStats({ userId: 'user-1', totalXp: 500, currentLevel: 4, streakCount: 5, maxStreak: 7 }),
+        )
+        .mockResolvedValueOnce(makeUserStats())
+      spyOn(repo, 'findUserById').mockResolvedValue({
+        id: 'user-1',
+        nickname: 'Bob',
+        avatarUrl: null,
+      } as never)
+
+      const result = await GamificationService.getFriendsLeaderboard('user-1')
+
+      expect(result).toHaveLength(2)
+      expect(result[0].userId).toBe('user-1')
+      expect(result[0].rank).toBe(1)
+      expect(result[0].totalXp).toBe(500)
+      expect(result[1].userId).toBe('friend-1')
+      expect(result[1].rank).toBe(2)
+    })
+
+    it('returns only current user when no friends', async () => {
+      spyOn(FriendshipRepository, 'getFriends').mockResolvedValue([] as never)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({ userId: 'user-1', totalXp: 100 }),
+      )
+      spyOn(repo, 'findUserById').mockResolvedValue({ id: 'user-1', nickname: 'Bob' } as never)
+
+      const result = await GamificationService.getFriendsLeaderboard('user-1')
+
+      expect(result).toHaveLength(1)
+      expect(result[0].userId).toBe('user-1')
+      expect(result[0].rank).toBe(1)
+    })
+
+    it('handles missing current user stats gracefully', async () => {
+      spyOn(FriendshipRepository, 'getFriends').mockResolvedValue([
+        {
+          friendshipId: 'f1',
+          friend: {
+            id: 'friend-1',
+            nickname: 'Alice',
+            avatarUrl: null,
+            level: 2,
+            xp: 200,
+            currentStreak: 1,
+          },
+        },
+      ] as never)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(null)
+      spyOn(repo, 'findUserById').mockResolvedValue(null as any)
+
+      const result = await GamificationService.getFriendsLeaderboard('user-1')
+
+      expect(result).toHaveLength(1)
+      expect(result[0].userId).toBe('friend-1')
+    })
+  })
+
+  describe('getAllAchievements', () => {
+    it('returns all achievements with unlockedAt for unlocked ones', async () => {
+      const ach1 = makeAchievement({ id: 'ach-1', code: 'first_login' })
+      const ach2 = makeAchievement({ id: 'ach-2', code: 'tasks_10', title: 'Task Master' })
+      spyOn(repo, 'listAchievements').mockResolvedValue([ach1, ach2])
+      spyOn(repo, 'findUnlockedAchievements').mockResolvedValue([
+        {
+          achievement: ach1,
+          unlockedAt: new Date('2026-01-15T10:00:00.000Z'),
+        },
+      ])
+
+      const result = await GamificationService.getAllAchievements('user-1')
+
+      expect(result).toHaveLength(2)
+      expect(result[0].unlockedAt).toBe('2026-01-15T10:00:00.000Z')
+      expect(result[1].unlockedAt).toBeUndefined()
+    })
+
+    it('returns empty array when no achievements exist', async () => {
+      spyOn(repo, 'listAchievements').mockResolvedValue([])
+      spyOn(repo, 'findUnlockedAchievements').mockResolvedValue([])
+
+      const result = await GamificationService.getAllAchievements('user-1')
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('getInventory', () => {
+    it('returns items from inventory', async () => {
+      const items = [
+        {
+          id: 'item-1',
+          code: 'freeze_potion',
+          name: 'Freeze Potion',
+          itemType: 'CONSUMABLE',
+          effect: 'FREEZE_STREAK',
+          assetUrl: null,
+          quantity: 2,
+          isEquipped: false,
+        },
+      ]
+      spyOn(repo, 'findInventoryByUserId').mockResolvedValue({ userId: 'user-1', items })
+
+      const result = await GamificationService.getInventory('user-1')
+
+      expect(result).toEqual(items)
+    })
+
+    it('returns empty array when user has no inventory', async () => {
+      spyOn(repo, 'findInventoryByUserId').mockResolvedValue(null)
+
+      const result = await GamificationService.getInventory('user-1')
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('useItem', () => {
+    it('throws 404 when item does not exist', async () => {
+      spyOn(repo, 'findItemById').mockResolvedValue(null as any)
+
+      try {
+        await GamificationService.useItem('user-1', 'missing-item')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+        expect((error as { response?: unknown }).response).toBe('Item not found')
+      }
+    })
+
+    it('throws 404 when item is not in inventory', async () => {
+      spyOn(repo, 'findItemById').mockResolvedValue({ id: 'item-1', code: 'test', name: 'Test', itemType: 'CONSUMABLE', effect: null, assetUrl: null } as any)
+      spyOn(repo, 'consumeInventoryItem').mockResolvedValue(null)
+
+      try {
+        await GamificationService.useItem('user-1', 'item-1')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+        expect((error as { response?: unknown }).response).toBe('Item not found in inventory')
+      }
+    })
+
+    it('consumes a regular item without triggering freeze', async () => {
+      spyOn(repo, 'findItemById').mockResolvedValue({ id: 'item-1', code: 'boost', name: 'Boost', itemType: 'CONSUMABLE', effect: 'BOOST_XP', assetUrl: null } as any)
+      const consumeSpy = spyOn(repo, 'consumeInventoryItem').mockResolvedValue({
+        userId: 'user-1',
+        itemId: 'item-1',
+        remainingQuantity: 1,
+        appliedEffect: 'BOOST_XP',
+      })
+
+      const result = await GamificationService.useItem('user-1', 'item-1')
+
+      expect(result.remainingQuantity).toBe(1)
+      expect(result.appliedEffect).toBe('BOOST_XP')
+      expect(consumeSpy).toHaveBeenCalledWith('user-1', 'item-1')
+    })
+
+    it('consumes a FREEZE item and triggers streak freeze', async () => {
+      spyOn(repo, 'findItemById')
+        .mockResolvedValueOnce({ id: 'item-1', code: 'freeze', name: 'Freeze', itemType: 'CONSUMABLE', effect: 'FREEZE_STREAK', assetUrl: null } as any)
+        .mockResolvedValueOnce({ id: 'item-1', code: 'freeze', name: 'Freeze', itemType: 'CONSUMABLE', effect: 'FREEZE_STREAK', assetUrl: null } as any)
+      spyOn(repo, 'consumeInventoryItem').mockResolvedValue({
+        userId: 'user-1',
+        itemId: 'item-1',
+        remainingQuantity: 0,
+        appliedEffect: 'FREEZE_STREAK',
+      })
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats())
+      const saveStatsSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      const result = await GamificationService.useItem('user-1', 'item-1')
+
+      expect(result.appliedEffect).toBe('FREEZE_STREAK')
+      expect(saveStatsSpy).toHaveBeenCalled()
+    })
+  })
 })
