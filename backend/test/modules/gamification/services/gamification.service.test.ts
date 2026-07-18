@@ -261,5 +261,253 @@ describe('GamificationService', () => {
       )
     })
   })
+
+  describe('verifyStreak', () => {
+    it('throws 404 when user does not exist', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(null)
+
+      try {
+        await GamificationService.verifyStreak('missing-user', new Date())
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+      }
+    })
+
+    it('sets streak to 1 on first activity', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats({ lastActiveDate: null }))
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      const result = await GamificationService.verifyStreak('user-1', new Date())
+
+      expect(result).toBe(1)
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ streakCount: 1 }),
+      )
+    })
+
+    it('keeps streak unchanged on same day', async () => {
+      const today = new Date()
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({ streakCount: 5, lastActiveDate: today }),
+      )
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      const result = await GamificationService.verifyStreak('user-1', new Date())
+
+      expect(result).toBe(5)
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ streakCount: 5 }),
+      )
+    })
+
+    it('increments streak by 1 on next day', async () => {
+      const twoDaysAgo = new Date()
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+      twoDaysAgo.setHours(10, 0, 0, 0)
+      const yesterdayMidnight = new Date()
+      yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1)
+      yesterdayMidnight.setHours(0, 0, 0, 0)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({ streakCount: 3, lastActiveDate: twoDaysAgo }),
+      )
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      const result = await GamificationService.verifyStreak('user-1', yesterdayMidnight)
+
+      expect(result).toBe(4)
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ streakCount: 4 }),
+      )
+    })
+
+    it('resets streak to 1 when gap exceeds 1 day without freeze', async () => {
+      const fiveDaysAgo = new Date()
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({ streakCount: 10, lastActiveDate: fiveDaysAgo, streakFrozenUntil: null }),
+      )
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      const now = new Date()
+      const result = await GamificationService.verifyStreak('user-1', now)
+
+      expect(result).toBe(1)
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ streakCount: 1 }),
+      )
+    })
+
+    it('preserves streak within freeze period', async () => {
+      const fiveDaysAgo = new Date()
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)
+      const future = new Date()
+      future.setDate(future.getDate() + 2)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({
+          streakCount: 7,
+          lastActiveDate: fiveDaysAgo,
+          streakFrozenUntil: future,
+        }),
+      )
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      const now = new Date()
+      const result = await GamificationService.verifyStreak('user-1', now)
+
+      expect(result).toBe(7)
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ streakCount: 7 }),
+      )
+    })
+
+    it('updates maxStreak when current streak exceeds it', async () => {
+      const twoDaysAgo = new Date()
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+      twoDaysAgo.setHours(10, 0, 0, 0)
+      const yesterdayMidnight = new Date()
+      yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1)
+      yesterdayMidnight.setHours(0, 0, 0, 0)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({ streakCount: 9, maxStreak: 9, lastActiveDate: twoDaysAgo }),
+      )
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      await GamificationService.verifyStreak('user-1', yesterdayMidnight)
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ maxStreak: 10 }),
+      )
+    })
+
+    it('does not update maxStreak when current streak is lower', async () => {
+      const twoDaysAgo = new Date()
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+      twoDaysAgo.setHours(10, 0, 0, 0)
+      const yesterdayMidnight = new Date()
+      yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1)
+      yesterdayMidnight.setHours(0, 0, 0, 0)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({ streakCount: 2, maxStreak: 10, lastActiveDate: twoDaysAgo }),
+      )
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      await GamificationService.verifyStreak('user-1', yesterdayMidnight)
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ maxStreak: 10 }),
+      )
+    })
+
+    it('updates lastActiveDate to the completion date', async () => {
+      const twoDaysAgo = new Date()
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+      const yesterdayMidnight = new Date()
+      yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1)
+      yesterdayMidnight.setHours(0, 0, 0, 0)
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({ streakCount: 1, lastActiveDate: twoDaysAgo }),
+      )
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      await GamificationService.verifyStreak('user-1', yesterdayMidnight)
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ lastActiveDate: yesterdayMidnight }),
+      )
+    })
+  })
+
+  describe('checkOverdueHighPriorityTasks', () => {
+    it('throws 404 when user does not exist', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(null)
+
+      try {
+        await GamificationService.checkOverdueHighPriorityTasks('missing-user')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+      }
+    })
+
+    it('saves the overdue count from repository', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats())
+      spyOn(repo, 'countOverdueHighPriorityTasks').mockResolvedValue(3)
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      await GamificationService.checkOverdueHighPriorityTasks('user-1')
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ overdueHighPriorityCount: 3 }),
+      )
+    })
+  })
+
+  describe('resetStreak', () => {
+    it('throws 404 when user does not exist', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(null)
+
+      try {
+        await GamificationService.resetStreak('missing-user')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+      }
+    })
+
+    it('resets streak count to 0 and clears freeze', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(
+        makeUserStats({ streakCount: 10, streakFrozenUntil: new Date() }),
+      )
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      await GamificationService.resetStreak('user-1')
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ streakCount: 0, streakFrozenUntil: null }),
+      )
+    })
+  })
+
+  describe('freezeStreak', () => {
+    it('throws 404 when user does not exist', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(null)
+
+      try {
+        await GamificationService.freezeStreak('missing-user', 'item-1')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+      }
+    })
+
+    it('throws 404 when item does not exist', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats())
+      spyOn(repo, 'findItemById').mockResolvedValue(null as any)
+
+      try {
+        await GamificationService.freezeStreak('user-1', 'missing-item')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+        expect((error as { response?: unknown }).response).toBe('Item not found')
+      }
+    })
+
+    it('sets streakFrozenUntil to next day', async () => {
+      spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats())
+      spyOn(repo, 'findItemById').mockResolvedValue({ id: 'item-1', code: 'freeze', name: 'Freeze', itemType: 'CONSUMABLE', effect: null, assetUrl: null } as any)
+      const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
+
+      await GamificationService.freezeStreak('user-1', 'item-1')
+
+      const savedStats = saveSpy.mock.calls[0][0] as unknown as UserStats
+      const frozenUntil = savedStats.streakFrozenUntil as Date
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      tomorrow.setHours(0, 0, 0, 0)
+
+      expect(frozenUntil.getTime()).toBe(tomorrow.getTime())
+    })
+  })
 })
-  
