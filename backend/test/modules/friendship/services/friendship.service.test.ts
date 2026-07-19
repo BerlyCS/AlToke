@@ -52,4 +52,162 @@ describe('FriendshipService', () => {
       expect(result.status).toBe('PENDING')
     })
   })
+
+  describe('acceptRequest', () => {
+    it('throws 404 when request not found', async () => {
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([])
+
+      try {
+        await FriendshipService.acceptRequest('user-2', 'fs-1')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+        expect((error as { response?: unknown }).response).toBe('Friendship request not found or unauthorized')
+      }
+    })
+
+    it('throws 404 when request belongs to different user', async () => {
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([])
+
+      try {
+        await FriendshipService.acceptRequest('user-3', 'fs-1')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+      }
+    })
+
+    it('accepts request and sends notification', async () => {
+      const pendingRequest = {
+        id: 'fs-1',
+        requesterId: 'user-1',
+        addresseeId: 'user-2',
+        status: 'PENDING',
+        requester: { id: 'user-1', nickname: 'Alice', avatarUrl: null, level: 3 },
+      }
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([pendingRequest] as any)
+      const updateSpy = spyOn(FriendshipRepository, 'updateStatus').mockResolvedValue({
+        id: 'fs-1',
+        requesterId: 'user-1',
+        addresseeId: 'user-2',
+        status: 'ACCEPTED',
+      } as any)
+      spyOn(NotificationService, 'recordNotification').mockResolvedValue({} as any)
+
+      const result = await FriendshipService.acceptRequest('user-2', 'fs-1')
+
+      expect(updateSpy).toHaveBeenCalledWith('fs-1', 'ACCEPTED')
+      expect(result.status).toBe('ACCEPTED')
+    })
+
+    it('sends FRIEND_ACCEPTED notification to requester', async () => {
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([
+        {
+          id: 'fs-1',
+          requesterId: 'user-1',
+          addresseeId: 'user-2',
+          status: 'PENDING',
+          requester: { id: 'user-1', nickname: 'Alice', avatarUrl: null, level: 3 },
+        },
+      ] as any)
+      spyOn(FriendshipRepository, 'updateStatus').mockResolvedValue({
+        id: 'fs-1',
+        requesterId: 'user-1',
+        addresseeId: 'user-2',
+        status: 'ACCEPTED',
+      } as any)
+      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue({} as any)
+
+      await FriendshipService.acceptRequest('user-2', 'fs-1')
+
+      expect(notifySpy).toHaveBeenCalledWith({
+        userId: 'user-1',
+        type: 'FRIEND_ACCEPTED',
+        title: 'Solicitud de amistad aceptada',
+        message: 'Alice aceptó tu solicitud de amistad',
+      })
+    })
+
+    it('uses fallback nickname when requester has no nickname', async () => {
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([
+        {
+          id: 'fs-1',
+          requesterId: 'user-1',
+          addresseeId: 'user-2',
+          status: 'PENDING',
+          requester: { id: 'user-1', nickname: null, avatarUrl: null, level: 1 },
+        },
+      ] as any)
+      spyOn(FriendshipRepository, 'updateStatus').mockResolvedValue({
+        id: 'fs-1',
+        requesterId: 'user-1',
+        status: 'ACCEPTED',
+      } as any)
+      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue({} as any)
+
+      await FriendshipService.acceptRequest('user-2', 'fs-1')
+
+      expect(notifySpy).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Un usuario aceptó tu solicitud de amistad' }),
+      )
+    })
+  })
+
+  describe('rejectRequest', () => {
+    it('throws 404 when request not found', async () => {
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([])
+
+      try {
+        await FriendshipService.rejectRequest('user-2', 'fs-1')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+        expect((error as { response?: unknown }).response).toBe('Friendship request not found or unauthorized')
+      }
+    })
+
+    it('rejects request when found', async () => {
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([
+        {
+          id: 'fs-1',
+          requesterId: 'user-1',
+          addresseeId: 'user-2',
+          status: 'PENDING',
+          requester: { id: 'user-1', nickname: 'Bob' },
+        },
+      ] as any)
+      const updateSpy = spyOn(FriendshipRepository, 'updateStatus').mockResolvedValue({
+        id: 'fs-1',
+        requesterId: 'user-1',
+        addresseeId: 'user-2',
+        status: 'REJECTED',
+      } as any)
+
+      const result = await FriendshipService.rejectRequest('user-2', 'fs-1')
+
+      expect(updateSpy).toHaveBeenCalledWith('fs-1', 'REJECTED')
+      expect(result.status).toBe('REJECTED')
+    })
+
+    it('does not send notification on reject', async () => {
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([
+        {
+          id: 'fs-1',
+          requesterId: 'user-1',
+          addresseeId: 'user-2',
+          status: 'PENDING',
+          requester: { id: 'user-1', nickname: 'Bob' },
+        },
+      ] as any)
+      spyOn(FriendshipRepository, 'updateStatus').mockResolvedValue({
+        id: 'fs-1',
+        status: 'REJECTED',
+      } as any)
+      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue({} as any)
+
+      await FriendshipService.rejectRequest('user-2', 'fs-1')
+
+      expect(notifySpy).not.toHaveBeenCalled()
+    })
+  })
 })
