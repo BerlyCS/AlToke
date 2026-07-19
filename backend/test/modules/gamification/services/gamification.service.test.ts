@@ -256,9 +256,7 @@ describe('GamificationService', () => {
       await GamificationService.recalculateLevel('user-1')
 
       const savedLevel = Math.max(1, Math.floor(Math.sqrt(100 / 25)))
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ currentLevel: savedLevel }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ currentLevel: savedLevel }))
     })
   })
 
@@ -281,9 +279,7 @@ describe('GamificationService', () => {
       const result = await GamificationService.verifyStreak('user-1', new Date())
 
       expect(result).toBe(1)
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ streakCount: 1 }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ streakCount: 1 }))
     })
 
     it('keeps streak unchanged on same day', async () => {
@@ -296,9 +292,7 @@ describe('GamificationService', () => {
       const result = await GamificationService.verifyStreak('user-1', new Date())
 
       expect(result).toBe(5)
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ streakCount: 5 }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ streakCount: 5 }))
     })
 
     it('increments streak by 1 on next day', async () => {
@@ -316,9 +310,7 @@ describe('GamificationService', () => {
       const result = await GamificationService.verifyStreak('user-1', yesterdayMidnight)
 
       expect(result).toBe(4)
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ streakCount: 4 }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ streakCount: 4 }))
     })
 
     it('resets streak to 1 when gap exceeds 1 day without freeze', async () => {
@@ -333,9 +325,7 @@ describe('GamificationService', () => {
       const result = await GamificationService.verifyStreak('user-1', now)
 
       expect(result).toBe(1)
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ streakCount: 1 }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ streakCount: 1 }))
     })
 
     it('preserves streak within freeze period', async () => {
@@ -356,9 +346,7 @@ describe('GamificationService', () => {
       const result = await GamificationService.verifyStreak('user-1', now)
 
       expect(result).toBe(7)
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ streakCount: 7 }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ streakCount: 7 }))
     })
 
     it('updates maxStreak when current streak exceeds it', async () => {
@@ -375,9 +363,7 @@ describe('GamificationService', () => {
 
       await GamificationService.verifyStreak('user-1', yesterdayMidnight)
 
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ maxStreak: 10 }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ maxStreak: 10 }))
     })
 
     it('does not update maxStreak when current streak is lower', async () => {
@@ -394,9 +380,7 @@ describe('GamificationService', () => {
 
       await GamificationService.verifyStreak('user-1', yesterdayMidnight)
 
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ maxStreak: 10 }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ maxStreak: 10 }))
     })
 
     it('updates lastActiveDate to the completion date', async () => {
@@ -437,9 +421,7 @@ describe('GamificationService', () => {
 
       await GamificationService.checkOverdueHighPriorityTasks('user-1')
 
-      expect(saveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ overdueHighPriorityCount: 3 }),
-      )
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ overdueHighPriorityCount: 3 }))
     })
   })
 
@@ -496,7 +478,14 @@ describe('GamificationService', () => {
 
     it('sets streakFrozenUntil to next day', async () => {
       spyOn(repo, 'findStatsByUserId').mockResolvedValue(makeUserStats())
-      spyOn(repo, 'findItemById').mockResolvedValue({ id: 'item-1', code: 'freeze', name: 'Freeze', itemType: 'CONSUMABLE', effect: null, assetUrl: null } as any)
+      spyOn(repo, 'findItemById').mockResolvedValue({
+        id: 'item-1',
+        code: 'freeze',
+        name: 'Freeze',
+        itemType: 'CONSUMABLE',
+        effect: null,
+        assetUrl: null,
+      } as any)
       const saveSpy = spyOn(repo, 'saveStats').mockResolvedValue()
 
       await GamificationService.freezeStreak('user-1', 'item-1')
@@ -576,7 +565,18 @@ describe('GamificationService', () => {
 
   describe('getGlobalLeaderboard', () => {
     it('delegates to repository with default limit of 10', async () => {
-      const leaderboard = [{ userId: 'u1', rank: 1, totalXp: 500, nickname: null, avatarUrl: null, currentLevel: 1, streakCount: 0, maxStreak: 0 }]
+      const leaderboard = [
+        {
+          userId: 'u1',
+          rank: 1,
+          totalXp: 500,
+          nickname: null,
+          avatarUrl: null,
+          currentLevel: 1,
+          streakCount: 0,
+          maxStreak: 0,
+        },
+      ]
       const spy = spyOn(repo, 'getTopUsersByXp').mockResolvedValue(leaderboard as never)
 
       const result = await GamificationService.getGlobalLeaderboard()
@@ -611,7 +611,13 @@ describe('GamificationService', () => {
       ] as never)
       spyOn(repo, 'findStatsByUserId')
         .mockResolvedValueOnce(
-          makeUserStats({ userId: 'user-1', totalXp: 500, currentLevel: 4, streakCount: 5, maxStreak: 7 }),
+          makeUserStats({
+            userId: 'user-1',
+            totalXp: 500,
+            currentLevel: 4,
+            streakCount: 5,
+            maxStreak: 7,
+          }),
         )
         .mockResolvedValueOnce(makeUserStats())
       spyOn(repo, 'findUserById').mockResolvedValue({
@@ -741,7 +747,14 @@ describe('GamificationService', () => {
     })
 
     it('throws 404 when item is not in inventory', async () => {
-      spyOn(repo, 'findItemById').mockResolvedValue({ id: 'item-1', code: 'test', name: 'Test', itemType: 'CONSUMABLE', effect: null, assetUrl: null } as any)
+      spyOn(repo, 'findItemById').mockResolvedValue({
+        id: 'item-1',
+        code: 'test',
+        name: 'Test',
+        itemType: 'CONSUMABLE',
+        effect: null,
+        assetUrl: null,
+      } as any)
       spyOn(repo, 'consumeInventoryItem').mockResolvedValue(null)
 
       try {
@@ -754,7 +767,14 @@ describe('GamificationService', () => {
     })
 
     it('consumes a regular item without triggering freeze', async () => {
-      spyOn(repo, 'findItemById').mockResolvedValue({ id: 'item-1', code: 'boost', name: 'Boost', itemType: 'CONSUMABLE', effect: 'BOOST_XP', assetUrl: null } as any)
+      spyOn(repo, 'findItemById').mockResolvedValue({
+        id: 'item-1',
+        code: 'boost',
+        name: 'Boost',
+        itemType: 'CONSUMABLE',
+        effect: 'BOOST_XP',
+        assetUrl: null,
+      } as any)
       const consumeSpy = spyOn(repo, 'consumeInventoryItem').mockResolvedValue({
         userId: 'user-1',
         itemId: 'item-1',
@@ -771,8 +791,22 @@ describe('GamificationService', () => {
 
     it('consumes a FREEZE item and triggers streak freeze', async () => {
       spyOn(repo, 'findItemById')
-        .mockResolvedValueOnce({ id: 'item-1', code: 'freeze', name: 'Freeze', itemType: 'CONSUMABLE', effect: 'FREEZE_STREAK', assetUrl: null } as any)
-        .mockResolvedValueOnce({ id: 'item-1', code: 'freeze', name: 'Freeze', itemType: 'CONSUMABLE', effect: 'FREEZE_STREAK', assetUrl: null } as any)
+        .mockResolvedValueOnce({
+          id: 'item-1',
+          code: 'freeze',
+          name: 'Freeze',
+          itemType: 'CONSUMABLE',
+          effect: 'FREEZE_STREAK',
+          assetUrl: null,
+        } as any)
+        .mockResolvedValueOnce({
+          id: 'item-1',
+          code: 'freeze',
+          name: 'Freeze',
+          itemType: 'CONSUMABLE',
+          effect: 'FREEZE_STREAK',
+          assetUrl: null,
+        } as any)
       spyOn(repo, 'consumeInventoryItem').mockResolvedValue({
         userId: 'user-1',
         itemId: 'item-1',

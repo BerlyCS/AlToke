@@ -209,7 +209,9 @@ describe('UserService', () => {
 
     it('hides level when showLevel is false', async () => {
       spyOn(UserRepository, 'findById').mockResolvedValue(makeUser())
-      spyOn(UserRepository, 'findPrivacySettings').mockResolvedValue(makePrivacy({ showLevel: false }))
+      spyOn(UserRepository, 'findPrivacySettings').mockResolvedValue(
+        makePrivacy({ showLevel: false }),
+      )
 
       const profile = await UserService.getPublicProfile('user-1')
 

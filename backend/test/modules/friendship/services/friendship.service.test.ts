@@ -15,7 +15,9 @@ describe('FriendshipService', () => {
         expect.unreachable()
       } catch (error) {
         expect((error as { code?: number }).code).toBe(400)
-        expect((error as { response?: unknown }).response).toBe('Cannot send friendship request to yourself')
+        expect((error as { response?: unknown }).response).toBe(
+          'Cannot send friendship request to yourself',
+        )
       }
     })
 
@@ -32,7 +34,9 @@ describe('FriendshipService', () => {
         expect.unreachable()
       } catch (error) {
         expect((error as { code?: number }).code).toBe(400)
-        expect((error as { response?: unknown }).response).toBe('Friendship or request already exists')
+        expect((error as { response?: unknown }).response).toBe(
+          'Friendship or request already exists',
+        )
       }
     })
 
@@ -62,7 +66,9 @@ describe('FriendshipService', () => {
         expect.unreachable()
       } catch (error) {
         expect((error as { code?: number }).code).toBe(404)
-        expect((error as { response?: unknown }).response).toBe('Friendship request not found or unauthorized')
+        expect((error as { response?: unknown }).response).toBe(
+          'Friendship request not found or unauthorized',
+        )
       }
     })
 
@@ -85,7 +91,9 @@ describe('FriendshipService', () => {
         status: 'PENDING',
         requester: { id: 'user-1', nickname: 'Alice', avatarUrl: null, level: 3 },
       }
-      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([pendingRequest] as any)
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([
+        pendingRequest,
+      ] as any)
       const updateSpy = spyOn(FriendshipRepository, 'updateStatus').mockResolvedValue({
         id: 'fs-1',
         requesterId: 'user-1',
@@ -116,7 +124,9 @@ describe('FriendshipService', () => {
         addresseeId: 'user-2',
         status: 'ACCEPTED',
       } as any)
-      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue({} as any)
+      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue(
+        {} as any,
+      )
 
       await FriendshipService.acceptRequest('user-2', 'fs-1')
 
@@ -143,7 +153,9 @@ describe('FriendshipService', () => {
         requesterId: 'user-1',
         status: 'ACCEPTED',
       } as any)
-      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue({} as any)
+      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue(
+        {} as any,
+      )
 
       await FriendshipService.acceptRequest('user-2', 'fs-1')
 
@@ -162,7 +174,9 @@ describe('FriendshipService', () => {
         expect.unreachable()
       } catch (error) {
         expect((error as { code?: number }).code).toBe(404)
-        expect((error as { response?: unknown }).response).toBe('Friendship request not found or unauthorized')
+        expect((error as { response?: unknown }).response).toBe(
+          'Friendship request not found or unauthorized',
+        )
       }
     })
 
@@ -203,7 +217,9 @@ describe('FriendshipService', () => {
         id: 'fs-1',
         status: 'REJECTED',
       } as any)
-      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue({} as any)
+      const notifySpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue(
+        {} as any,
+      )
 
       await FriendshipService.rejectRequest('user-2', 'fs-1')
 
@@ -220,7 +236,9 @@ describe('FriendshipService', () => {
         expect.unreachable()
       } catch (error) {
         expect((error as { code?: number }).code).toBe(404)
-        expect((error as { response?: unknown }).response).toBe('Friendship not found or unauthorized')
+        expect((error as { response?: unknown }).response).toBe(
+          'Friendship not found or unauthorized',
+        )
       }
     })
 
@@ -228,7 +246,14 @@ describe('FriendshipService', () => {
       spyOn(FriendshipRepository, 'getFriends').mockResolvedValue([
         {
           friendshipId: 'fs-1',
-          friend: { id: 'user-2', nickname: 'Alice', avatarUrl: null, level: 2, xp: 100, currentStreak: 3 },
+          friend: {
+            id: 'user-2',
+            nickname: 'Alice',
+            avatarUrl: null,
+            level: 2,
+            xp: 100,
+            currentStreak: 3,
+          },
         },
       ] as any)
       const deleteSpy = spyOn(FriendshipRepository, 'deleteFriendship').mockResolvedValue()
@@ -251,7 +276,9 @@ describe('FriendshipService', () => {
           requester: { id: 'user-1', nickname: 'Alice' },
         },
       ]
-      const spy = spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue(pending as any)
+      const spy = spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue(
+        pending as any,
+      )
 
       const result = await FriendshipService.getPendingRequests('user-2')
 
@@ -273,7 +300,14 @@ describe('FriendshipService', () => {
       const friends = [
         {
           friendshipId: 'fs-1',
-          friend: { id: 'user-2', nickname: 'Alice', avatarUrl: null, level: 3, xp: 300, currentStreak: 5 },
+          friend: {
+            id: 'user-2',
+            nickname: 'Alice',
+            avatarUrl: null,
+            level: 3,
+            xp: 300,
+            currentStreak: 5,
+          },
         },
       ]
       const spy = spyOn(FriendshipRepository, 'getFriends').mockResolvedValue(friends as any)
