@@ -89,6 +89,7 @@ describe('GamificationService', () => {
       spyOn(repo, 'getDailyXPTotal').mockResolvedValue(0)
       const saveTxSpy = spyOn(repo, 'saveXPTransaction').mockResolvedValue()
       spyOn(repo, 'saveStats').mockResolvedValue()
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(null)
 
       const result = await GamificationService.addXP('user-1', 100, 'LOW', true)
 
@@ -104,6 +105,7 @@ describe('GamificationService', () => {
       spyOn(repo, 'getDailyXPTotal').mockResolvedValue(0)
       const saveTxSpy = spyOn(repo, 'saveXPTransaction').mockResolvedValue()
       spyOn(repo, 'saveStats').mockResolvedValue()
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(null)
 
       const result = await GamificationService.addXP('user-1', 100, 'MEDIUM', true)
 
@@ -119,6 +121,7 @@ describe('GamificationService', () => {
       spyOn(repo, 'getDailyXPTotal').mockResolvedValue(0)
       spyOn(repo, 'saveXPTransaction').mockResolvedValue()
       spyOn(repo, 'saveStats').mockResolvedValue()
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(null)
 
       const result = await GamificationService.addXP('user-1', 100, 'HIGH', true)
 
@@ -131,6 +134,7 @@ describe('GamificationService', () => {
       spyOn(repo, 'getDailyXPTotal').mockResolvedValue(0)
       spyOn(repo, 'saveXPTransaction').mockResolvedValue()
       spyOn(repo, 'saveStats').mockResolvedValue()
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(null)
 
       const result = await GamificationService.addXP('user-1', 100, 'URGENT', true)
 
@@ -143,6 +147,7 @@ describe('GamificationService', () => {
       spyOn(repo, 'getDailyXPTotal').mockResolvedValue(480)
       spyOn(repo, 'saveXPTransaction').mockResolvedValue()
       spyOn(repo, 'saveStats').mockResolvedValue()
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(null)
 
       const result = await GamificationService.addXP('user-1', 50, 'HIGH', true)
 
@@ -167,6 +172,7 @@ describe('GamificationService', () => {
       spyOn(repo, 'getDailyXPTotal').mockResolvedValue(0)
       spyOn(repo, 'saveXPTransaction').mockResolvedValue()
       spyOn(repo, 'saveStats').mockResolvedValue()
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(null)
 
       const result = await GamificationService.addXP('user-1', 1, 'LOW', true)
 
@@ -181,6 +187,7 @@ describe('GamificationService', () => {
       spyOn(repo, 'getDailyXPTotal').mockResolvedValue(0)
       spyOn(repo, 'saveXPTransaction').mockResolvedValue()
       spyOn(repo, 'saveStats').mockResolvedValue()
+      spyOn(repo, 'findAchievementByCode').mockResolvedValue(null)
 
       const result = await GamificationService.addXP('user-1', 1, 'LOW', true)
 
