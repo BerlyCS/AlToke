@@ -267,4 +267,59 @@ describe('FriendshipService', () => {
       expect(result).toEqual([])
     })
   })
+
+  describe('getFriends', () => {
+    it('delegates to repository', async () => {
+      const friends = [
+        {
+          friendshipId: 'fs-1',
+          friend: { id: 'user-2', nickname: 'Alice', avatarUrl: null, level: 3, xp: 300, currentStreak: 5 },
+        },
+      ]
+      const spy = spyOn(FriendshipRepository, 'getFriends').mockResolvedValue(friends as any)
+
+      const result = await FriendshipService.getFriends('user-1')
+
+      expect(spy).toHaveBeenCalledWith('user-1')
+      expect(result).toEqual(friends)
+    })
+
+    it('returns empty array when no friends', async () => {
+      spyOn(FriendshipRepository, 'getFriends').mockResolvedValue([])
+
+      const result = await FriendshipService.getFriends('user-1')
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('searchUsers', () => {
+    it('returns empty array for empty query', async () => {
+      const spy = spyOn(FriendshipRepository, 'searchUsers').mockResolvedValue([])
+
+      const result = await FriendshipService.searchUsers('', 'user-1')
+
+      expect(spy).not.toHaveBeenCalled()
+      expect(result).toEqual([])
+    })
+
+    it('returns empty array for whitespace-only query', async () => {
+      const spy = spyOn(FriendshipRepository, 'searchUsers').mockResolvedValue([])
+
+      const result = await FriendshipService.searchUsers('   ', 'user-1')
+
+      expect(spy).not.toHaveBeenCalled()
+      expect(result).toEqual([])
+    })
+
+    it('trims query and delegates to repository', async () => {
+      const users = [{ id: 'user-2', nickname: 'Alice', avatarUrl: null, level: 3 }]
+      const spy = spyOn(FriendshipRepository, 'searchUsers').mockResolvedValue(users as any)
+
+      const result = await FriendshipService.searchUsers('  Alice  ', 'user-1')
+
+      expect(spy).toHaveBeenCalledWith('Alice', 'user-1')
+      expect(result).toEqual(users)
+    })
+  })
 })
