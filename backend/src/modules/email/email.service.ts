@@ -44,6 +44,7 @@ export abstract class EmailService {
       port: config.port,
       secure: config.secure,
       requireTLS: !config.secure && Boolean(config.user && config.password),
+      ignoreTLS: !config.secure && !(config.user && config.password),
       ...(config.user && config.password
         ? { auth: { user: config.user, pass: config.password } }
         : {}),
