@@ -210,4 +210,61 @@ describe('FriendshipService', () => {
       expect(notifySpy).not.toHaveBeenCalled()
     })
   })
+
+  describe('removeFriend', () => {
+    it('throws 404 when friendship not in friends list', async () => {
+      spyOn(FriendshipRepository, 'getFriends').mockResolvedValue([])
+
+      try {
+        await FriendshipService.removeFriend('user-1', 'fs-1')
+        expect.unreachable()
+      } catch (error) {
+        expect((error as { code?: number }).code).toBe(404)
+        expect((error as { response?: unknown }).response).toBe('Friendship not found or unauthorized')
+      }
+    })
+
+    it('deletes friendship when found in friends list', async () => {
+      spyOn(FriendshipRepository, 'getFriends').mockResolvedValue([
+        {
+          friendshipId: 'fs-1',
+          friend: { id: 'user-2', nickname: 'Alice', avatarUrl: null, level: 2, xp: 100, currentStreak: 3 },
+        },
+      ] as any)
+      const deleteSpy = spyOn(FriendshipRepository, 'deleteFriendship').mockResolvedValue()
+
+      const result = await FriendshipService.removeFriend('user-1', 'fs-1')
+
+      expect(deleteSpy).toHaveBeenCalledWith('fs-1')
+      expect(result).toEqual({ success: true })
+    })
+  })
+
+  describe('getPendingRequests', () => {
+    it('delegates to repository', async () => {
+      const pending = [
+        {
+          id: 'fs-1',
+          requesterId: 'user-1',
+          addresseeId: 'user-2',
+          status: 'PENDING',
+          requester: { id: 'user-1', nickname: 'Alice' },
+        },
+      ]
+      const spy = spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue(pending as any)
+
+      const result = await FriendshipService.getPendingRequests('user-2')
+
+      expect(spy).toHaveBeenCalledWith('user-2')
+      expect(result).toEqual(pending as any)
+    })
+
+    it('returns empty array when no pending requests', async () => {
+      spyOn(FriendshipRepository, 'getPendingIncomingRequests').mockResolvedValue([])
+
+      const result = await FriendshipService.getPendingRequests('user-2')
+
+      expect(result).toEqual([])
+    })
+  })
 })
