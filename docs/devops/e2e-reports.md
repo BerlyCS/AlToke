@@ -1,9 +1,20 @@
-# Production E2E reports
+# Test reports
 
 `Production E2E` is a separate workflow triggered after a successful `CI / CD` run on `main`.
 It never gates deployment, performs no rollback, and uses the same `:production` images with an
 ephemeral PostgreSQL database and Mailpit SMTP server. The only requests sent to the real
 application are read-only HTTPS smoke checks.
+
+## Test coverage
+
+The CI workflow starts an ephemeral PostgreSQL 16 service, applies the backend migrations, and
+runs the backend suite without skipping database-dependent integration tests. It uploads JUnit
+artifacts for backend unit and integration tests and frontend unit tests.
+
+The `Production E2E` workflow downloads those artifacts for the triggering revision, adds the
+Cypress JUnit output, screenshots, and videos, and publishes a single HTML report. The report
+contains the individual XML files and a summary for frontend unit, backend unit/integration, and
+E2E suites.
 
 ## Report server
 

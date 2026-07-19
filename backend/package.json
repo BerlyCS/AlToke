@@ -9,6 +9,7 @@
     "seed": "bun run src/db/seeders/index.ts",
     "start": "bun run src/index.ts",
     "test": "bun test",
+    "test:report": "mkdir -p ../test-results/backend && bun test --reporter=junit --reporter-outfile=../test-results/backend/junit.xml",
     "type-check": "tsc --noEmit",
     "lint": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint . --fix\"",
     "lint:check": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint .\"",

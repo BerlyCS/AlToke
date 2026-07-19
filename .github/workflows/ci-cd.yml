@@ -112,7 +112,16 @@ jobs:
         run: bun run frontend:type-check
 
       - name: Run frontend tests
-        run: bun run frontend:test
+        run: bun run frontend:test:report
+
+      - name: Upload frontend unit test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-unit-${{ github.sha }}
+          path: test-results/frontend
+          retention-days: 30
+          if-no-files-found: warn
 
       - name: Build frontend bundle
         working-directory: frontend
@@ -125,6 +134,20 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/altoke
       JWT_SECRET: test-jwt-secret
       GOOGLE_CLIENT_ID: ""
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: altoke
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d altoke"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     needs: detect-changes
     if: needs.detect-changes.outputs.backend_affected == 'true'
     steps:
@@ -149,8 +172,21 @@ jobs:
       - name: Check backend types
         run: bun run backend:type-check
 
+      - name: Apply test database migrations
+        working-directory: backend
+        run: bun run migrate
+
       - name: Run backend tests
-        run: bun run backend:test
+        run: bun run backend:test:report
+
+      - name: Upload backend unit and integration test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-unit-integration-${{ github.sha }}
+          path: test-results/backend
+          retention-days: 30
+          if-no-files-found: warn
 
   build-backend-image:
     name: Build and push backend image

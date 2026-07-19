@@ -8,6 +8,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:report": "mkdir -p ../test-results/frontend && vitest run --reporter=default --reporter=junit --outputFile.junit=../test-results/frontend/junit.xml",
     "test:unit": "bun run test",
     "test:unit:watch": "vitest",
     "prepare": "cypress install",

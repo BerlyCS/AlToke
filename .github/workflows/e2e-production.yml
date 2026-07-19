@@ -59,6 +59,26 @@ jobs:
           CYPRESS_baseUrl: http://localhost:8080
         run: bun run test:e2e:ci
 
+      - name: Download frontend unit test report
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-unit-${{ github.event.workflow_run.head_sha }}
+          path: e2e-report/junit/frontend-unit
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Download backend unit and integration test report
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-unit-integration-${{ github.event.workflow_run.head_sha }}
+          path: e2e-report/junit/backend-unit-integration
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
       - name: Build portable E2E report
         if: always()
         env:
@@ -67,8 +87,8 @@ jobs:
           GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
           SMOKE_STATUS: ${{ steps.smoke.outcome }}
         run: |
-          mkdir -p e2e-report/junit e2e-report/cypress
-          if [[ -d e2e-results ]]; then cp -R e2e-results/. e2e-report/junit/; fi
+          mkdir -p e2e-report/junit/e2e e2e-report/cypress
+          if [[ -d e2e-results ]]; then cp -R e2e-results/. e2e-report/junit/e2e/; fi
           if [[ -d frontend/cypress/screenshots ]]; then cp -R frontend/cypress/screenshots e2e-report/cypress/; fi
           if [[ -d frontend/cypress/videos ]]; then cp -R frontend/cypress/videos e2e-report/cypress/; fi
           node scripts/generate-e2e-report.mjs e2e-report e2e-report/index.html
