@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, lte, ne, or } from 'drizzle-orm'
+import { and, gte, isNull, lte, ne, or } from 'drizzle-orm'
 import { db } from '../../../db'
 import { tasks } from '../../../db/schema'
 import { NotificationRepository } from '../repositories'
