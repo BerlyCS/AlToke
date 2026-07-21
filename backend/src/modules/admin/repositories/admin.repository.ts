@@ -145,4 +145,19 @@ export class AdminRepository {
       count: Number(row.count),
     }))
   }
+
+  static async getTopUsers(limit: number = 5) {
+    const result = await db
+      .select({
+        id: users.id,
+        nickname: users.nickname,
+        level: users.level,
+        xp: users.xp,
+      })
+      .from(users)
+      .orderBy(sql`${users.level} DESC, ${users.xp} DESC`)
+      .limit(limit)
+
+    return result
+  }
 }
