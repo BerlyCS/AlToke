@@ -1,18 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { adminService } from '@/services/admin.service'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import type { AdminMetrics } from '@/types'
+import type { AdminMetrics, TaskMetricsResponse } from '@/types'
 
 import StatCard from '@/components/StatCard.vue'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Zap, Users, Activity } from 'lucide-vue-next'
+import { 
+  CheckCircle, 
+  Zap, 
+  Users, 
+  Activity, 
+  Award,
+  Target,
+  UserCheck,
+  ListChecks,
+} from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 const metrics = ref<AdminMetrics>()
+const taskMetrics = ref<TaskMetricsResponse>()
 const loading = ref(true)
 
 
@@ -28,6 +38,7 @@ async function fetchMetrics() {
   try {
     loading.value = true
     metrics.value = await adminService.getMetrics()
+    taskMetrics.value = await adminService.getTaskMetrics()
   } catch (e) {
     console.error(e)
   } finally {
@@ -39,6 +50,66 @@ function logout() {
   authStore.logout()
   router.push('/')
 }
+
+function getColor(type: string) {
+  const badges = {
+    'PENDING': 'bg-emerald-500 text-emerald-500',
+    'COMPLETED': 'bg-yellow-500 text-purple-500',
+  }
+  return badges[type as keyof typeof badges] || 'bg-gray-500/10 text-gray-500'
+}
+
+function getLabel(type: string) {
+  const badges = {
+    'PENDING': 'Pendiente',
+    'COMPLETED': 'Completado',
+  }
+  return badges[type as keyof typeof badges] || ''
+}
+
+// Datos mock para el dashboard
+const stats = ref({
+  totalUsers: 1247,
+  activeUsers: 892,
+  newUsersThisWeek: 48,
+  totalTasks: 2156,
+  completedTasks: 2156,
+  pendingTasks: 1265,
+  completionRate: 63,
+  avgTasksPerUser: 2.7,
+  totalXP: 456789,
+  activeStreaks: 342,
+  topPerformer: 'Carlos M.',
+  topPerformerXP: 12450,
+})
+
+// Datos de actividad semanal mejorados
+const weeklyActivity = ref([
+  { day: 'Lun', created: 45, completed: 32, activeUsers: 120 },
+  { day: 'Mar', created: 52, completed: 41, activeUsers: 135 },
+  { day: 'Mié', created: 38, completed: 28, activeUsers: 110 },
+  { day: 'Jue', created: 65, completed: 55, activeUsers: 150 },
+  { day: 'Vie', created: 48, completed: 40, activeUsers: 130 },
+  { day: 'Sáb', created: 30, completed: 25, activeUsers: 95 },
+  { day: 'Dom', created: 22, completed: 18, activeUsers: 70 },
+])
+
+// Top usuarios por rendimiento
+const topPerformers = ref([
+  { name: 'Carlos M.', xp: 12450, tasksCompleted: 45, streak: 12 },
+  { name: 'Ana G.', xp: 11890, tasksCompleted: 42, streak: 8 },
+  { name: 'Luis R.', xp: 10540, tasksCompleted: 38, streak: 15 },
+  { name: 'Marta S.', xp: 9870, tasksCompleted: 35, streak: 6 },
+  { name: 'Jorge P.', xp: 9230, tasksCompleted: 32, streak: 4 },
+])
+
+// Métricas de rendimiento
+const performanceMetrics = computed(() => ({
+  completionRate: stats.value.completionRate,
+  avgTasksPerUser: stats.value.avgTasksPerUser,
+  activeUsers: stats.value.activeUsers,
+  totalXP: stats.value.totalXP,
+}))
 </script>
 
 <template>
@@ -89,8 +160,8 @@ function logout() {
           :value="metrics?.tasksCompletedToday"
           :icon="CheckCircle"
           complement-info="Tasa de completitud: 63%"
-          bgColor="bg-emerald-500/10"
-          textColor="text-emerald-500"
+          bgColor="bg-purple-500/10"
+          textColor="text-purple-500"
         />
         <StatCard
           title="Total de Tareas"
@@ -100,6 +171,157 @@ function logout() {
           bgColor="bg-yellow-500/10"
           textColor="text-yellow-500"
         />
+      </div>
+
+
+      <!-- Main Content Grid -->
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Top Usuarios -->
+        <Card class="lg:col-span-2 rounded-2xl shadow-xl border-border bg-card">
+          <CardHeader class="p-6">
+            <CardTitle class="text-xl font-bold">Top Usuarios</CardTitle>
+            <p class="text-sm text-muted-foreground">Los mejores en rendimiento</p>
+          </CardHeader>
+          <CardContent class="p-6 pt-0">
+            <div class="space-y-3">
+              <div 
+                v-for="(user, index) in topPerformers" 
+                :key="user.name"
+                class="flex items-center justify-between p-3 rounded-xl hover:bg-muted/5 transition border border-border/50"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                    {{ index + 1 }}
+                  </div>
+                  <div>
+                    <div class="font-medium">{{ user.name }}</div>
+                    <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span class="flex items-center gap-1">
+                        <CheckCircle class="w-3 h-3" />
+                        {{ user.tasksCompleted }} tareas
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <Zap class="w-3 h-3" />
+                        {{ user.streak }} días
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="font-bold text-primary">{{ user.xp.toLocaleString() }}</div>
+                  <div class="text-xs text-muted-foreground">XP</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Distribución de Tareas -->
+        <Card class="rounded-2xl shadow-xl border-border bg-card p-7">
+          <CardHeader>
+            <CardTitle class="text-xl font-bold">Distribución de Tareas</CardTitle>
+            <p class="text-sm text-muted-foreground">Estado actual de todas las tareas</p>
+          </CardHeader>
+          <CardContent class="p-6 pt-0">
+            <div class="space-y-4">
+              <div 
+                v-for="item in taskMetrics?.typeTask" 
+                :key="item.type"
+                class="flex items-center justify-between p-2 rounded-lg hover:bg-muted/5 transition"
+              >
+                <div class="flex items-center gap-3">
+                  <div 
+                    class="w-3 h-3 rounded-full"
+                    :class="getColor(item.type)"
+                  ></div>
+                  <span class="text-sm font-medium">{{ getLabel(item.type) }}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm font-bold">{{ item.count }}</span>
+                </div>
+              </div>
+              
+              <!-- Barras de progreso para distribución -->
+              <div class="mt-4 space-y-2">
+                <div 
+                  v-for="item in taskMetrics?.typeTask" 
+                  :key="item.type + '-bar'"
+                  class="space-y-1"
+                >
+                  <div class="flex justify-between text-xs">
+                    <span class="text-muted-foreground">{{ getLabel(item.type) }}</span>
+                    <span>{{ Math.round((item.count / (taskMetrics?.totalTasks ?? 1)) * 100) }}%</span>
+                  </div>
+                  <div class="w-full bg-muted rounded-full h-2">
+                    <div 
+                      class="h-2 rounded-full transition-all"
+                      :style="{ 
+                        width: `${(item.count / (taskMetrics?.totalTasks ?? 1)) * 100}%`
+                      }"
+                      :class="getColor(item.type)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Segunda fila: Rendimiento y Top Usuarios -->
+      <div class="grid gap-6">
+        <!-- Métricas de Rendimiento -->
+        <Card class="rounded-[35px] shadow-xl border-border bg-card">
+          <CardHeader class="p-6">
+            <CardTitle class="text-xl font-bold">Métricas de Rendimiento</CardTitle>
+            <p class="text-sm text-muted-foreground">Indicadores clave de rendimiento</p>
+          </CardHeader>
+          <CardContent class="p-6 pt-0">
+            <div class="grid grid-cols-4 gap-4">
+              <div class="p-4 bg-muted/10 rounded-xl">
+                <div class="flex items-center gap-2 text-muted-foreground mb-2">
+                  <Target class="w-4 h-4" />
+                  <span class="text-sm">Tasa de Completitud</span>
+                </div>
+                <div class="text-2xl font-bold text-emerald-500">{{ performanceMetrics.completionRate }}%</div>
+                <div class="w-full bg-muted rounded-full h-1.5 mt-2">
+                  <div 
+                    class="bg-emerald-500 h-1.5 rounded-full transition-all"
+                    :style="{ width: `${performanceMetrics.completionRate}%` }"
+                  ></div>
+                </div>
+              </div>
+              
+              <div class="p-4 bg-muted/10 rounded-xl">
+                <div class="flex items-center gap-2 text-muted-foreground mb-2">
+                  <ListChecks class="w-4 h-4" />
+                  <span class="text-sm">Tareas por Usuario</span>
+                </div>
+                <div class="text-2xl font-bold text-primary">{{ performanceMetrics.avgTasksPerUser }}</div>
+                <div class="text-xs text-muted-foreground mt-1">Promedio general</div>
+              </div>
+              
+              <div class="p-4 bg-muted/10 rounded-xl">
+                <div class="flex items-center gap-2 text-muted-foreground mb-2">
+                  <UserCheck class="w-4 h-4" />
+                  <span class="text-sm">Usuarios Activos</span>
+                </div>
+                <div class="text-2xl font-bold text-blue-500">{{ performanceMetrics.activeUsers }}</div>
+                <div class="text-xs text-muted-foreground mt-1">De {{ stats.totalUsers }} totales</div>
+              </div>
+              
+              <div class="p-4 bg-muted/10 rounded-xl">
+                <div class="flex items-center gap-2 text-muted-foreground mb-2">
+                  <Award class="w-4 h-4" />
+                  <span class="text-sm">XP Total</span>
+                </div>
+                <div class="text-2xl font-bold text-yellow-500">{{ performanceMetrics.totalXP.toLocaleString() }}</div>
+                <div class="text-xs text-muted-foreground mt-1">Experiencia acumulada</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
       </div>
     </template>
   </div>

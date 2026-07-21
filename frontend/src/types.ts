@@ -184,3 +184,11 @@ export interface BanUserResponse {
   message: string
   userId: string
 }
+
+export interface TaskMetricsResponse {
+  typeTask: {
+    type: string
+    count: number
+  }[]
+  totalTasks: number
+}
