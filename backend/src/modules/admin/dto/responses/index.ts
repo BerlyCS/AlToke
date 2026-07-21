@@ -72,6 +72,15 @@ export const TaskMeticsResponse = t.Object({
   totalTasks: t.Number(),
 })
 
+export const TopUsersResponse = t.Object({
+  users: t.Array(t.Object({
+    id: t.String(),
+    nickname: t.Optional(t.String()),
+    level: t.Number(),
+    xp: t.Number(),
+  }))
+})
+
 export type UserDetailResponseType = typeof UserDetailResponse.static
 export type SystemMetricsResponseType = typeof SystemMetricsResponse.static
 export type UserSummaryResponseType = typeof UserSummaryResponse.static
@@ -79,3 +88,4 @@ export type ActivityLogResponseType = typeof ActivityLogResponse.static
 export type UsersResponseType = typeof UsersResponse.static
 export type BanUserResponseType = typeof BanUserResponse.static
 export type TaskMeticsResponseType = typeof TaskMeticsResponse.static
+export type TopUsersResponseType = typeof TopUsersResponse.static

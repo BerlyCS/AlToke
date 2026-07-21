@@ -146,4 +146,16 @@ export class AdminService {
       totalTasks: typeTask.reduce((acc, curr) => acc + curr.count, 0),
     }
   }
+
+  static async getTopUsers(limit: number = 5) {
+    const topUsers = await AdminRepository.getTopUsers(limit)
+    return {
+      users: topUsers.map((user) => ({
+        id: user.id,
+        nickname: user.nickname ?? undefined,
+        level: user.level ?? 0,
+        xp: user.xp ?? 0,
+      })),
+    }
+  }
 }
