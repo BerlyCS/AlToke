@@ -1,6 +1,6 @@
 import { api, ApiError } from './api'
 import { useAuthStore } from '@/stores/auth'
-import type { AdminMetrics, BanUserResponse, UsersList } from '@/types'
+import type { AdminMetrics, BanUserResponse, TaskMetricsResponse, UsersList } from '@/types'
 
 // Helper to get auth headers automatically
 const getHeaders = () => {
@@ -40,5 +40,11 @@ export const adminService = {
           .unban.post({ headers: getHeaders() }, userId)
     if (error) throw new ApiError(status, String(error.value) || 'Failed to unban user')
     return data as unknown as BanUserResponse
+  },
+
+  getTaskMetrics: async (): Promise<TaskMetricsResponse> => {
+    const { data, error, status } = await api.api.admin.taskMetrics.get({ headers: getHeaders() })
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch task metrics')
+    return data as TaskMetricsResponse
   }
 }

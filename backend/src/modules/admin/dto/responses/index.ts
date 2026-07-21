@@ -68,7 +68,8 @@ export const TaskMeticsResponse = t.Object({
   typeTask: t.Array(t.Object({
     type: t.String(),
     count: t.Number(),
-  }))
+  })),
+  totalTasks: t.Number(),
 })
 
 export type UserDetailResponseType = typeof UserDetailResponse.static

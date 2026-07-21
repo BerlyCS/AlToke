@@ -143,6 +143,7 @@ export class AdminService {
     const typeTask = await AdminRepository.getTaskMetrics()
     return {
       typeTask,
+      totalTasks: typeTask.reduce((acc, curr) => acc + curr.count, 0),
     }
   }
 }
