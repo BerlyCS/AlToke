@@ -3,6 +3,7 @@ import type {
   BanUserResponseType,
   ModerateProfileRequestType,
   SystemMetricsResponseType,
+  TaskMeticsResponseType,
   UsersResponseType,
 } from '../dto'
 
@@ -135,6 +136,13 @@ export class AdminService {
       success: true,
       message: `User ${targetUserId} has been unbanned`,
       userId: targetUserId,
+    }
+  }
+
+  static async getTaskMetrics() : Promise<TaskMeticsResponseType> {
+    const typeTask = await AdminRepository.getTaskMetrics()
+    return {
+      typeTask,
     }
   }
 }

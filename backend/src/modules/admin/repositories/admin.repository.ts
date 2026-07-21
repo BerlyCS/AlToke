@@ -130,4 +130,19 @@ export class AdminRepository {
       .where(and(eq(users.id, userId), eq(users.role, 'BANNED')))
     return result.length > 0
   }
+
+  static async getTaskMetrics() {
+    const result = await db
+      .select({
+        status: tasks.status,
+        count: sql<number>`count(*)`,
+      })
+      .from(tasks)
+      .groupBy(tasks.status)
+
+    return result.map((row) => ({
+      type: row.status,
+      count: Number(row.count),
+    }))
+  }
 }

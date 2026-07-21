@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia'
 import { AdminService } from '../services'
 import { authPlugin } from '../../../shared/utils/auth-plugin'
 import { UsersQueryRequest } from '../dto/requests'
-import { UsersResponse } from '../dto/responses'
+import { UsersResponse, TaskMeticsResponse } from '../dto/responses'
 import { ModerateProfileRequest, BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from '../dto'
 
 /**
@@ -100,6 +100,18 @@ export const adminController = new Elysia({ prefix: '/admin' })
         id: t.String(),
       }),
       response: BanUserResponse,
+    },
+  )
+
+  .get(
+    '/taskMetrics',
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+
+      return await AdminService.getTaskMetrics()
+    },
+    {
+      response: TaskMeticsResponse,
     },
   )
 

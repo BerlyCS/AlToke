@@ -64,9 +64,17 @@ export const UsersResponse = t.Object({
   offset: t.Number(),
 })
 
+export const TaskMeticsResponse = t.Object({
+  typeTask: t.Array(t.Object({
+    type: t.String(),
+    count: t.Number(),
+  }))
+})
+
 export type UserDetailResponseType = typeof UserDetailResponse.static
 export type SystemMetricsResponseType = typeof SystemMetricsResponse.static
 export type UserSummaryResponseType = typeof UserSummaryResponse.static
 export type ActivityLogResponseType = typeof ActivityLogResponse.static
 export type UsersResponseType = typeof UsersResponse.static
 export type BanUserResponseType = typeof BanUserResponse.static
+export type TaskMeticsResponseType = typeof TaskMeticsResponse.static
