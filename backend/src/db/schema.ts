@@ -264,6 +264,10 @@ export const friendshipsRelations = relations(friendships, ({ one }) => ({
 }))
 
 export const usersRelations = relations(users, ({ many }) => ({
-  requestedFriendships: many(friendships, { relationName: 'requestedFriendships' }),
-  receivedFriendships: many(friendships, { relationName: 'receivedFriendships' }),
+  requestedFriendships: many(friendships, {
+    relationName: 'requestedFriendships',
+  }),
+  receivedFriendships: many(friendships, {
+    relationName: 'receivedFriendships',
+  }),
 }))

@@ -152,13 +152,15 @@ export abstract class TaskService {
     if (task.status === 'COMPLETED') return task
 
     const now = new Date()
-    const completedOnTime = !task.dueDate || now <= new Date(task.dueDate)
-    const estimatedMinutes = task.estimatedTime ?? 0
-    const xpAmount = XP_BASE + estimatedMinutes * XP_PER_MINUTE
+    const alreadyCompletedBefore = task.completedAt !== null
 
     const [updated] = await db
       .update(tasks)
-      .set({ status: 'COMPLETED', completedAt: now, updatedAt: now })
+      .set({
+        status: 'COMPLETED',
+        completedAt: now,
+        updatedAt: now,
+      })
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
       .returning()
 
@@ -211,6 +213,30 @@ export abstract class TaskService {
       }
     }
 
+    NotificationService.recordNotification({
+      userId,
+      type: 'TASK_COMPLETED',
+      title: 'Tarea Completada',
+      message: `Completaste: "${task.title}"`,
+    }).catch(() => {})
+
+    // XP and achievements are only awarded the first time the task is completed
+    if (alreadyCompletedBefore) {
+      return {
+        ...updated,
+        tags: task.tags,
+        xpAwarded: 0,
+        leveledUp: false,
+        newLevel: 0,
+        newStreak: 0,
+        unlockedAchievements: [],
+      }
+    }
+
+    const completedOnTime = !task.dueDate || now <= new Date(task.dueDate)
+    const estimatedMinutes = task.estimatedTime ?? 0
+    const xpAmount = XP_BASE + estimatedMinutes * XP_PER_MINUTE
+
     const xpResult = await GamificationService.addXP(
       userId,
       xpAmount,
@@ -236,13 +262,6 @@ export abstract class TaskService {
       taskAchs.push(await GamificationService.triggerAchievement(userId, 'tasks_100'))
 
     const unlockedAchievements = [...xpResult.unlockedAchievements, ...taskAchs.filter(Boolean)]
-
-    NotificationService.recordNotification({
-      userId,
-      type: 'TASK_COMPLETED',
-      title: 'Tarea Completada',
-      message: `Completaste: "${task.title}"`,
-    }).catch(() => {})
 
     return {
       ...updated,
