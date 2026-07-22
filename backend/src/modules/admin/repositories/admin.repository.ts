@@ -161,4 +161,13 @@ export class AdminRepository {
 
     return result
   }
+
+  static async getCompletedTasks() {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tasks)
+      .where(eq(tasks.status, 'COMPLETED'))
+
+    return Number(result[0]?.count || 0)
+  }
 }

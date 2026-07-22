@@ -79,7 +79,13 @@ export const TopUsersResponse = t.Object({
     level: t.Number(),
     xp: t.Number(),
     streak: t.Number(),
-  }))
+  })),
+  totalUsers: t.Number(),
+})
+
+export const PerformanceMetricsResponse = t.Object({
+  completionRate: t.Number(),
+  totalXp: t.Number()
 })
 
 export type UserDetailResponseType = typeof UserDetailResponse.static
@@ -90,3 +96,4 @@ export type UsersResponseType = typeof UsersResponse.static
 export type BanUserResponseType = typeof BanUserResponse.static
 export type TaskMeticsResponseType = typeof TaskMeticsResponse.static
 export type TopUsersResponseType = typeof TopUsersResponse.static
+export type PerformanceMetricsResponseType = typeof PerformanceMetricsResponse.static

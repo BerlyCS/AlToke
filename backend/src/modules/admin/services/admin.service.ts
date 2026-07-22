@@ -2,8 +2,10 @@ import { AdminRepository } from '../repositories'
 import type {
   BanUserResponseType,
   ModerateProfileRequestType,
+  PerformanceMetricsResponseType,
   SystemMetricsResponseType,
   TaskMeticsResponseType,
+  TopUsersResponseType,
   UsersResponseType,
 } from '../dto'
 
@@ -147,7 +149,7 @@ export class AdminService {
     }
   }
 
-  static async getTopUsers(limit: number = 5) {
+  static async getTopUsers(limit: number = 5) : Promise<TopUsersResponseType> {
     const topUsers = await AdminRepository.getTopUsers(limit)
     return {
       users: topUsers.map((user) => ({
@@ -157,6 +159,24 @@ export class AdminService {
         xp: user.xp ?? 0,
         streak: user.streak ?? 0,
       })),
+      totalUsers: topUsers.length,
+    }
+  }
+
+  static async getPerformanceMetrics() : Promise<PerformanceMetricsResponseType> {
+    const [tasks, users] = await Promise.all([
+      AdminRepository.getCompletedTasks(),
+      AdminRepository.getAllUsers()
+    ])
+
+    const totalUsers = users.length
+
+    const completionRate = totalUsers > 0 ? (tasks / totalUsers) * 100 : 0
+    const totalXp = users.reduce((acc, user) => acc + (user.xp ?? 0), 0)
+
+    return {
+      completionRate,
+      totalXp,
     }
   }
 }
