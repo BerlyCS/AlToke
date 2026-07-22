@@ -117,13 +117,16 @@ const xpProgress = computed(() => {
             <span class="font-bold text-base truncate">{{
               authStore.profile?.nickname || 'Jugador'
             }}</span>
-            <span class="text-sm text-primary-foreground/80 font-bold"
-              >Nivel {{ currentLevel }}</span
-            >
+            <span v-if="authStore.profile?.role == 'ADMIN'" class="text-sm text-primary-foreground/80 font-bold">
+              ADMIN
+            </span> 
+            <span v-else class="text-sm text-primary-foreground/80 font-bold">
+              Nivel {{ currentLevel }}
+            </span>
           </div>
         </div>
 
-        <div class="flex flex-col gap-2 mt-1">
+        <div v-if="authStore.profile?.role != 'ADMIN'" class="flex flex-col gap-2 mt-1">
           <div
             class="flex justify-between text-xs font-black uppercase tracking-wider text-primary-foreground/90"
           >
