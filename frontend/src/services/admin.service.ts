@@ -1,6 +1,6 @@
 import { api, ApiError } from './api'
 import { useAuthStore } from '@/stores/auth'
-import type { AdminMetrics, BanUserResponse, TaskMetricsResponse, TopUsersResponse, UsersList } from '@/types'
+import type { AdminMetrics, BanUserResponse, PerformanceMetricsResponse, TaskMetricsResponse, TopUsersResponse, UsersList } from '@/types'
 
 // Helper to get auth headers automatically
 const getHeaders = () => {
@@ -54,5 +54,11 @@ export const adminService = {
     })
     if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch top users')
     return data as TopUsersResponse
+  },
+
+  getPerformanceMetrics: async (): Promise<PerformanceMetricsResponse> => {
+    const { data, error, status } = await api.api.admin.performanceMetrics.get({ headers: getHeaders() })
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch performance metrics')
+    return data as PerformanceMetricsResponse
   }
 }

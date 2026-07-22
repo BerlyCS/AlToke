@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { adminService } from '@/services/admin.service'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import type { AdminMetrics, TaskMetricsResponse, TopUsersResponse } from '@/types'
+import type { AdminMetrics, PerformanceMetricsResponse, TaskMetricsResponse, TopUsersResponse } from '@/types'
 
 import StatCard from '@/components/StatCard.vue'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,6 @@ import {
   Activity, 
   Award,
   Target,
-  UserCheck,
   ListChecks,
 } from 'lucide-vue-next'
 
@@ -24,6 +23,7 @@ const router = useRouter()
 const metrics = ref<AdminMetrics>()
 const taskMetrics = ref<TaskMetricsResponse>()
 const topUsers = ref<TopUsersResponse>()
+const perMetrics = ref<PerformanceMetricsResponse>()
 const loading = ref(true)
 
 
@@ -41,6 +41,7 @@ async function fetchMetrics() {
     metrics.value = await adminService.getMetrics()
     taskMetrics.value = await adminService.getTaskMetrics()
     topUsers.value = await adminService.getTopUsers()
+    perMetrics.value = await adminService.getPerformanceMetrics()
   } catch (e) {
     console.error(e)
   } finally {
@@ -68,50 +69,6 @@ function getLabel(type: string) {
   }
   return badges[type as keyof typeof badges] || ''
 }
-
-// Datos mock para el dashboard
-const stats = ref({
-  totalUsers: 1247,
-  activeUsers: 892,
-  newUsersThisWeek: 48,
-  totalTasks: 2156,
-  completedTasks: 2156,
-  pendingTasks: 1265,
-  completionRate: 63,
-  avgTasksPerUser: 2.7,
-  totalXP: 456789,
-  activeStreaks: 342,
-  topPerformer: 'Carlos M.',
-  topPerformerXP: 12450,
-})
-
-// Datos de actividad semanal mejorados
-const weeklyActivity = ref([
-  { day: 'Lun', created: 45, completed: 32, activeUsers: 120 },
-  { day: 'Mar', created: 52, completed: 41, activeUsers: 135 },
-  { day: 'Mié', created: 38, completed: 28, activeUsers: 110 },
-  { day: 'Jue', created: 65, completed: 55, activeUsers: 150 },
-  { day: 'Vie', created: 48, completed: 40, activeUsers: 130 },
-  { day: 'Sáb', created: 30, completed: 25, activeUsers: 95 },
-  { day: 'Dom', created: 22, completed: 18, activeUsers: 70 },
-])
-
-// Top usuarios por rendimiento
-const topPerformers = ref([
-  { name: 'Carlos M.', xp: 12450, tasksCompleted: 45, streak: 12 },
-  { name: 'Ana G.', xp: 11890, tasksCompleted: 42, streak: 8 },
-  { name: 'Luis R.', xp: 10540, tasksCompleted: 38, streak: 15 },
-  { name: 'Marta S.', xp: 9870, tasksCompleted: 35, streak: 6 },
-  { name: 'Jorge P.', xp: 9230, tasksCompleted: 32, streak: 4 },
-])
-
-// Métricas de rendimiento
-const performanceMetrics = computed(() => ({
-  completionRate: stats.value.completionRate,
-  avgTasksPerUser: stats.value.avgTasksPerUser,
-  activeUsers: stats.value.activeUsers,
-  totalXP: stats.value.totalXP,
-}))
 </script>
 
 <template>
@@ -273,23 +230,23 @@ const performanceMetrics = computed(() => ({
       <!-- Segunda fila: Rendimiento y Top Usuarios -->
       <div class="grid gap-6">
         <!-- Métricas de Rendimiento -->
-        <Card class="rounded-[35px] shadow-xl border-border bg-card">
-          <CardHeader class="p-6">
+        <Card class="rounded-[35px] shadow-xl border-border bg-card p-6">
+          <CardHeader>
             <CardTitle class="text-xl font-bold">Métricas de Rendimiento</CardTitle>
             <p class="text-sm text-muted-foreground">Indicadores clave de rendimiento</p>
           </CardHeader>
           <CardContent class="p-6 pt-0">
-            <div class="grid grid-cols-4 gap-4">
+            <div class="grid grid-cols-3 gap-4">
               <div class="p-4 bg-muted/10 rounded-xl">
                 <div class="flex items-center gap-2 text-muted-foreground mb-2">
                   <Target class="w-4 h-4" />
                   <span class="text-sm">Tasa de Completitud</span>
                 </div>
-                <div class="text-2xl font-bold text-emerald-500">{{ performanceMetrics.completionRate }}%</div>
+                <div class="text-2xl font-bold text-emerald-500">{{ perMetrics?.completionRate }}%</div>
                 <div class="w-full bg-muted rounded-full h-1.5 mt-2">
                   <div 
                     class="bg-emerald-500 h-1.5 rounded-full transition-all"
-                    :style="{ width: `${performanceMetrics.completionRate}%` }"
+                    :style="{ width: `${perMetrics?.completionRate}%` }"
                   ></div>
                 </div>
               </div>
@@ -299,17 +256,8 @@ const performanceMetrics = computed(() => ({
                   <ListChecks class="w-4 h-4" />
                   <span class="text-sm">Tareas por Usuario</span>
                 </div>
-                <div class="text-2xl font-bold text-primary">{{ performanceMetrics.avgTasksPerUser }}</div>
+                <div class="text-2xl font-bold text-primary">{{ (taskMetrics?.totalTasks ?? 0) / (topUsers?.totalUsers ?? 1)  }}</div>
                 <div class="text-xs text-muted-foreground mt-1">Promedio general</div>
-              </div>
-              
-              <div class="p-4 bg-muted/10 rounded-xl">
-                <div class="flex items-center gap-2 text-muted-foreground mb-2">
-                  <UserCheck class="w-4 h-4" />
-                  <span class="text-sm">Usuarios Activos</span>
-                </div>
-                <div class="text-2xl font-bold text-blue-500">{{ performanceMetrics.activeUsers }}</div>
-                <div class="text-xs text-muted-foreground mt-1">De {{ stats.totalUsers }} totales</div>
               </div>
               
               <div class="p-4 bg-muted/10 rounded-xl">
@@ -317,7 +265,7 @@ const performanceMetrics = computed(() => ({
                   <Award class="w-4 h-4" />
                   <span class="text-sm">XP Total</span>
                 </div>
-                <div class="text-2xl font-bold text-yellow-500">{{ performanceMetrics.totalXP.toLocaleString() }}</div>
+                <div class="text-2xl font-bold text-yellow-500">{{ perMetrics?.totalXp.toLocaleString() }}</div>
                 <div class="text-xs text-muted-foreground mt-1">Experiencia acumulada</div>
               </div>
             </div>

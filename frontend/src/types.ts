@@ -201,4 +201,10 @@ export interface TopUsersResponse {
     xp: number
     streak: number
   }[]
+  totalUsers: number
+}
+
+export interface PerformanceMetricsResponse {
+  completionRate: number
+  totalXp: number  
 }
