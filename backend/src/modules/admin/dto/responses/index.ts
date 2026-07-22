@@ -65,27 +65,31 @@ export const UsersResponse = t.Object({
 })
 
 export const TaskMeticsResponse = t.Object({
-  typeTask: t.Array(t.Object({
-    type: t.String(),
-    count: t.Number(),
-  })),
+  typeTask: t.Array(
+    t.Object({
+      type: t.String(),
+      count: t.Number(),
+    }),
+  ),
   totalTasks: t.Number(),
 })
 
 export const TopUsersResponse = t.Object({
-  users: t.Array(t.Object({
-    id: t.String(),
-    nickname: t.Optional(t.String()),
-    level: t.Number(),
-    xp: t.Number(),
-    streak: t.Number(),
-  })),
+  users: t.Array(
+    t.Object({
+      id: t.String(),
+      nickname: t.Optional(t.String()),
+      level: t.Number(),
+      xp: t.Number(),
+      streak: t.Number(),
+    }),
+  ),
   totalUsers: t.Number(),
 })
 
 export const PerformanceMetricsResponse = t.Object({
   completionRate: t.Number(),
-  totalXp: t.Number()
+  totalXp: t.Number(),
 })
 
 export type UserDetailResponseType = typeof UserDetailResponse.static

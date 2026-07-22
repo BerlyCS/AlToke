@@ -20,7 +20,7 @@ import type {
   BanUserResponse,
   TaskMetricsResponse,
   TopUsersResponse,
-  PerformanceMetricsResponse
+  PerformanceMetricsResponse,
 } from '@/types'
 
 type ApiResult<T> = Promise<{
@@ -162,14 +162,15 @@ type ApiClientContract = {
         get: (options: AuthHeaders) => ApiResult<AdminMetrics>
       }
       users: {
-        get: (options: AuthHeaders & { query?: { limit?: number; offset?: number } }) => ApiResult<UsersList>
-      }
-      & ((params: { userId: string }) => {
+        get: (
+          options: AuthHeaders & { query?: { limit?: number; offset?: number } },
+        ) => ApiResult<UsersList>
+      } & ((params: { userId: string }) => {
         ban: {
-          post: (options: AuthHeaders, body: string ) => ApiResult<BanUserResponse>
+          post: (options: AuthHeaders, body: string) => ApiResult<BanUserResponse>
         }
         unban: {
-          post: (options: AuthHeaders, body: string ) => ApiResult<BanUserResponse>
+          post: (options: AuthHeaders, body: string) => ApiResult<BanUserResponse>
         }
       })
       taskMetrics: {

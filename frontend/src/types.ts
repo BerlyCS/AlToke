@@ -206,5 +206,5 @@ export interface TopUsersResponse {
 
 export interface PerformanceMetricsResponse {
   completionRate: number
-  totalXp: number  
+  totalXp: number
 }

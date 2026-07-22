@@ -3,19 +3,16 @@ import { ref, onMounted } from 'vue'
 import { adminService } from '@/services/admin.service'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import type { AdminMetrics, PerformanceMetricsResponse, TaskMetricsResponse, TopUsersResponse } from '@/types'
+import type {
+  AdminMetrics,
+  PerformanceMetricsResponse,
+  TaskMetricsResponse,
+  TopUsersResponse,
+} from '@/types'
 
 import StatCard from '@/components/StatCard.vue'
 import { Button } from '@/components/ui/button'
-import { 
-  CheckCircle, 
-  Zap, 
-  Users, 
-  Activity, 
-  Award,
-  Target,
-  ListChecks,
-} from 'lucide-vue-next'
+import { CheckCircle, Zap, Users, Activity, Award, Target, ListChecks } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -25,7 +22,6 @@ const taskMetrics = ref<TaskMetricsResponse>()
 const topUsers = ref<TopUsersResponse>()
 const perMetrics = ref<PerformanceMetricsResponse>()
 const loading = ref(true)
-
 
 onMounted(async () => {
   if (!authStore.token) {
@@ -56,16 +52,16 @@ function logout() {
 
 function getColor(type: string) {
   const badges = {
-    'PENDING': 'bg-emerald-500 text-emerald-500',
-    'COMPLETED': 'bg-yellow-500 text-purple-500',
+    PENDING: 'bg-emerald-500 text-emerald-500',
+    COMPLETED: 'bg-yellow-500 text-purple-500',
   }
   return badges[type as keyof typeof badges] || 'bg-gray-500/10 text-gray-500'
 }
 
 function getLabel(type: string) {
   const badges = {
-    'PENDING': 'Pendiente',
-    'COMPLETED': 'Completado',
+    PENDING: 'Pendiente',
+    COMPLETED: 'Completado',
   }
   return badges[type as keyof typeof badges] || ''
 }
@@ -132,7 +128,6 @@ function getLabel(type: string) {
         />
       </div>
 
-
       <!-- Main Content Grid -->
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Top Usuarios -->
@@ -143,13 +138,15 @@ function getLabel(type: string) {
           </CardHeader>
           <CardContent class="p-6 pt-0">
             <div class="space-y-3">
-              <div 
-                v-for="(user, index) in topUsers?.users" 
+              <div
+                v-for="(user, index) in topUsers?.users"
                 :key="user.id"
                 class="flex items-center justify-between p-3 rounded-xl hover:bg-muted/5 transition border border-border/50"
               >
                 <div class="flex items-center gap-3">
-                  <div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                  <div
+                    class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm"
+                  >
                     {{ index + 1 }}
                   </div>
                   <div>
@@ -183,39 +180,38 @@ function getLabel(type: string) {
           </CardHeader>
           <CardContent class="p-6 pt-0">
             <div class="space-y-4">
-              <div 
-                v-for="item in taskMetrics?.typeTask" 
+              <div
+                v-for="item in taskMetrics?.typeTask"
                 :key="item.type"
                 class="flex items-center justify-between p-2 rounded-lg hover:bg-muted/5 transition"
               >
                 <div class="flex items-center gap-3">
-                  <div 
-                    class="w-3 h-3 rounded-full"
-                    :class="getColor(item.type)"
-                  ></div>
+                  <div class="w-3 h-3 rounded-full" :class="getColor(item.type)"></div>
                   <span class="text-sm font-medium">{{ getLabel(item.type) }}</span>
                 </div>
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-bold">{{ item.count }}</span>
                 </div>
               </div>
-              
+
               <!-- Barras de progreso para distribución -->
               <div class="mt-4 space-y-2">
-                <div 
-                  v-for="item in taskMetrics?.typeTask" 
+                <div
+                  v-for="item in taskMetrics?.typeTask"
                   :key="item.type + '-bar'"
                   class="space-y-1"
                 >
                   <div class="flex justify-between text-xs">
                     <span class="text-muted-foreground">{{ getLabel(item.type) }}</span>
-                    <span>{{ Math.round((item.count / (taskMetrics?.totalTasks ?? 1)) * 100) }}%</span>
+                    <span
+                      >{{ Math.round((item.count / (taskMetrics?.totalTasks ?? 1)) * 100) }}%</span
+                    >
                   </div>
                   <div class="w-full bg-muted rounded-full h-2">
-                    <div 
+                    <div
                       class="h-2 rounded-full transition-all"
-                      :style="{ 
-                        width: `${(item.count / (taskMetrics?.totalTasks ?? 1)) * 100}%`
+                      :style="{
+                        width: `${(item.count / (taskMetrics?.totalTasks ?? 1)) * 100}%`,
                       }"
                       :class="getColor(item.type)"
                     ></div>
@@ -242,36 +238,41 @@ function getLabel(type: string) {
                   <Target class="w-4 h-4" />
                   <span class="text-sm">Tasa de Completitud</span>
                 </div>
-                <div class="text-2xl font-bold text-emerald-500">{{ perMetrics?.completionRate }}%</div>
+                <div class="text-2xl font-bold text-emerald-500">
+                  {{ perMetrics?.completionRate }}%
+                </div>
                 <div class="w-full bg-muted rounded-full h-1.5 mt-2">
-                  <div 
+                  <div
                     class="bg-emerald-500 h-1.5 rounded-full transition-all"
                     :style="{ width: `${perMetrics?.completionRate}%` }"
                   ></div>
                 </div>
               </div>
-              
+
               <div class="p-4 bg-muted/10 rounded-xl">
                 <div class="flex items-center gap-2 text-muted-foreground mb-2">
                   <ListChecks class="w-4 h-4" />
                   <span class="text-sm">Tareas por Usuario</span>
                 </div>
-                <div class="text-2xl font-bold text-primary">{{ (taskMetrics?.totalTasks ?? 0) / (topUsers?.totalUsers ?? 1)  }}</div>
+                <div class="text-2xl font-bold text-primary">
+                  {{ (taskMetrics?.totalTasks ?? 0) / (topUsers?.totalUsers ?? 1) }}
+                </div>
                 <div class="text-xs text-muted-foreground mt-1">Promedio general</div>
               </div>
-              
+
               <div class="p-4 bg-muted/10 rounded-xl">
                 <div class="flex items-center gap-2 text-muted-foreground mb-2">
                   <Award class="w-4 h-4" />
                   <span class="text-sm">XP Total</span>
                 </div>
-                <div class="text-2xl font-bold text-yellow-500">{{ perMetrics?.totalXp.toLocaleString() }}</div>
+                <div class="text-2xl font-bold text-yellow-500">
+                  {{ perMetrics?.totalXp.toLocaleString() }}
+                </div>
                 <div class="text-xs text-muted-foreground mt-1">Experiencia acumulada</div>
               </div>
             </div>
           </CardContent>
         </Card>
-
       </div>
     </template>
   </div>

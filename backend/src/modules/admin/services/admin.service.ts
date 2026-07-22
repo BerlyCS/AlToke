@@ -13,7 +13,7 @@ export class AdminService {
   /**
    * Ban a user
    */
-  static async banUser(targetUserId: string) : Promise<BanUserResponseType> {
+  static async banUser(targetUserId: string): Promise<BanUserResponseType> {
     const user = await AdminRepository.getUserById(targetUserId)
     if (!user) {
       throw new Error('User not found')
@@ -116,7 +116,7 @@ export class AdminService {
         xp: user.xp ?? 0,
         lastActiveAt: user.lastActiveAt?.toISOString(),
         createdAt: user.createdAt.toISOString(),
-    })),
+      })),
       total,
       limit,
       offset,
@@ -126,7 +126,7 @@ export class AdminService {
   /**
    * Unban a user
    */
-  static async unbanUser(targetUserId: string) : Promise<BanUserResponseType> {
+  static async unbanUser(targetUserId: string): Promise<BanUserResponseType> {
     const user = await AdminRepository.getUserById(targetUserId)
     if (!user) {
       throw new Error('User not found')
@@ -141,7 +141,7 @@ export class AdminService {
     }
   }
 
-  static async getTaskMetrics() : Promise<TaskMeticsResponseType> {
+  static async getTaskMetrics(): Promise<TaskMeticsResponseType> {
     const typeTask = await AdminRepository.getTaskMetrics()
     return {
       typeTask,
@@ -149,7 +149,7 @@ export class AdminService {
     }
   }
 
-  static async getTopUsers(limit: number = 5) : Promise<TopUsersResponseType> {
+  static async getTopUsers(limit: number = 5): Promise<TopUsersResponseType> {
     const topUsers = await AdminRepository.getTopUsers(limit)
     return {
       users: topUsers.map((user) => ({
@@ -163,10 +163,10 @@ export class AdminService {
     }
   }
 
-  static async getPerformanceMetrics() : Promise<PerformanceMetricsResponseType> {
+  static async getPerformanceMetrics(): Promise<PerformanceMetricsResponseType> {
     const [tasks, users] = await Promise.all([
       AdminRepository.getCompletedTasks(),
-      AdminRepository.getAllUsers()
+      AdminRepository.getAllUsers(),
     ])
 
     const totalUsers = users.length

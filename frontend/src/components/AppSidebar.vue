@@ -33,7 +33,7 @@ const menuAllItems = [
 ]
 
 const menuItems = computed(() => {
-  return menuAllItems.filter(item => {
+  return menuAllItems.filter((item) => {
     if (!item.roles || item.roles.length === 0) return true
     return item.roles.includes(authStore.profile?.role || 'USER')
   })
@@ -117,9 +117,12 @@ const xpProgress = computed(() => {
             <span class="font-bold text-base truncate">{{
               authStore.profile?.nickname || 'Jugador'
             }}</span>
-            <span v-if="authStore.profile?.role == 'ADMIN'" class="text-sm text-primary-foreground/80 font-bold">
+            <span
+              v-if="authStore.profile?.role == 'ADMIN'"
+              class="text-sm text-primary-foreground/80 font-bold"
+            >
               ADMIN
-            </span> 
+            </span>
             <span v-else class="text-sm text-primary-foreground/80 font-bold">
               Nivel {{ currentLevel }}
             </span>

@@ -2,8 +2,18 @@ import { Elysia, t } from 'elysia'
 import { AdminService } from '../services'
 import { authPlugin } from '../../../shared/utils/auth-plugin'
 import { UsersQueryRequest } from '../dto/requests'
-import { UsersResponse, TaskMeticsResponse, TopUsersResponse, PerformanceMetricsResponse } from '../dto/responses'
-import { ModerateProfileRequest, BanUserResponse, ModerateProfileResponse, SystemMetricsResponse } from '../dto'
+import {
+  UsersResponse,
+  TaskMeticsResponse,
+  TopUsersResponse,
+  PerformanceMetricsResponse,
+} from '../dto/responses'
+import {
+  ModerateProfileRequest,
+  BanUserResponse,
+  ModerateProfileResponse,
+  SystemMetricsResponse,
+} from '../dto'
 
 /**
  * Admin Controller
@@ -14,7 +24,7 @@ export const adminController = new Elysia({ prefix: '/admin' })
   .get(
     '/metrics',
     async ({ requireAuth }) => {
-      const userId = requireAuth()
+      requireAuth()
 
       return await AdminService.getSystemMetrics()
     },
@@ -29,14 +39,14 @@ export const adminController = new Elysia({ prefix: '/admin' })
   .get(
     '/users',
     async ({ requireAuth, query }) => {
-      const userId = requireAuth()
-      
+      requireAuth()
+
       return await AdminService.listUsers(query.limit ?? 10, query.offset ?? 0)
     },
     {
       query: UsersQueryRequest,
       response: UsersResponse,
-    }
+    },
   )
 
   .get(
@@ -75,7 +85,7 @@ export const adminController = new Elysia({ prefix: '/admin' })
 
   .post(
     '/users/:id/ban',
-    async ({ requireAuth, params: { id } }) => {
+    async ({ params: { id } }) => {
       //const userId = requireAuth()
 
       return await AdminService.banUser(id)
@@ -90,9 +100,9 @@ export const adminController = new Elysia({ prefix: '/admin' })
 
   .post(
     '/users/:id/unban',
-    async ({ requireAuth, params: { id } }) => {
+    async ({ params: { id } }) => {
       //const userId = requireAuth()
-      
+
       return await AdminService.unbanUser(id)
     },
     {
@@ -106,7 +116,7 @@ export const adminController = new Elysia({ prefix: '/admin' })
   .get(
     '/taskMetrics',
     async ({ requireAuth }) => {
-      const userId = requireAuth()
+      requireAuth()
 
       return await AdminService.getTaskMetrics()
     },
@@ -118,7 +128,7 @@ export const adminController = new Elysia({ prefix: '/admin' })
   .get(
     '/topUsers',
     async ({ requireAuth }) => {
-      const userId = requireAuth()
+      requireAuth()
 
       return await AdminService.getTopUsers()
     },
@@ -130,7 +140,7 @@ export const adminController = new Elysia({ prefix: '/admin' })
   .get(
     '/performanceMetrics',
     async ({ requireAuth }) => {
-      const userId = requireAuth()
+      requireAuth()
 
       return await AdminService.getPerformanceMetrics()
     },
