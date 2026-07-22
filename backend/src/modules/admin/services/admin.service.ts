@@ -155,6 +155,7 @@ export class AdminService {
         nickname: user.nickname ?? undefined,
         level: user.level ?? 0,
         xp: user.xp ?? 0,
+        streak: user.streak ?? 0,
       })),
     }
   }

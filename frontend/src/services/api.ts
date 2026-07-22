@@ -18,7 +18,8 @@ import type {
   UserProfile,
   UsersList,
   BanUserResponse,
-  TaskMetricsResponse
+  TaskMetricsResponse,
+  TopUsersResponse
 } from '@/types'
 
 type ApiResult<T> = Promise<{
@@ -172,6 +173,9 @@ type ApiClientContract = {
       })
       taskMetrics: {
         get: (options: AuthHeaders) => ApiResult<TaskMetricsResponse>
+      }
+      topUsers: {
+        get: (options: AuthHeaders & { query?: { limit?: number } }) => ApiResult<TopUsersResponse>
       }
     }
   }

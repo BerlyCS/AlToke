@@ -153,6 +153,7 @@ export class AdminRepository {
         nickname: users.nickname,
         level: users.level,
         xp: users.xp,
+        streak: users.currentStreak,
       })
       .from(users)
       .orderBy(sql`${users.level} DESC, ${users.xp} DESC`)
