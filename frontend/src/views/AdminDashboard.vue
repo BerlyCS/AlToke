@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { adminService } from '@/services/admin.service'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import type { AdminMetrics, TaskMetricsResponse } from '@/types'
+import type { AdminMetrics, TaskMetricsResponse, TopUsersResponse } from '@/types'
 
 import StatCard from '@/components/StatCard.vue'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ const router = useRouter()
 
 const metrics = ref<AdminMetrics>()
 const taskMetrics = ref<TaskMetricsResponse>()
+const topUsers = ref<TopUsersResponse>()
 const loading = ref(true)
 
 
@@ -39,6 +40,7 @@ async function fetchMetrics() {
     loading.value = true
     metrics.value = await adminService.getMetrics()
     taskMetrics.value = await adminService.getTaskMetrics()
+    topUsers.value = await adminService.getTopUsers()
   } catch (e) {
     console.error(e)
   } finally {
@@ -177,16 +179,16 @@ const performanceMetrics = computed(() => ({
       <!-- Main Content Grid -->
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Top Usuarios -->
-        <Card class="lg:col-span-2 rounded-2xl shadow-xl border-border bg-card">
-          <CardHeader class="p-6">
+        <Card class="lg:col-span-2 rounded-2xl shadow-xl border-border bg-card p-6">
+          <CardHeader>
             <CardTitle class="text-xl font-bold">Top Usuarios</CardTitle>
             <p class="text-sm text-muted-foreground">Los mejores en rendimiento</p>
           </CardHeader>
           <CardContent class="p-6 pt-0">
             <div class="space-y-3">
               <div 
-                v-for="(user, index) in topPerformers" 
-                :key="user.name"
+                v-for="(user, index) in topUsers?.users" 
+                :key="user.id"
                 class="flex items-center justify-between p-3 rounded-xl hover:bg-muted/5 transition border border-border/50"
               >
                 <div class="flex items-center gap-3">
@@ -194,11 +196,11 @@ const performanceMetrics = computed(() => ({
                     {{ index + 1 }}
                   </div>
                   <div>
-                    <div class="font-medium">{{ user.name }}</div>
+                    <div class="font-medium">{{ user.nickname }}</div>
                     <div class="flex items-center gap-3 text-xs text-muted-foreground">
                       <span class="flex items-center gap-1">
                         <CheckCircle class="w-3 h-3" />
-                        {{ user.tasksCompleted }} tareas
+                        Nivel {{ user.level }}
                       </span>
                       <span class="flex items-center gap-1">
                         <Zap class="w-3 h-3" />

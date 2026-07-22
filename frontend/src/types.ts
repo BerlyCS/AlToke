@@ -192,3 +192,13 @@ export interface TaskMetricsResponse {
   }[]
   totalTasks: number
 }
+
+export interface TopUsersResponse {
+  users: {
+    id: string
+    nickname?: string
+    level: number
+    xp: number
+    streak: number
+  }[]
+}

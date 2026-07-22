@@ -78,6 +78,7 @@ export const TopUsersResponse = t.Object({
     nickname: t.Optional(t.String()),
     level: t.Number(),
     xp: t.Number(),
+    streak: t.Number(),
   }))
 })
 
