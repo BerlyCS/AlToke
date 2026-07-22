@@ -112,11 +112,22 @@ const usersList = ref<UsersList>()
 const selectedUser = ref<UserSummary | null>(null)
 
 const filteredUsers = computed(() => {
-  if (!searchQuery.value) return usersList.value?.users
-  return usersList.value?.users.filter(user =>
-    user.nickname.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
+  return usersList.value?.users.filter(user => {
+    if (user.id === authStore.profile?.id) {
+      return false
+    }
+
+    if (!searchQuery.value) {
+      return true
+    }
+
+    const query = searchQuery.value.toLowerCase()
+
+    return (
+      user.nickname.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query)
+    )
+  })
 })
 
 onMounted(async () => {
