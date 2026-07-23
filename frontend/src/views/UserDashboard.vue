@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { taskService } from '@/services/task.service'
+import { gamificationService } from '@/services/gamification.service'
 import { useAuthStore } from '@/stores/auth'
 import {
   useGamification,
@@ -9,7 +10,7 @@ import {
 } from '@/composables/useGamification'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import type { Task } from '@/types'
+import type { Task, LeaderboardEntry } from '@/types'
 
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -45,17 +46,35 @@ const completedTasksCount = computed(() => {
   return tasks.value.filter((t) => t.status === 'COMPLETED').length
 })
 
-// Mock values for stats
-const globalRanking = ref(8)
-const currentStreak = ref(14)
+const leaderboard = ref<LeaderboardEntry[]>([])
+
+const globalRanking = computed(() => {
+  const entry = leaderboard.value.find((u) => u.userId === authStore.profile?.id)
+  return entry ? entry.rank : 0
+})
+
+const rankingInfo = computed(() => {
+  const entry = leaderboard.value.find((u) => u.userId === authStore.profile?.id)
+  return entry ? `#${entry.rank} esta semana` : 'Fuera del top 50'
+})
+
+const currentStreak = computed(() => authStore.profile?.currentStreak ?? 0)
 
 onMounted(async () => {
   if (!authStore.token) {
     router.push('/')
     return
   }
-  await fetchTasks()
+  await Promise.all([fetchTasks(), loadLeaderboard()])
 })
+
+async function loadLeaderboard() {
+  try {
+    leaderboard.value = await gamificationService.getLeaderboard(50)
+  } catch (error) {
+    console.error('Failed to load leaderboard', error)
+  }
+}
 
 async function fetchTasks() {
   try {
@@ -193,7 +212,7 @@ function onTaskCreated(created: Task) {
           title="Ranking Global"
           :value="globalRanking"
           :icon="Trophy"
-          complement-info="Top 10 esta semana"
+          :complement-info="rankingInfo"
           bgColor="bg-success/10"
           textColor="text-green-500"
         />
@@ -227,7 +246,7 @@ function onTaskCreated(created: Task) {
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-primary-foreground/80 font-semibold">Racha actual</p>
-                  <h3 class="text-6xl font-black mt-2">{{ currentStreak }}🔥</h3>
+                  <h3 class="text-6xl font-black mt-2">{{ currentStreak }}</h3>
                 </div>
                 <div
                   class="w-20 h-20 rounded-[28px] bg-primary-foreground/20 flex items-center justify-center"
