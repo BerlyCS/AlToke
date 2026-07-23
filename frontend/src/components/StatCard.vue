@@ -31,7 +31,7 @@ import { Card, CardContent } from '@/components/ui/card'
 
 defineProps({
   title: String,
-  value: Number,
+  value: [Number, String],
   icon: Object,
   complementInfo: String,
   bgColor: String,

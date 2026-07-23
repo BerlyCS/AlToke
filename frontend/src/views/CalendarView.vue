@@ -70,6 +70,11 @@ const hasMore = computed(() => tasks.value.length < totalActiveTasks.value)
 
 const { tasksWithDeadline, startWatching, stopWatching } = useTaskDeadline(tasks)
 
+const selectedTaskDeadlineStatus = computed(() => {
+  if (!selectedTask.value) return undefined
+  return tasksWithDeadline.value.find((t) => t.id === selectedTask.value?.id)?.deadlineStatus
+})
+
 const dfMonth = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
 const dfDay = new Intl.DateTimeFormat('es-ES', { weekday: 'long' })
 
@@ -95,61 +100,30 @@ function getTaskColors(task: TaskWithDeadline) {
       border: 'border-red-500/40',
     }
   }
-  if (task.tags && task.tags.length > 0) {
-    const firstTag = task.tags[0]
-    if (firstTag && firstTag.color) {
-      const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-        'bg-red-500': {
-          bg: 'bg-red-500/10',
-          text: 'text-red-600 dark:text-red-400',
-          border: 'border-red-500/20',
-        },
-        'bg-orange-500': {
-          bg: 'bg-orange-500/10',
-          text: 'text-orange-600 dark:text-orange-400',
-          border: 'border-orange-500/20',
-        },
-        'bg-yellow-500': {
-          bg: 'bg-yellow-500/10',
-          text: 'text-yellow-600 dark:text-yellow-400',
-          border: 'border-yellow-500/20',
-        },
-        'bg-green-500': {
-          bg: 'bg-green-500/10',
-          text: 'text-green-600 dark:text-green-400',
-          border: 'border-green-500/20',
-        },
-        'bg-blue-500': {
-          bg: 'bg-blue-500/10',
-          text: 'text-blue-600 dark:text-blue-400',
-          border: 'border-blue-500/20',
-        },
-        'bg-indigo-500': {
-          bg: 'bg-indigo-500/10',
-          text: 'text-indigo-600 dark:text-indigo-400',
-          border: 'border-indigo-500/20',
-        },
-        'bg-purple-500': {
-          bg: 'bg-purple-500/10',
-          text: 'text-purple-600 dark:text-purple-400',
-          border: 'border-purple-500/20',
-        },
-        'bg-pink-500': {
-          bg: 'bg-pink-500/10',
-          text: 'text-pink-600 dark:text-pink-400',
-          border: 'border-pink-500/20',
-        },
-      }
-      return (
-        colorMap[firstTag.color] || {
-          bg: 'bg-primary/10',
-          text: 'text-primary',
-          border: 'border-primary/20',
-        }
-      )
-    }
+  const priorityColors: Record<string, { bg: string; text: string; border: string }> = {
+    HIGH: {
+      bg: 'bg-red-500/10',
+      text: 'text-red-500',
+      border: 'border-red-500/20',
+    },
+    MEDIUM: {
+      bg: 'bg-yellow-500/10',
+      text: 'text-yellow-500',
+      border: 'border-yellow-500/20',
+    },
+    LOW: {
+      bg: 'bg-green-500/10',
+      text: 'text-green-500',
+      border: 'border-green-500/20',
+    },
   }
-  return { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' }
+  return (
+    priorityColors[task.priority] || {
+      bg: 'bg-primary/10',
+      text: 'text-primary',
+      border: 'border-primary/20',
+    }
+  )
 }
 
 function getDeadlineClass(task: TaskWithDeadline): string {
@@ -215,7 +189,7 @@ function goToToday() {
   currentDate.value = new Date()
 }
 
-function openTask(task: TaskWithDeadline) {
+function openTask(task: Task) {
   selectedTask.value = task
   showViewModal.value = true
 }
@@ -225,8 +199,9 @@ function handleSelectDay(day: Date) {
   viewMode.value = 'day'
 }
 
-async function toggleStatus(task: TaskWithDeadline) {
-  if (task.deadlineStatus === 'expired') {
+async function toggleStatus(task: Task) {
+  const taskWithDeadline = tasksWithDeadline.value.find((t) => t.id === task.id)
+  if (taskWithDeadline && taskWithDeadline.deadlineStatus === 'expired') {
     toast.error('No se puede completar', { description: 'Esta tarea ya venció' })
     return
   }
@@ -236,7 +211,7 @@ async function toggleStatus(task: TaskWithDeadline) {
     if (newStatus === 'COMPLETED') {
       const result = await taskService.completeTask(task.id)
       updated = { ...task, ...result }
-      if (typeof result.xpAwarded === 'number') {
+      if (result.xpAwarded > 0) {
         authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
         showReward(
           result.xpAwarded,
@@ -471,7 +446,7 @@ async function deleteTask(id: string) {
                           v-if="task.deadlineStatus === 'expired'"
                           class="text-red-500 font-bold"
                         >
-                          Vencida
+                          Vencido
                         </span>
                         <span v-if="task.estimatedTime" class="flex items-center gap-1">
                           • {{ task.estimatedTime }} min
@@ -509,6 +484,7 @@ async function deleteTask(id: string) {
     <ViewTaskDialog
       v-model:open="showViewModal"
       :task="selectedTask"
+      :deadline-status="selectedTaskDeadlineStatus"
       @delete-task="deleteTask"
       @toggle-status="toggleStatus"
       @edit-task="() => {}"

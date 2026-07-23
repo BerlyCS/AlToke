@@ -16,10 +16,12 @@ import {
   Trash2,
   Edit,
   CheckCircle,
+  XCircle,
 } from 'lucide-vue-next'
 import { DateFormatter } from '@internationalized/date'
 import type { Component } from 'vue'
 import type { Task } from '@/types'
+import type { TaskDeadlineStatus } from '@/composables/useTaskDeadline'
 import * as icons from 'lucide-vue-next'
 
 const IconMap: Record<string, Component> = icons as unknown as Record<string, Component>
@@ -27,6 +29,7 @@ const IconMap: Record<string, Component> = icons as unknown as Record<string, Co
 defineProps<{
   open: boolean
   task: Task | null
+  deadlineStatus?: TaskDeadlineStatus
 }>()
 
 defineEmits(['update:open', 'delete-task', 'edit-task', 'toggle-status'])
@@ -233,6 +236,7 @@ function getTypeLabel(type: string) {
 
       <div class="flex flex-col gap-3 px-6 pb-6 pt-4 bg-muted/10 border-t border-border w-full">
         <Button
+          v-if="deadlineStatus !== 'expired'"
           size="default"
           :variant="task.status === 'COMPLETED' ? 'secondary' : 'default'"
           class="w-full font-bold shadow-sm py-5 text-md"
@@ -246,6 +250,13 @@ function getTypeLabel(type: string) {
           <CheckCircle class="w-5 h-5 mr-2" />
           {{ task.status === 'COMPLETED' ? 'Marcar Pendiente' : 'Completar Tarea' }}
         </Button>
+        <div
+          v-else
+          class="w-full font-bold py-5 text-md text-center text-red-500 bg-red-500/10 border border-red-500/30 rounded-md"
+        >
+          <XCircle class="w-5 h-5 mr-2 inline" />
+          Vencido
+        </div>
         <div class="flex justify-center items-center gap-3 w-full">
           <Button
             variant="outline"

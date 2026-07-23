@@ -166,8 +166,8 @@ onUnmounted(() => {
         <span class="sr-only">Notificaciones</span>
       </Button>
     </SheetTrigger>
-    <SheetContent side="right" class="w-full sm:max-w-md flex flex-col">
-      <SheetHeader class="pb-4 border-b">
+    <SheetContent side="right" class="w-full sm:max-w-md flex flex-col p-0">
+      <SheetHeader class="p-6 pb-4 border-b">
         <SheetTitle class="flex items-center gap-2 text-lg">
           <BellDot class="w-5 h-5 text-primary" />
           Notificaciones
@@ -177,63 +177,65 @@ onUnmounted(() => {
         </SheetTitle>
       </SheetHeader>
 
-      <ScrollArea class="flex-1 -mx-6 px-6">
-        <div
-          v-if="loading && logs.length === 0"
-          class="py-8 text-center text-muted-foreground text-sm"
-        >
-          Cargando...
-        </div>
-
-        <div v-else-if="logs.length === 0" class="py-8 text-center text-muted-foreground">
-          <Bell class="w-10 h-10 mx-auto mb-3 opacity-40" />
-          <p class="text-sm font-medium">No hay notificaciones</p>
-          <p class="text-xs mt-1">Las notificaciones aparecerán aquí</p>
-        </div>
-
-        <div v-else class="divide-y">
+      <ScrollArea class="flex-1">
+        <div class="p-6">
           <div
-            v-for="log in logs"
-            :key="log.id"
-            class="flex gap-3 py-4 transition hover:bg-muted/30 -mx-2 px-2 rounded-lg"
-            :class="{
-              'opacity-60': log.isRead,
-            }"
+            v-if="loading && logs.length === 0"
+            class="py-8 text-center text-muted-foreground text-sm"
           >
-            <div
-              class="mt-0.5 w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-              :class="typeBadgeColor(log.type)"
-            >
-              <component :is="typeIcon(log.type)" class="w-4 h-4" />
-            </div>
+            Cargando...
+          </div>
 
-            <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-2">
-                <p class="text-sm font-semibold truncate">{{ log.title }}</p>
-                <span class="text-xs text-muted-foreground whitespace-nowrap shrink-0">
-                  {{ formatDate(log.createdAt) }}
-                </span>
+          <div v-else-if="logs.length === 0" class="py-8 text-center text-muted-foreground">
+            <Bell class="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <p class="text-sm font-medium">No hay notificaciones</p>
+            <p class="text-xs mt-1">Las notificaciones aparecerán aquí</p>
+          </div>
+
+          <div v-else class="divide-y divide-border">
+            <div
+              v-for="log in logs"
+              :key="log.id"
+              class="flex gap-3 py-4 first:pt-0 last:pb-0 transition hover:bg-muted/30 -mx-2 px-2 rounded-lg"
+              :class="{
+                'opacity-60': log.isRead,
+              }"
+            >
+              <div
+                class="mt-0.5 w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                :class="typeBadgeColor(log.type)"
+              >
+                <component :is="typeIcon(log.type)" class="w-4 h-4" />
               </div>
-              <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{{ log.message }}</p>
-              <div class="flex gap-1.5 mt-2">
-                <Badge variant="secondary" class="text-[10px] px-1.5 py-0">
-                  {{ log.channel }}
-                </Badge>
-                <Badge variant="outline" class="text-[10px] px-1.5 py-0">
-                  {{
-                    log.type.startsWith('TASK_DUE:')
-                      ? 'VENCIDA'
-                      : log.type.startsWith('TASK_DUE_SOON:')
-                        ? 'PRÓXIMA'
-                        : log.type.startsWith('TASK_TIME_REACHED:')
-                          ? 'INICIO'
-                          : log.type.startsWith('TASK_COMPLETED')
-                            ? 'COMPLETADA'
-                            : log.type.startsWith('FRIEND_ACCEPTED')
-                              ? 'AMISTAD'
-                              : log.type
-                  }}
-                </Badge>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2">
+                  <p class="text-sm font-semibold truncate">{{ log.title }}</p>
+                  <span class="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+                    {{ formatDate(log.createdAt) }}
+                  </span>
+                </div>
+                <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{{ log.message }}</p>
+                <div class="flex gap-1.5 mt-2">
+                  <Badge variant="secondary" class="text-[10px] px-1.5 py-0">
+                    {{ log.channel }}
+                  </Badge>
+                  <Badge variant="outline" class="text-[10px] px-1.5 py-0">
+                    {{
+                      log.type.startsWith('TASK_DUE:')
+                        ? 'VENCIDA'
+                        : log.type.startsWith('TASK_DUE_SOON:')
+                          ? 'PRÓXIMA'
+                          : log.type.startsWith('TASK_TIME_REACHED:')
+                            ? 'INICIO'
+                            : log.type.startsWith('TASK_COMPLETED')
+                              ? 'COMPLETADA'
+                              : log.type.startsWith('FRIEND_ACCEPTED')
+                                ? 'AMISTAD'
+                                : log.type
+                    }}
+                  </Badge>
+                </div>
               </div>
             </div>
           </div>

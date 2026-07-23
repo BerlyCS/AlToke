@@ -44,16 +44,15 @@ defineEmits(['toggleStatus', 'deleteTask', 'openTask'])
 
 const todayTasks = computed(() => {
   const now = new Date()
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const endOfWindow = new Date(startOfToday)
-  endOfWindow.setDate(startOfToday.getDate() + 7)
+  const endOfWindow = new Date(now)
+  endOfWindow.setDate(now.getDate() + 7)
 
   return props.tasks
     .filter((task) => {
       if (!task.dueDate) return false
       if (task.status === 'COMPLETED') return false
       const d = new Date(task.dueDate)
-      return d >= startOfToday && d < endOfWindow
+      return d >= now && d < endOfWindow
     })
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
 })
@@ -61,33 +60,6 @@ const todayTasks = computed(() => {
 function formatTime(val: string | Date) {
   const d = new Date(val)
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-const colorMap: Record<string, { bg: string; border: string; text: string }> = {
-  'bg-red-500': { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' },
-  'bg-orange-500': {
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500/30',
-    text: 'text-orange-500',
-  },
-  'bg-yellow-500': {
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
-    text: 'text-yellow-500',
-  },
-  'bg-green-500': { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
-  'bg-blue-500': { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-500' },
-  'bg-indigo-500': {
-    bg: 'bg-indigo-500/10',
-    border: 'border-indigo-500/30',
-    text: 'text-indigo-500',
-  },
-  'bg-purple-500': {
-    bg: 'bg-purple-500/10',
-    border: 'border-purple-500/30',
-    text: 'text-purple-500',
-  },
-  'bg-pink-500': { bg: 'bg-pink-500/10', border: 'border-pink-500/30', text: 'text-pink-500' },
 }
 
 function getTaskColors(task: TaskWithDeadline) {
@@ -98,10 +70,18 @@ function getTaskColors(task: TaskWithDeadline) {
       text: 'text-red-400',
     }
   }
-  const defaultColors = { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary' }
-  if (!task.tags || task.tags.length === 0) return defaultColors
-  const color = task.tags?.[0]?.color
-  return (color ? colorMap[color] : undefined) || defaultColors
+  const priorityColors: Record<string, { bg: string; border: string; text: string }> = {
+    HIGH: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' },
+    MEDIUM: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-500' },
+    LOW: { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
+  }
+  return (
+    priorityColors[task.priority] || {
+      bg: 'bg-primary/10',
+      border: 'border-primary/30',
+      text: 'text-primary',
+    }
+  )
 }
 
 function getDeadlineClass(task: TaskWithDeadline): string {
@@ -184,7 +164,7 @@ function getDeadlineClass(task: TaskWithDeadline): string {
                 ¡Vence pronto!
               </span>
               <span v-if="task.deadlineStatus === 'expired'" class="text-red-500 font-bold text-xs">
-                Vencida
+                Vencido
               </span>
               <span v-if="task.estimatedTime" class="flex items-center gap-1.5">
                 • {{ task.estimatedTime }} min

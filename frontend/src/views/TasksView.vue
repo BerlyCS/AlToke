@@ -73,33 +73,6 @@ const IconMap: Record<string, Component> = {
   AlignLeft,
 }
 
-const colorMap: Record<string, { bg: string; border: string; text: string }> = {
-  'bg-red-500': { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' },
-  'bg-orange-500': {
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500/30',
-    text: 'text-orange-500',
-  },
-  'bg-yellow-500': {
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
-    text: 'text-yellow-500',
-  },
-  'bg-green-500': { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
-  'bg-blue-500': { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-500' },
-  'bg-indigo-500': {
-    bg: 'bg-indigo-500/10',
-    border: 'border-indigo-500/30',
-    text: 'text-indigo-500',
-  },
-  'bg-purple-500': {
-    bg: 'bg-purple-500/10',
-    border: 'border-purple-500/30',
-    text: 'text-purple-500',
-  },
-  'bg-pink-500': { bg: 'bg-pink-500/10', border: 'border-pink-500/30', text: 'text-pink-500' },
-}
-
 function getTaskColors(task: TaskWithDeadline) {
   if (task.deadlineStatus === 'expired') {
     return {
@@ -108,10 +81,18 @@ function getTaskColors(task: TaskWithDeadline) {
       text: 'text-red-400',
     }
   }
-  const defaultColors = { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary' }
-  if (!task.tags || task.tags.length === 0) return defaultColors
-  const color = task.tags?.[0]?.color
-  return (color ? colorMap[color] : undefined) || defaultColors
+  const priorityColors: Record<string, { bg: string; border: string; text: string }> = {
+    HIGH: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' },
+    MEDIUM: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-500' },
+    LOW: { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
+  }
+  return (
+    priorityColors[task.priority] || {
+      bg: 'bg-primary/10',
+      border: 'border-primary/30',
+      text: 'text-primary',
+    }
+  )
 }
 
 function getDeadlineClass(task: TaskWithDeadline): string {
@@ -145,11 +126,13 @@ const aiLoading = ref(false)
 const aiError = ref('')
 const showAiDialog = ref(false)
 const totalActiveTasks = ref(0)
-const pageSize = 50
-const currentPage = ref(0)
-const hasMore = computed(() => tasks.value.length < totalActiveTasks.value)
 
 const { tasksWithDeadline, startWatching, stopWatching } = useTaskDeadline(tasks)
+
+const selectedTaskDeadlineStatus = computed(() => {
+  if (!selectedTask.value) return undefined
+  return tasksWithDeadline.value.find((t) => t.id === selectedTask.value?.id)?.deadlineStatus
+})
 
 const filteredTasks = computed(() => {
   let result = tasksWithDeadline.value
@@ -191,25 +174,13 @@ onMounted(async () => {
 async function fetchTasks() {
   try {
     loading.value = true
-    currentPage.value = 0
-    const result = await taskService.getActiveTasks(pageSize, 0)
-    tasks.value = result.tasks
-    totalActiveTasks.value = result.total
+    const result = await taskService.getAllTasks()
+    tasks.value = result
+    totalActiveTasks.value = result.length
   } catch (e) {
     console.error(e)
   } finally {
     loading.value = false
-  }
-}
-
-async function loadMore() {
-  try {
-    currentPage.value++
-    const offset = currentPage.value * pageSize
-    const result = await taskService.getActiveTasks(pageSize, offset)
-    tasks.value = [...tasks.value, ...result.tasks]
-  } catch (e) {
-    console.error(e)
   }
 }
 
@@ -288,7 +259,7 @@ async function toggleStatus(task: TaskWithDeadline) {
     if (newStatus === 'COMPLETED') {
       const result = await taskService.completeTask(task.id)
       updated = { ...task, ...result }
-      if (typeof result.xpAwarded === 'number') {
+      if (result.xpAwarded > 0) {
         authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
         showReward(
           result.xpAwarded,
@@ -737,7 +708,7 @@ function formatTime(val: string | Date) {
                     v-if="task.deadlineStatus === 'expired'"
                     class="text-red-500 font-bold text-xs"
                   >
-                    Vencida
+                    Vencido
                   </span>
                   <span v-if="task.estimatedTime" class="flex items-center gap-1.5">
                     • {{ task.estimatedTime }} min
@@ -764,12 +735,6 @@ function formatTime(val: string | Date) {
                 <Trash2 class="w-5 h-5" />
               </button>
             </div>
-          </div>
-
-          <div v-if="hasMore" class="flex justify-center pt-4">
-            <Button variant="outline" class="rounded-xl font-bold border-border" @click="loadMore">
-              Cargar más
-            </Button>
           </div>
 
           <div v-if="filteredTasks.length === 0" class="text-center py-16 text-muted-foreground">
@@ -803,6 +768,7 @@ function formatTime(val: string | Date) {
     <ViewTaskDialog
       v-model:open="showViewModal"
       :task="selectedTask"
+      :deadline-status="selectedTaskDeadlineStatus"
       @delete-task="deleteTask"
       @toggle-status="toggleStatus"
       @edit-task="editTask"

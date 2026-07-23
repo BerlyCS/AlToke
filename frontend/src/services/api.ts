@@ -1,6 +1,7 @@
 import { treaty } from '@elysiajs/eden'
 import type {
   Achievement,
+  ActiveTasksResponse,
   AdminMetrics,
   CompleteTaskResult,
   Credentials,
@@ -82,6 +83,11 @@ type ApiClientContract = {
     tasks: {
       get: (options: AuthHeaders) => ApiResult<Task[]>
       post: (body: Partial<Task>, options: AuthHeaders) => ApiResult<Task>
+      active: {
+        get: (
+          options: AuthHeaders & { query: { limit?: number; offset?: number } },
+        ) => ApiResult<ActiveTasksResponse>
+      }
       trash: {
         get: (options: AuthHeaders) => ApiResult<Task[]>
       }
@@ -134,7 +140,23 @@ type ApiClientContract = {
           options: AuthHeaders & { query: { limit?: number; offset?: number } },
         ) => ApiResult<NotificationLog[]>
       }
-    }
+      'read-all': {
+        patch: (
+          body: Record<string, never>,
+          options: AuthHeaders,
+        ) => ApiResult<{ success: boolean }>
+      }
+      'unread-count': {
+        get: (options: AuthHeaders) => ApiResult<{ count: number }>
+      }
+    } & ((params: { id: string }) => {
+      read: {
+        patch: (
+          body: Record<string, never>,
+          options: AuthHeaders,
+        ) => ApiResult<{ success: boolean }>
+      }
+    })
     friendships: {
       '': {
         get: (options: AuthHeaders) => ApiResult<any[]>

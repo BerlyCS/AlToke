@@ -3,6 +3,7 @@ import { db } from '../../db'
 import { tasks, taskTags } from '../../db/schema'
 import { GamificationService } from '../gamification/services'
 import { NotificationService } from '../notification/services'
+import { UserRepository } from '../user/repositories/user.repository'
 import type { TaskModel } from './model'
 
 const XP_BASE = 10
@@ -262,13 +263,14 @@ export abstract class TaskService {
 
     // XP and achievements are only awarded the first time the task is completed
     if (alreadyCompletedBefore) {
+      const user = await UserRepository.findById(userId)
       return {
         ...updated,
         tags: task.tags,
         xpAwarded: 0,
         leveledUp: false,
-        newLevel: 0,
-        newStreak: 0,
+        newLevel: user?.level ?? 1,
+        newStreak: user?.currentStreak ?? 0,
         unlockedAchievements: [],
       }
     }

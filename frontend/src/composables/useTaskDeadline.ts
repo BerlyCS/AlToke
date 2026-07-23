@@ -1,4 +1,4 @@
-import { ref, computed, onUnmounted, watch } from 'vue'
+import { ref, computed, onUnmounted, watch, type Ref } from 'vue'
 import { toast } from 'vue-sonner'
 import type { Task } from '@/types'
 
@@ -10,26 +10,21 @@ export interface TaskWithDeadline extends Task {
 }
 
 const EXPIRED_ALERT_SHOWN_KEY = 'altoke_expired_alerts_shown'
+const DUE_SOON_ALERT_SHOWN_KEY = 'altoke_due_soon_alerts_shown'
 
-function getExpiredAlertsShown(): Set<string> {
+function getAlertsShown(key: string): Set<string> {
   try {
-    const stored = localStorage.getItem(EXPIRED_ALERT_SHOWN_KEY)
+    const stored = localStorage.getItem(key)
     return stored ? new Set(JSON.parse(stored)) : new Set()
   } catch {
     return new Set()
   }
 }
 
-function markExpiredAlertShown(taskId: string) {
-  const shown = getExpiredAlertsShown()
+function markAlertShown(key: string, taskId: string) {
+  const shown = getAlertsShown(key)
   shown.add(taskId)
-  localStorage.setItem(EXPIRED_ALERT_SHOWN_KEY, JSON.stringify([...shown]))
-}
-
-function clearExpiredAlertShown(taskId: string) {
-  const shown = getExpiredAlertsShown()
-  shown.delete(taskId)
-  localStorage.setItem(EXPIRED_ALERT_SHOWN_KEY, JSON.stringify([...shown]))
+  localStorage.setItem(key, JSON.stringify([...shown]))
 }
 
 function calculateDeadlineStatus(task: Task): {
@@ -54,7 +49,23 @@ function calculateDeadlineStatus(task: Task): {
   return { status: 'normal', minutesRemaining }
 }
 
-export function useTaskDeadline(tasks: ReturnType<typeof import('vue').ref<Task[]>>) {
+export const expiredTaskData = ref<{ open: boolean; taskTitle: string }>({
+  open: false,
+  taskTitle: '',
+})
+
+export const expiredTaskQueue = ref<string[]>([])
+
+export function processExpiredTaskQueue() {
+  if (expiredTaskQueue.value.length > 0 && !expiredTaskData.value.open) {
+    const nextTitle = expiredTaskQueue.value.shift()
+    if (nextTitle) {
+      expiredTaskData.value = { open: true, taskTitle: nextTitle }
+    }
+  }
+}
+
+export function useTaskDeadline(tasks: Ref<Task[]>) {
   const tickInterval = ref<ReturnType<typeof setInterval> | null>(null)
   const expiredTasks = ref<Set<string>>(new Set())
 
@@ -71,18 +82,26 @@ export function useTaskDeadline(tasks: ReturnType<typeof import('vue').ref<Task[
 
   function checkForNewExpiredTasks() {
     const now = new Date()
-    const alertsShown = getExpiredAlertsShown()
+    const expiredAlerts = getAlertsShown(EXPIRED_ALERT_SHOWN_KEY)
+    const dueSoonAlerts = getAlertsShown(DUE_SOON_ALERT_SHOWN_KEY)
 
     for (const task of tasks.value) {
       if (!task.dueDate || task.status === 'COMPLETED') continue
       const due = new Date(task.dueDate)
-      if (due.getTime() <= now.getTime() && !alertsShown.has(task.id)) {
+      const diffMs = due.getTime() - now.getTime()
+      const minutesRemaining = Math.floor(diffMs / 60000)
+
+      if (minutesRemaining < 0 && !expiredAlerts.has(task.id)) {
         expiredTasks.value.add(task.id)
-        toast.error('Tarea vencida', {
-          description: `La tarea "${task.title}" ha vencido`,
+        expiredTaskQueue.value.push(task.title)
+        processExpiredTaskQueue()
+        markAlertShown(EXPIRED_ALERT_SHOWN_KEY, task.id)
+      } else if (minutesRemaining >= 0 && minutesRemaining <= 5 && !dueSoonAlerts.has(task.id)) {
+        toast('Tarea por vencer', {
+          description: `La tarea "${task.title}" vence en ${minutesRemaining} min`,
           duration: 8000,
         })
-        markExpiredAlertShown(task.id)
+        markAlertShown(DUE_SOON_ALERT_SHOWN_KEY, task.id)
       }
     }
   }
@@ -105,7 +124,9 @@ export function useTaskDeadline(tasks: ReturnType<typeof import('vue').ref<Task[
 
   function clearExpiredState(taskId: string) {
     expiredTasks.value.delete(taskId)
-    clearExpiredAlertShown(taskId)
+    const shown = getAlertsShown(EXPIRED_ALERT_SHOWN_KEY)
+    shown.delete(taskId)
+    localStorage.setItem(EXPIRED_ALERT_SHOWN_KEY, JSON.stringify([...shown]))
   }
 
   watch(

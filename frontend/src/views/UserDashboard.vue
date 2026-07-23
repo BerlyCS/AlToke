@@ -49,6 +49,11 @@ const hasMore = computed(() => tasks.value.length < totalActiveTasks.value)
 
 const { tasksWithDeadline, startWatching, stopWatching } = useTaskDeadline(tasks)
 
+const selectedTaskDeadlineStatus = computed(() => {
+  if (!selectedTask.value) return undefined
+  return tasksWithDeadline.value.find((t) => t.id === selectedTask.value?.id)?.deadlineStatus
+})
+
 const completedTasksCount = computed(() => {
   return tasks.value.filter((t) => t.status === 'COMPLETED').length
 })
@@ -109,13 +114,18 @@ async function loadMore() {
 }
 
 async function toggleStatus(task: Task) {
+  const taskWithDeadline = tasksWithDeadline.value.find((t) => t.id === task.id)
+  if (taskWithDeadline && taskWithDeadline.deadlineStatus === 'expired') {
+    toast.error('No se puede completar', { description: 'Esta tarea ya venció' })
+    return
+  }
   try {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
     let updated: Task
     if (newStatus === 'COMPLETED') {
       const result = await taskService.completeTask(task.id)
       updated = { ...task, ...result }
-      if (typeof result.xpAwarded === 'number') {
+      if (result.xpAwarded > 0) {
         authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
         showReward(
           result.xpAwarded,
@@ -341,6 +351,7 @@ function onTaskCreated(created: Task) {
     <ViewTaskDialog
       v-model:open="showViewModal"
       :task="selectedTask"
+      :deadline-status="selectedTaskDeadlineStatus"
       @delete-task="deleteTask"
       @toggle-status="toggleStatus"
       @edit-task="editTask"
