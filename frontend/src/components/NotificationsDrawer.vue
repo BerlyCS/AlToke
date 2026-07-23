@@ -166,7 +166,7 @@ onUnmounted(() => {
         <span class="sr-only">Notificaciones</span>
       </Button>
     </SheetTrigger>
-    <SheetContent side="right" class="w-full sm:max-w-md flex flex-col p-0">
+    <SheetContent side="right" class="w-full sm:max-w-md flex flex-col p-0 overflow-hidden">
       <SheetHeader class="p-6 pb-4 border-b">
         <SheetTitle class="flex items-center gap-2 text-lg">
           <BellDot class="w-5 h-5 text-primary" />
@@ -177,7 +177,7 @@ onUnmounted(() => {
         </SheetTitle>
       </SheetHeader>
 
-      <ScrollArea class="flex-1">
+      <ScrollArea class="flex-1 min-h-0 max-h-[calc(100vh-8rem)]">
         <div class="p-6">
           <div
             v-if="loading && logs.length === 0"
