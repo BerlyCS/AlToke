@@ -48,9 +48,7 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
 
   describe('banUser', () => {
     it('should ban a user successfully', async () => {
-      const result = await AdminService.banUser(testUserId, {
-        reason: 'Test ban reason',
-      })
+      const result = await AdminService.banUser(testUserId)
       expect(result.success).toBe(true)
       expect(result.userId).toBe(testUserId)
       expect(result.message).toContain('banned')
@@ -61,9 +59,7 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
 
     it('should throw error when user not found', async () => {
       try {
-        await AdminService.banUser('00000000-0000-0000-0000-000000000000', {
-          reason: 'Test',
-        })
+        await AdminService.banUser('00000000-0000-0000-0000-000000000000')
         expect.unreachable()
       } catch (error) {
         expect((error as Error).message).toBe('User not found')
@@ -71,9 +67,9 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
     })
 
     it('should throw error when user already banned', async () => {
-      await AdminService.banUser(testUserId, { reason: 'First ban' })
+      await AdminService.banUser(testUserId)
       try {
-        await AdminService.banUser(testUserId, { reason: 'Second ban' })
+        await AdminService.banUser(testUserId)
         expect.unreachable()
       } catch (error) {
         expect((error as Error).message).toBe('User is already banned')
@@ -83,7 +79,7 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
 
   describe('unbanUser', () => {
     it('should unban a user successfully', async () => {
-      await AdminService.banUser(testUserId, { reason: 'Test ban' })
+      await AdminService.banUser(testUserId)
 
       const result = await AdminService.unbanUser(testUserId)
       expect(result.success).toBe(true)

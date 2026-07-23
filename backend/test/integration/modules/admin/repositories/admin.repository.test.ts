@@ -72,7 +72,7 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
 
   describe('banUser', () => {
     it('should ban user by changing role to BANNED', async () => {
-      const bannedUser = await AdminRepository.banUser(testUserId, 'Test ban')
+      const bannedUser = await AdminRepository.banUser(testUserId)
       expect(bannedUser?.role).toBe('BANNED')
     })
 
@@ -84,7 +84,7 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
 
   describe('unbanUser', () => {
     it('should unban user by restoring role to USER', async () => {
-      await AdminRepository.banUser(testUserId, 'Test ban')
+      await AdminRepository.banUser(testUserId)
       const unbannedUser = await AdminRepository.unbanUser(testUserId)
       expect(unbannedUser?.role).toBe('USER')
     })
@@ -92,7 +92,7 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
 
   describe('isUserBanned', () => {
     it('should return true for banned user', async () => {
-      await AdminRepository.banUser(testUserId, 'Test ban')
+      await AdminRepository.banUser(testUserId)
       const isBanned = await AdminRepository.isUserBanned(testUserId)
       expect(isBanned).toBe(true)
     })
