@@ -38,19 +38,19 @@ describe('AdminService', () => {
         makeUserRow({ role: 'BANNED' }),
       )
 
-      const result = await AdminService.banUser('user-1', { reason: 'Spam' })
+      const result = await AdminService.banUser('user-1')
 
       expect(result.success).toBe(true)
       expect(result.userId).toBe('user-1')
       expect(result.message).toContain('banned')
-      expect(banSpy).toHaveBeenCalledWith('user-1', 'Spam')
+      expect(banSpy).toHaveBeenCalledWith('user-1')
     })
 
     it('throws when user does not exist', async () => {
       spyOn(AdminRepository, 'getUserById').mockResolvedValue(null as any)
 
       try {
-        await AdminService.banUser('ghost', { reason: 'Test' })
+        await AdminService.banUser('ghost')
         expect.unreachable()
       } catch (error) {
         expect((error as Error).message).toBe('User not found')
@@ -62,7 +62,7 @@ describe('AdminService', () => {
       spyOn(AdminRepository, 'isUserBanned').mockResolvedValue(true)
 
       try {
-        await AdminService.banUser('user-1', { reason: 'Double ban' })
+        await AdminService.banUser('user-1')
         expect.unreachable()
       } catch (error) {
         expect((error as Error).message).toBe('User is already banned')
