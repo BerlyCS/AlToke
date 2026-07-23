@@ -104,7 +104,7 @@ function getTaskColors(task: Task) {
         }}</span>
       </CardTitle>
       <CardDescription class="text-base text-muted-foreground"
-        >Organiza tu día y mantén tu racha 🔥</CardDescription
+        >Organiza tu día y mantén tu racha</CardDescription
       >
     </CardHeader>
     <CardContent class="grid gap-3">
@@ -173,7 +173,6 @@ function getTaskColors(task: Task) {
         v-if="todayTasks.length === 0"
         class="text-center py-12 text-muted-foreground bg-black/5 dark:bg-white/5 rounded-xl border border-dashed border-border mt-2"
       >
-        <div class="text-4xl mb-3 opacity-50">☀️</div>
         <h3 class="text-lg font-bold text-foreground">Día libre</h3>
         <p>No tienes tareas pendientes para hoy.</p>
       </div>
