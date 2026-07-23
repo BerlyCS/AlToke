@@ -200,13 +200,8 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
     })
 
     afterAll(async () => {
-      if (taskIds.length > 0) {
-        await db.execute(
-          sql`DELETE FROM tasks WHERE id IN ${sql.join(
-            taskIds.map((id: string) => sql`${id}`),
-            sql`,`,
-          )}`,
-        )
+      for (const id of taskIds) {
+        await db.execute(sql`DELETE FROM tasks WHERE id = ${id}`)
       }
     })
 
@@ -244,24 +239,20 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
     let extraUserIds: string[] = []
 
     beforeAll(async () => {
+      const ts = Date.now()
       const result = await db.execute(sql`
         INSERT INTO users (email, password_hash, nickname, role, level, xp)
         VALUES
-          ('admin-topuser-a-${Date.now()}@test.com', 'hash', 'TopA', 'USER', 10, 5000),
-          ('admin-topuser-b-${Date.now()}@test.com', 'hash', 'TopB', 'USER', 8, 3000)
+          (${`admin-topuser-a-${ts}@test.com`}, 'hash', 'TopA', 'USER', 10, 5000),
+          (${`admin-topuser-b-${ts}@test.com`}, 'hash', 'TopB', 'USER', 8, 3000)
         RETURNING id
       `)
       extraUserIds = result.map((r: any) => r.id)
     })
 
     afterAll(async () => {
-      if (extraUserIds.length > 0) {
-        await db.execute(
-          sql`DELETE FROM users WHERE id IN ${sql.join(
-            extraUserIds.map((id: string) => sql`${id}`),
-            sql`,`,
-          )}`,
-        )
+      for (const id of extraUserIds) {
+        await db.execute(sql`DELETE FROM users WHERE id = ${id}`)
       }
     })
 
