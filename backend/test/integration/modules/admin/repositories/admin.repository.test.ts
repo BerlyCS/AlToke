@@ -182,4 +182,147 @@ describe.skipIf(!databaseAvailable)('AdminRepository', () => {
       expect(count).toBe(0)
     })
   })
+
+  describe('getTaskMetrics', () => {
+    let taskIds: string[] = []
+
+    beforeAll(async () => {
+      const result = await db.execute(sql`
+        INSERT INTO tasks (user_id, title, status)
+        VALUES
+          (${testUserId}, 'Metric Task 1', 'COMPLETED'),
+          (${testUserId}, 'Metric Task 2', 'COMPLETED'),
+          (${testUserId}, 'Metric Task 3', 'PENDING'),
+          (${testUserId}, 'Metric Task 4', 'IN_PROGRESS')
+        RETURNING id
+      `)
+      taskIds = result.map((r: any) => r.id)
+    })
+
+    afterAll(async () => {
+      if (taskIds.length > 0) {
+        await db.execute(
+          sql`DELETE FROM tasks WHERE id IN ${sql.join(
+            taskIds.map((id: string) => sql`${id}`),
+            sql`,`,
+          )}`,
+        )
+      }
+    })
+
+    it('should return an array of task metrics grouped by status', async () => {
+      const metrics = await AdminRepository.getTaskMetrics()
+      expect(Array.isArray(metrics)).toBe(true)
+      expect(metrics.length).toBeGreaterThan(0)
+    })
+
+    it('should have type and count fields in each metric', async () => {
+      const metrics = await AdminRepository.getTaskMetrics()
+      for (const metric of metrics) {
+        expect(typeof metric.type).toBe('string')
+        expect(typeof metric.count).toBe('number')
+      }
+    })
+
+    it('should include the created task statuses', async () => {
+      const metrics = await AdminRepository.getTaskMetrics()
+      const types = metrics.map((m) => m.type)
+      expect(types).toContain('COMPLETED')
+      expect(types).toContain('PENDING')
+      expect(types).toContain('IN_PROGRESS')
+    })
+
+    it('should correctly count tasks per status', async () => {
+      const metrics = await AdminRepository.getTaskMetrics()
+      const completed = metrics.find((m) => m.type === 'COMPLETED')
+      expect(completed).toBeDefined()
+      expect(completed!.count).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  describe('getTopUsers', () => {
+    let extraUserIds: string[] = []
+
+    beforeAll(async () => {
+      const result = await db.execute(sql`
+        INSERT INTO users (email, password_hash, nickname, role, level, xp)
+        VALUES
+          ('admin-topuser-a-${Date.now()}@test.com', 'hash', 'TopA', 'USER', 10, 5000),
+          ('admin-topuser-b-${Date.now()}@test.com', 'hash', 'TopB', 'USER', 8, 3000)
+        RETURNING id
+      `)
+      extraUserIds = result.map((r: any) => r.id)
+    })
+
+    afterAll(async () => {
+      if (extraUserIds.length > 0) {
+        await db.execute(
+          sql`DELETE FROM users WHERE id IN ${sql.join(
+            extraUserIds.map((id: string) => sql`${id}`),
+            sql`,`,
+          )}`,
+        )
+      }
+    })
+
+    it('should return an array of top users', async () => {
+      const topUsers = await AdminRepository.getTopUsers()
+      expect(Array.isArray(topUsers)).toBe(true)
+      expect(topUsers.length).toBeGreaterThan(0)
+    })
+
+    it('should have id, nickname, level, xp, and streak fields', async () => {
+      const topUsers = await AdminRepository.getTopUsers()
+      const user = topUsers[0]
+      expect(user.id).toBeDefined()
+      expect(user.level).toBeDefined()
+      expect(user.xp).toBeDefined()
+    })
+
+    it('should respect the limit parameter', async () => {
+      const topUsers = await AdminRepository.getTopUsers(2)
+      expect(topUsers.length).toBeLessThanOrEqual(2)
+    })
+
+    it('should return users ordered by level DESC then xp DESC', async () => {
+      const topUsers = await AdminRepository.getTopUsers(10)
+      for (let i = 1; i < topUsers.length; i++) {
+        const prev = topUsers[i - 1]
+        const curr = topUsers[i]
+        const prevLevel = prev.level ?? 0
+        const currLevel = curr.level ?? 0
+        const prevXp = prev.xp ?? 0
+        const currXp = curr.xp ?? 0
+        expect(prevLevel > currLevel || (prevLevel === currLevel && prevXp >= currXp)).toBe(true)
+      }
+    })
+  })
+
+  describe('getCompletedTasks', () => {
+    it('should return a number', async () => {
+      const count = await AdminRepository.getCompletedTasks()
+      expect(typeof count).toBe('number')
+    })
+
+    it('should return a non-negative number', async () => {
+      const count = await AdminRepository.getCompletedTasks()
+      expect(count).toBeGreaterThanOrEqual(0)
+    })
+
+    it('should count only tasks with COMPLETED status', async () => {
+      const countBefore = await AdminRepository.getCompletedTasks()
+
+      const result = await db.execute(sql`
+        INSERT INTO tasks (user_id, title, status, completed_at)
+        VALUES (${testUserId}, 'Count Me', 'COMPLETED', NOW())
+        RETURNING id
+      `)
+      const taskId = result[0]?.id as string
+
+      const countAfter = await AdminRepository.getCompletedTasks()
+      expect(countAfter).toBe(countBefore + 1)
+
+      await db.execute(sql`DELETE FROM tasks WHERE id = ${taskId}`)
+    })
+  })
 })

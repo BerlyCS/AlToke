@@ -211,4 +211,76 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
       expect(json.error).toBe('User not found')
     })
   })
+
+  describe('GET /admin/taskMetrics', () => {
+    it('should return 200 with task metrics data', async () => {
+      const { status, json } = await request('GET', '/admin/taskMetrics', undefined, adminToken)
+      expect(status).toBe(200)
+      expect(Array.isArray(json.typeTask)).toBe(true)
+      expect(typeof json.totalTasks).toBe('number')
+    })
+
+    it('should return 401 without auth token', async () => {
+      const { status } = await request('GET', '/admin/taskMetrics')
+      expect(status).toBe(401)
+    })
+
+    it('should have type and count in each metric entry', async () => {
+      const { json } = await request('GET', '/admin/taskMetrics', undefined, adminToken)
+      for (const metric of json.typeTask) {
+        expect(typeof metric.type).toBe('string')
+        expect(typeof metric.count).toBe('number')
+      }
+    })
+  })
+
+  describe('GET /admin/topUsers', () => {
+    it('should return 200 with top users data', async () => {
+      const { status, json } = await request('GET', '/admin/topUsers', undefined, adminToken)
+      expect(status).toBe(200)
+      expect(Array.isArray(json.users)).toBe(true)
+      expect(typeof json.totalUsers).toBe('number')
+    })
+
+    it('should return 401 without auth token', async () => {
+      const { status } = await request('GET', '/admin/topUsers')
+      expect(status).toBe(401)
+    })
+
+    it('should have user fields in each entry', async () => {
+      const { json } = await request('GET', '/admin/topUsers', undefined, adminToken)
+      if (json.users.length > 0) {
+        const user = json.users[0]
+        expect(user.id).toBeDefined()
+        expect(typeof user.level).toBe('number')
+        expect(typeof user.xp).toBe('number')
+        expect(typeof user.streak).toBe('number')
+      }
+    })
+  })
+
+  describe('GET /admin/performanceMetrics', () => {
+    it('should return 200 with performance metrics data', async () => {
+      const { status, json } = await request(
+        'GET',
+        '/admin/performanceMetrics',
+        undefined,
+        adminToken,
+      )
+      expect(status).toBe(200)
+      expect(typeof json.completionRate).toBe('number')
+      expect(typeof json.totalXp).toBe('number')
+    })
+
+    it('should return 401 without auth token', async () => {
+      const { status } = await request('GET', '/admin/performanceMetrics')
+      expect(status).toBe(401)
+    })
+
+    it('should return non-negative values', async () => {
+      const { json } = await request('GET', '/admin/performanceMetrics', undefined, adminToken)
+      expect(json.completionRate).toBeGreaterThanOrEqual(0)
+      expect(json.totalXp).toBeGreaterThanOrEqual(0)
+    })
+  })
 })

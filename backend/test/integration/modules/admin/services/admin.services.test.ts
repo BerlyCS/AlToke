@@ -255,4 +255,123 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
       expect(metrics.totalUsers).toBeGreaterThanOrEqual(1)
     })
   })
+
+  describe('getTaskMetrics', () => {
+    let taskIds: string[] = []
+
+    beforeAll(async () => {
+      const result = await db.execute(sql`
+        INSERT INTO tasks (user_id, title, status)
+        VALUES
+          (${testUserId}, 'Svc Task 1', 'COMPLETED'),
+          (${testUserId}, 'Svc Task 2', 'COMPLETED'),
+          (${testUserId}, 'Svc Task 3', 'PENDING')
+        RETURNING id
+      `)
+      taskIds = result.map((r: any) => r.id)
+    })
+
+    afterAll(async () => {
+      if (taskIds.length > 0) {
+        await db.execute(
+          sql`DELETE FROM tasks WHERE id IN ${sql.join(
+            taskIds.map((id: string) => sql`${id}`),
+            sql`,`,
+          )}`,
+        )
+      }
+    })
+
+    it('should return typeTask array and totalTasks', async () => {
+      const result = await AdminService.getTaskMetrics()
+      expect(Array.isArray(result.typeTask)).toBe(true)
+      expect(typeof result.totalTasks).toBe('number')
+    })
+
+    it('should sum all task counts into totalTasks', async () => {
+      const result = await AdminService.getTaskMetrics()
+      const sum = result.typeTask.reduce((acc, curr) => acc + curr.count, 0)
+      expect(result.totalTasks).toBe(sum)
+    })
+
+    it('should include each metric with type and count', async () => {
+      const result = await AdminService.getTaskMetrics()
+      for (const metric of result.typeTask) {
+        expect(typeof metric.type).toBe('string')
+        expect(typeof metric.count).toBe('number')
+        expect(metric.count).toBeGreaterThanOrEqual(0)
+      }
+    })
+  })
+
+  describe('getTopUsers', () => {
+    it('should return users array and totalUsers', async () => {
+      const result = await AdminService.getTopUsers()
+      expect(Array.isArray(result.users)).toBe(true)
+      expect(typeof result.totalUsers).toBe('number')
+      expect(result.totalUsers).toBe(result.users.length)
+    })
+
+    it('should map user fields correctly', async () => {
+      const result = await AdminService.getTopUsers()
+      if (result.users.length > 0) {
+        const user = result.users[0]
+        expect(user.id).toBeDefined()
+        expect(typeof user.level).toBe('number')
+        expect(typeof user.xp).toBe('number')
+        expect(typeof user.streak).toBe('number')
+      }
+    })
+
+    it('should default to 5 users', async () => {
+      const result = await AdminService.getTopUsers()
+      expect(result.users.length).toBeLessThanOrEqual(5)
+    })
+
+    it('should respect custom limit', async () => {
+      const result = await AdminService.getTopUsers(2)
+      expect(result.users.length).toBeLessThanOrEqual(2)
+    })
+
+    it('should return users ordered by level DESC, xp DESC', async () => {
+      const result = await AdminService.getTopUsers(10)
+      for (let i = 1; i < result.users.length; i++) {
+        const prev = result.users[i - 1]
+        const curr = result.users[i]
+        expect(prev.level > curr.level || (prev.level === curr.level && prev.xp >= curr.xp)).toBe(
+          true,
+        )
+      }
+    })
+  })
+
+  describe('getPerformanceMetrics', () => {
+    it('should return completionRate and totalXp', async () => {
+      const result = await AdminService.getPerformanceMetrics()
+      expect(typeof result.completionRate).toBe('number')
+      expect(typeof result.totalXp).toBe('number')
+    })
+
+    it('should return non-negative values', async () => {
+      const result = await AdminService.getPerformanceMetrics()
+      expect(result.completionRate).toBeGreaterThanOrEqual(0)
+      expect(result.totalXp).toBeGreaterThanOrEqual(0)
+    })
+
+    it('should calculate completionRate as (completedTasks / totalUsers) * 100', async () => {
+      const metrics = await AdminService.getSystemMetrics()
+      const perf = await AdminService.getPerformanceMetrics()
+
+      const expectedRate =
+        metrics.totalUsers > 0 ? (metrics.totalTasks / metrics.totalUsers) * 100 : 0
+      expect(perf.completionRate).toBeCloseTo(expectedRate, 2)
+    })
+
+    it('should have totalXp equal to sum of all user xp', async () => {
+      const allUsers = await AdminService.listUsers(1000, 0)
+      const expectedXp = allUsers.users.reduce((acc, u) => acc + (u.xp ?? 0), 0)
+      const perf = await AdminService.getPerformanceMetrics()
+      expect(perf.totalXp).toBe(expectedXp)
+    })
+  })
 })
