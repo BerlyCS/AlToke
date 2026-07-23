@@ -323,4 +323,143 @@ describe('AdminService', () => {
       expect(metrics.totalTasks).toBe(0)
     })
   })
+
+  describe('getTaskMetrics', () => {
+    it('returns typeTask array and totalTasks sum', async () => {
+      spyOn(AdminRepository, 'getTaskMetrics').mockResolvedValue([
+        { type: 'COMPLETED', count: 10 },
+        { type: 'PENDING', count: 5 },
+        { type: 'IN_PROGRESS', count: 3 },
+      ])
+
+      const result = await AdminService.getTaskMetrics()
+
+      expect(result.typeTask).toHaveLength(3)
+      expect(result.totalTasks).toBe(18)
+    })
+
+    it('returns zero totalTasks when no tasks', async () => {
+      spyOn(AdminRepository, 'getTaskMetrics').mockResolvedValue([])
+
+      const result = await AdminService.getTaskMetrics()
+
+      expect(result.typeTask).toHaveLength(0)
+      expect(result.totalTasks).toBe(0)
+    })
+
+    it('handles single task type', async () => {
+      spyOn(AdminRepository, 'getTaskMetrics').mockResolvedValue([{ type: 'COMPLETED', count: 42 }])
+
+      const result = await AdminService.getTaskMetrics()
+
+      expect(result.totalTasks).toBe(42)
+      expect(result.typeTask[0].type).toBe('COMPLETED')
+    })
+  })
+
+  describe('getTopUsers', () => {
+    it('returns top users with mapped fields', async () => {
+      spyOn(AdminRepository, 'getTopUsers').mockResolvedValue([
+        { id: 'u-1', nickname: 'Alice', level: 10, xp: 5000, streak: 7 },
+        { id: 'u-2', nickname: 'Bob', level: 8, xp: 3000, streak: 3 },
+      ])
+
+      const result = await AdminService.getTopUsers()
+
+      expect(result.users).toHaveLength(2)
+      expect(result.totalUsers).toBe(2)
+      expect(result.users[0]).toEqual({
+        id: 'u-1',
+        nickname: 'Alice',
+        level: 10,
+        xp: 5000,
+        streak: 7,
+      })
+    })
+
+    it('defaults limit to 5', async () => {
+      const spy = spyOn(AdminRepository, 'getTopUsers').mockResolvedValue([])
+
+      await AdminService.getTopUsers()
+
+      expect(spy).toHaveBeenCalledWith(5)
+    })
+
+    it('passes custom limit', async () => {
+      const spy = spyOn(AdminRepository, 'getTopUsers').mockResolvedValue([])
+
+      await AdminService.getTopUsers(10)
+
+      expect(spy).toHaveBeenCalledWith(10)
+    })
+
+    it('handles null nickname and streak', async () => {
+      spyOn(AdminRepository, 'getTopUsers').mockResolvedValue([
+        { id: 'u-1', nickname: null, level: null, xp: null, streak: null },
+      ])
+
+      const result = await AdminService.getTopUsers()
+
+      expect(result.users[0].nickname).toBeUndefined()
+      expect(result.users[0].level).toBe(0)
+      expect(result.users[0].xp).toBe(0)
+      expect(result.users[0].streak).toBe(0)
+    })
+
+    it('returns empty users array when no users', async () => {
+      spyOn(AdminRepository, 'getTopUsers').mockResolvedValue([])
+
+      const result = await AdminService.getTopUsers()
+
+      expect(result.users).toEqual([])
+      expect(result.totalUsers).toBe(0)
+    })
+  })
+
+  describe('getPerformanceMetrics', () => {
+    it('calculates completionRate and totalXp', async () => {
+      spyOn(AdminRepository, 'getCompletedTasks').mockResolvedValue(50)
+      spyOn(AdminRepository, 'getAllUsers').mockResolvedValue([
+        makeUserRow({ xp: 1000 }),
+        makeUserRow({ id: 'u-2', xp: 2000 }),
+      ] as any)
+
+      const result = await AdminService.getPerformanceMetrics()
+
+      expect(result.completionRate).toBe(2500)
+      expect(result.totalXp).toBe(3000)
+    })
+
+    it('returns zero completionRate when no users', async () => {
+      spyOn(AdminRepository, 'getCompletedTasks').mockResolvedValue(10)
+      spyOn(AdminRepository, 'getAllUsers').mockResolvedValue([])
+
+      const result = await AdminService.getPerformanceMetrics()
+
+      expect(result.completionRate).toBe(0)
+      expect(result.totalXp).toBe(0)
+    })
+
+    it('returns zero totalXp when all users have null xp', async () => {
+      spyOn(AdminRepository, 'getCompletedTasks').mockResolvedValue(0)
+      spyOn(AdminRepository, 'getAllUsers').mockResolvedValue([
+        makeUserRow({ xp: null }),
+        makeUserRow({ id: 'u-2', xp: null }),
+      ] as any)
+
+      const result = await AdminService.getPerformanceMetrics()
+
+      expect(result.totalXp).toBe(0)
+    })
+
+    it('calls both repository methods in parallel', async () => {
+      const tasksSpy = spyOn(AdminRepository, 'getCompletedTasks').mockResolvedValue(0)
+      const usersSpy = spyOn(AdminRepository, 'getAllUsers').mockResolvedValue([])
+
+      await AdminService.getPerformanceMetrics()
+
+      expect(tasksSpy).toHaveBeenCalledTimes(1)
+      expect(usersSpy).toHaveBeenCalledTimes(1)
+    })
+  })
 })
