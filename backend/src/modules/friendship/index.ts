@@ -1,35 +1,38 @@
 import { Elysia } from 'elysia'
-import { jwt } from '@elysiajs/jwt'
-import { resolveJwtSecret } from '../../shared/auth/jwt-secret'
+import { authPlugin } from '../../shared/utils/auth-plugin'
 import { FriendshipService } from './services/friendship.service'
 import { FriendshipModel } from './dto'
 
 export const friendshipRoutes = new Elysia({ prefix: '/friendships' })
-  .use(
-    jwt({
-      name: 'jwt',
-      secret: resolveJwtSecret(),
-    }),
+  .use(authPlugin)
+  .get(
+    '/',
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+      return (await FriendshipService.getFriends(userId)) as any
+    },
+    {
+      response: {
+        200: FriendshipModel.friendsResponse,
+      },
+    }
   )
-  .derive(async ({ jwt, headers }) => {
-    const auth = headers['authorization']
-    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
-    if (!token) throw new Error('Unauthorized')
-
-    const payload = await jwt.verify(token)
-    if (!payload || !payload.id) throw new Error('Unauthorized')
-
-    return { userId: payload.id as string }
-  })
-  .get('/', async ({ userId }) => {
-    return await FriendshipService.getFriends(userId)
-  })
-  .get('/pending', async ({ userId }) => {
-    return await FriendshipService.getPendingRequests(userId)
-  })
+  .get(
+    '/pending',
+    async ({ requireAuth }) => {
+      const userId = requireAuth()
+      return (await FriendshipService.getPendingRequests(userId)) as any
+    },
+    {
+      response: {
+        200: FriendshipModel.pendingRequestsResponse,
+      },
+    }
+  )
   .post(
     '/request',
-    async ({ userId, body }) => {
+    async ({ requireAuth, body }) => {
+      const userId = requireAuth()
       return await FriendshipService.sendRequest(userId, body.addresseeId)
     },
     {
@@ -38,7 +41,8 @@ export const friendshipRoutes = new Elysia({ prefix: '/friendships' })
   )
   .post(
     '/accept',
-    async ({ userId, body }) => {
+    async ({ requireAuth, body }) => {
+      const userId = requireAuth()
       return await FriendshipService.acceptRequest(userId, body.friendshipId)
     },
     {
@@ -47,22 +51,31 @@ export const friendshipRoutes = new Elysia({ prefix: '/friendships' })
   )
   .post(
     '/reject',
-    async ({ userId, body }) => {
+    async ({ requireAuth, body }) => {
+      const userId = requireAuth()
       return await FriendshipService.rejectRequest(userId, body.friendshipId)
     },
     {
       body: FriendshipModel.acceptRequestParams,
     },
   )
-  .delete('/:id', async ({ userId, params }) => {
-    return await FriendshipService.removeFriend(userId, params.id)
-  })
+  .delete(
+    '/:id',
+    async ({ requireAuth, params }) => {
+      const userId = requireAuth()
+      return await FriendshipService.removeFriend(userId, params.id)
+    }
+  )
   .get(
     '/search',
-    async ({ userId, query }) => {
-      return await FriendshipService.searchUsers(query.query, userId)
+    async ({ requireAuth, query }) => {
+      const userId = requireAuth()
+      return (await FriendshipService.searchUsers(query.query, userId)) as any
     },
     {
       query: FriendshipModel.searchQuery,
+      response: {
+        200: FriendshipModel.searchUsersResponse,
+      },
     },
   )
