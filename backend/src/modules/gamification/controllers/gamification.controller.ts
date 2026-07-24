@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { authPlugin } from '../../../shared/utils/auth-plugin'
 import { GamificationModel } from '../dto'
 import { GamificationService } from '../services'
+import { t } from 'elysia'
 
 export const gamificationController = new Elysia({ prefix: '/gamification' })
   .get(
@@ -63,6 +64,7 @@ export const gamificationController = new Elysia({ prefix: '/gamification' })
       body: GamificationModel.useItemBody,
       response: {
         200: GamificationModel.useItemResponse,
+        404: t.String(),
       },
     },
   )
