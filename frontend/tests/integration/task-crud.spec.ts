@@ -5,25 +5,25 @@ import { mockTasks, mockTask, mockCompleteTaskResult, mockProfile } from '../fix
 
 vi.mock('@/services/task.service', () => ({
   taskService: {
-    getAllTasks: vi.fn(),
-    createTask: vi.fn(),
-    completeTask: vi.fn(),
-    deleteTask: vi.fn(),
-    restoreTask: vi.fn(),
-    updateTask: vi.fn(),
+    getAllTasks: vi.fn<(...args: any[]) => any>(),
+    createTask: vi.fn<(...args: any[]) => any>(),
+    completeTask: vi.fn<(...args: any[]) => any>(),
+    deleteTask: vi.fn<(...args: any[]) => any>(),
+    restoreTask: vi.fn<(...args: any[]) => any>(),
+    updateTask: vi.fn<(...args: any[]) => any>(),
   },
 }))
 
 vi.mock('vue-sonner', () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn<(...args: any[]) => any>(), error: vi.fn<(...args: any[]) => any>() },
 }))
 
 vi.mock('@/composables/useGamification', () => ({
   useGamification: () => ({
-    showReward: vi.fn(),
+    showReward: vi.fn<(...args: any[]) => any>(),
   }),
   unlockedAchievementsQueue: { value: [] },
-  processAchievementsQueue: vi.fn(),
+  processAchievementsQueue: vi.fn<(...args: any[]) => any>(),
 }))
 
 describe('Task CRUD Integration', () => {
@@ -38,7 +38,7 @@ describe('Task CRUD Integration', () => {
     ;(taskService.getAllTasks as any).mockResolvedValue(mockTasks)
     const tasks = await taskService.getAllTasks()
     expect(tasks).toHaveLength(4)
-    expect(tasks[0].title).toBe('Terminar reporte')
+    expect(tasks[0]!.title).toBe('Terminar reporte')
   })
 
   it('creates a task and adds it to the list', async () => {
@@ -117,6 +117,6 @@ describe('Task CRUD Integration', () => {
     const query = 'reporte'
     const results = mockTasks.filter((t) => t.title.toLowerCase().includes(query.toLowerCase()))
     expect(results).toHaveLength(1)
-    expect(results[0].title).toBe('Terminar reporte')
+    expect(results[0]!.title).toBe('Terminar reporte')
   })
 })

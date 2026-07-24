@@ -3,12 +3,12 @@ import { mount } from '@vue/test-utils'
 import App from '@/App.vue'
 
 vi.mock('@vueuse/core', () => ({
-  useColorMode: vi.fn(() => ({ value: 'light' })),
-  useMediaQuery: vi.fn(() => ({ value: false })),
+  useColorMode: vi.fn<() => any>(() => ({ value: 'light' })),
+  useMediaQuery: vi.fn<() => any>(() => ({ value: false })),
 }))
 
 vi.mock('vue-sonner', () => ({
-  toast: { success: vi.fn() },
+  toast: { success: vi.fn<() => void>() },
 }))
 
 vi.mock('@/components/LevelUpModal.vue', () => ({

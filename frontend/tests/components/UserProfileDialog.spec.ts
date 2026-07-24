@@ -8,12 +8,12 @@ import { friendshipService } from '@/services/friendship.service'
 
 vi.mock('@/services/friendship.service', () => ({
   friendshipService: {
-    sendRequest: vi.fn(),
+    sendRequest: vi.fn<(...args: any[]) => any>(),
   },
 }))
 
 vi.mock('vue-sonner', () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn<(...args: any[]) => any>(), error: vi.fn<(...args: any[]) => any>() },
 }))
 
 describe('UserProfileDialog', () => {
@@ -21,6 +21,8 @@ describe('UserProfileDialog', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
   })
+
+  const user = mockLeaderboard[0]!
 
   const stubs = {
     Dialog: { template: '<div><slot /><slot name="default" /></div>', props: ['open'] },
@@ -33,7 +35,6 @@ describe('UserProfileDialog', () => {
   }
 
   it('renders user nickname', () => {
-    const user = mockLeaderboard[0]
     const wrapper = mount(UserProfileDialog, {
       props: { user },
       global: { stubs },
@@ -42,7 +43,6 @@ describe('UserProfileDialog', () => {
   })
 
   it('shows user level', () => {
-    const user = mockLeaderboard[0]
     const wrapper = mount(UserProfileDialog, {
       props: { user },
       global: { stubs },
@@ -51,7 +51,6 @@ describe('UserProfileDialog', () => {
   })
 
   it('shows user rank', () => {
-    const user = mockLeaderboard[0]
     const wrapper = mount(UserProfileDialog, {
       props: { user },
       global: { stubs },
@@ -60,7 +59,6 @@ describe('UserProfileDialog', () => {
   })
 
   it('shows user XP', () => {
-    const user = mockLeaderboard[0]
     const wrapper = mount(UserProfileDialog, {
       props: { user },
       global: { stubs },
@@ -69,7 +67,6 @@ describe('UserProfileDialog', () => {
   })
 
   it('shows user streak', () => {
-    const user = mockLeaderboard[0]
     const wrapper = mount(UserProfileDialog, {
       props: { user },
       global: { stubs },
@@ -80,7 +77,6 @@ describe('UserProfileDialog', () => {
   it('shows add friend button for non-current user', () => {
     const store = useAuthStore()
     store.profile = { id: 'other-user' } as any
-    const user = mockLeaderboard[0]
     const wrapper = mount(UserProfileDialog, {
       props: { user },
       global: { stubs },
@@ -91,7 +87,6 @@ describe('UserProfileDialog', () => {
   it('does not show add friend button for current user', () => {
     const store = useAuthStore()
     store.profile = { id: 'user-1' } as any
-    const user = mockLeaderboard[0]
     const wrapper = mount(UserProfileDialog, {
       props: { user },
       global: { stubs },
@@ -103,15 +98,12 @@ describe('UserProfileDialog', () => {
     const store = useAuthStore()
     store.profile = { id: 'other-user' } as any
     ;(friendshipService.sendRequest as any).mockResolvedValue({ success: true })
-    const user = mockLeaderboard[0]
     const wrapper = mount(UserProfileDialog, {
       props: { user },
       global: { stubs },
     })
     const addBtn = wrapper.findAll('button').find((b) => b.text().includes('Añadir'))
-    if (addBtn) {
-      await addBtn.trigger('click')
-      expect(friendshipService.sendRequest).toHaveBeenCalledWith('user-1')
-    }
+    await addBtn?.trigger('click')
+    expect(friendshipService.sendRequest).toHaveBeenCalledWith('user-1')
   })
 })

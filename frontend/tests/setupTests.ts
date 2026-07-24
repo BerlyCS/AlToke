@@ -1,7 +1,7 @@
 import { config } from '@vue/test-utils'
 import { vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
+
 import { ref } from 'vue'
 
 // Ensure localStorage is available in jsdom
@@ -28,10 +28,10 @@ if (typeof globalThis.localStorage === 'undefined') {
 // Mock vue-sonner
 vi.mock('vue-sonner', () => ({
   toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    warning: vi.fn(),
+    success: vi.fn<() => void>(),
+    error: vi.fn<() => void>(),
+    info: vi.fn<() => void>(),
+    warning: vi.fn<() => void>(),
   },
   Toaster: {
     name: 'Toaster',
@@ -41,7 +41,7 @@ vi.mock('vue-sonner', () => ({
 
 // Mock canvas-confetti
 vi.mock('canvas-confetti', () => ({
-  default: vi.fn(),
+  default: vi.fn<() => void>(),
 }))
 
 // Mock @vueuse/core
@@ -49,14 +49,14 @@ vi.mock('@vueuse/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@vueuse/core')>()
   return {
     ...actual,
-    useColorMode: vi.fn(() => ref('light')),
-    useMediaQuery: vi.fn(() => ref(false)),
+    useColorMode: vi.fn<() => any>(() => ref('light')),
+    useMediaQuery: vi.fn<() => any>(() => ref(false)),
   }
 })
 
 // Mock @elysiajs/eden
 vi.mock('@elysiajs/eden', () => ({
-  treaty: vi.fn(() => ({})),
+  treaty: vi.fn<() => any>(() => ({})),
 }))
 
 // Mock lucide-vue-next icons as simple Vue stubs
@@ -85,7 +85,7 @@ vi.mock('lucide-vue-next', async (importOriginal) => {
       if (typeof prop === 'symbol') return undefined
       return stub(String(prop))
     },
-    has(target, prop) {
+    has(_target, _prop) {
       return true
     },
   })

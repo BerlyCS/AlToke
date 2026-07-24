@@ -106,7 +106,7 @@ export async function mountComponent(
     RouterView: { template: '<div />' },
   }
 
-  const mergedStubs = { ...defaultStubs, ...(options.global?.stubs || {}) }
+  const mergedStubs = { ...defaultStubs, ...options.global?.stubs }
 
   const wrapper = mount(component, {
     global: {

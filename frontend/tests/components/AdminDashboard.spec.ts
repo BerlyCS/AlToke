@@ -14,10 +14,10 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 
 vi.mock('@/services/admin.service', () => ({
   adminService: {
-    getMetrics: vi.fn(),
-    getTaskMetrics: vi.fn(),
-    getTopUsers: vi.fn(),
-    getPerformanceMetrics: vi.fn(),
+    getMetrics: vi.fn<() => void>(),
+    getTaskMetrics: vi.fn<() => void>(),
+    getTopUsers: vi.fn<() => void>(),
+    getPerformanceMetrics: vi.fn<() => void>(),
   },
 }))
 

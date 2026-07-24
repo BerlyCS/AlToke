@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mockAuthResponse } from '../../fixtures'
 
-const mockApiResult = vi.fn()
+const mockApiResult = vi.fn<(...args: any[]) => any>()
 vi.mock('@/services/api', () => {
   const createProxy = (): any =>
     new Proxy(function () {}, {
@@ -48,7 +48,9 @@ describe('authService', () => {
       status: 401,
     })
 
-    await expect(authService.login({ email: 'test@test.com', password: 'wrong' })).rejects.toThrow()
+    await expect(authService.login({ email: 'test@test.com', password: 'wrong' })).rejects.toThrow(
+      'Invalid credentials',
+    )
   })
 
   it('register returns auth response on success', async () => {
@@ -73,7 +75,7 @@ describe('authService', () => {
 
     await expect(
       authService.register({ email: 'existing@test.com', password: 'pass123' }),
-    ).rejects.toThrow()
+    ).rejects.toThrow('Email already exists')
   })
 
   it('googleLogin returns auth response', async () => {

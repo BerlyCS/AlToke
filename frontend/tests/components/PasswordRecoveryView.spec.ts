@@ -6,8 +6,8 @@ import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/services/auth.service', () => ({
   authService: {
-    requestPasswordReset: vi.fn(),
-    resetPassword: vi.fn(),
+    requestPasswordReset: vi.fn<() => void>(),
+    resetPassword: vi.fn<() => void>(),
   },
 }))
 
@@ -68,10 +68,8 @@ describe('PasswordRecoveryView', () => {
     await router.isReady()
     const wrapper = mount(PasswordRecoveryView, { global: { plugins: [router], stubs } })
     const form = wrapper.find('form')
-    if (form.exists()) {
-      await form.trigger('submit')
-      expect(wrapper.text()).toContain('El enlace de recuperación no es válido.')
-    }
+    await form.trigger('submit')
+    expect(wrapper.text()).toContain('El enlace de recuperación no es válido.')
   })
 
   it('shows login link in forgot password mode', async () => {

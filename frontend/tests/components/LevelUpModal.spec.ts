@@ -3,12 +3,12 @@ import { mount } from '@vue/test-utils'
 import LevelUpModal from '@/components/LevelUpModal.vue'
 import { levelUpData } from '@/composables/useGamification'
 
-vi.mock('canvas-confetti', () => ({ default: vi.fn() }))
+vi.mock('canvas-confetti', () => ({ default: vi.fn<() => void>() }))
 vi.mock('@vueuse/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@vueuse/core')>()
   return {
     ...actual,
-    useMediaQuery: vi.fn(() => ({ value: false })),
+    useMediaQuery: vi.fn<() => any>(() => ({ value: false })),
   }
 })
 vi.mock('@/composables/useGamification', async (importOriginal) => {
@@ -16,7 +16,7 @@ vi.mock('@/composables/useGamification', async (importOriginal) => {
   return {
     ...actual,
     levelUpData: actual.levelUpData,
-    processAchievementsQueue: vi.fn(),
+    processAchievementsQueue: vi.fn<() => void>(),
   }
 })
 

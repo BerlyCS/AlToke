@@ -10,7 +10,7 @@ vi.mock('@/composables/useGamification', async (importOriginal) => {
     ...actual,
     isAchievementModalOpen: actual.isAchievementModalOpen,
     currentAchievement: actual.currentAchievement,
-    processAchievementsQueue: vi.fn(),
+    processAchievementsQueue: vi.fn<() => void>(),
   }
 })
 

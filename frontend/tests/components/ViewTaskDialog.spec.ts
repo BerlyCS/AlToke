@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
 import { mockTask, mockCompletedTask } from '../fixtures'
@@ -89,10 +89,8 @@ describe('ViewTaskDialog', () => {
     })
     const buttons = wrapper.findAll('button')
     const completeBtn = buttons.find((b) => b.text().includes('Completar'))
-    if (completeBtn) {
-      await completeBtn.trigger('click')
-      expect(wrapper.emitted('toggle-status')).toBeTruthy()
-    }
+    await completeBtn?.trigger('click')
+    expect(wrapper.emitted('toggle-status')).toBeTruthy()
   })
 
   it('emits delete-task event', async () => {
@@ -101,10 +99,8 @@ describe('ViewTaskDialog', () => {
       global: { stubs },
     })
     const deleteBtn = wrapper.findAll('button').find((b) => b.text().includes('Eliminar'))
-    if (deleteBtn) {
-      await deleteBtn.trigger('click')
-      expect(wrapper.emitted('delete-task')).toBeTruthy()
-    }
+    await deleteBtn?.trigger('click')
+    expect(wrapper.emitted('delete-task')).toBeTruthy()
   })
 
   it('emits edit-task event', async () => {
@@ -113,10 +109,8 @@ describe('ViewTaskDialog', () => {
       global: { stubs },
     })
     const editBtn = wrapper.findAll('button').find((b) => b.text().includes('Editar'))
-    if (editBtn) {
-      await editBtn.trigger('click')
-      expect(wrapper.emitted('edit-task')).toBeTruthy()
-    }
+    await editBtn?.trigger('click')
+    expect(wrapper.emitted('edit-task')).toBeTruthy()
   })
 
   it('shows recurrence label', () => {

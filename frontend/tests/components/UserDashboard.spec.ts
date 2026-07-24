@@ -3,32 +3,31 @@ import { mount } from '@vue/test-utils'
 import UserDashboard from '@/views/UserDashboard.vue'
 import { taskService } from '@/services/task.service'
 import { gamificationService } from '@/services/gamification.service'
-import { mockTasks, mockLeaderboard } from '../fixtures'
 import { useAuthStore } from '@/stores/auth'
 import { setActivePinia, createPinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
 
 vi.mock('@/services/task.service', () => ({
   taskService: {
-    getAllTasks: vi.fn(),
-    completeTask: vi.fn(),
-    updateTask: vi.fn(),
-    deleteTask: vi.fn(),
+    getAllTasks: vi.fn<() => void>(),
+    completeTask: vi.fn<() => void>(),
+    updateTask: vi.fn<() => void>(),
+    deleteTask: vi.fn<() => void>(),
   },
 }))
 
 vi.mock('@/services/gamification.service', () => ({
   gamificationService: {
-    getLeaderboard: vi.fn(),
+    getLeaderboard: vi.fn<() => void>(),
   },
 }))
 
 vi.mock('@/composables/useGamification', () => ({
   useGamification: () => ({
-    showReward: vi.fn(),
+    showReward: vi.fn<() => void>(),
   }),
   unlockedAchievementsQueue: { value: [] },
-  processAchievementsQueue: vi.fn(),
+  processAchievementsQueue: vi.fn<() => void>(),
 }))
 
 vi.mock('@/components/CreateTaskDialog.vue', () => ({

@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('vue-sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock('vue-sonner', () => ({
+  toast: { success: vi.fn<(...args: any[]) => any>(), error: vi.fn<(...args: any[]) => any>() },
+}))
 
-const mockApiResult = vi.fn()
+const mockApiResult = vi.fn<(...args: any[]) => any>()
 vi.mock('@/services/api', () => {
   const createProxy = (): any =>
     new Proxy(function () {}, {
@@ -47,7 +49,7 @@ describe('userService', () => {
     const { userService } = await import('@/services/user.service')
     mockApiResult.mockResolvedValue({ data: null, error: { value: 'Unauthorized' }, status: 401 })
 
-    await expect(userService.getProfile()).rejects.toThrow()
+    await expect(userService.getProfile()).rejects.toThrow('Unauthorized')
   })
 
   it('updateProfile returns updated profile', async () => {

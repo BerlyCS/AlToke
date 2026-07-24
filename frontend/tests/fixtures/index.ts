@@ -18,9 +18,8 @@ import type {
   TopUsersResponse,
   PerformanceMetricsResponse,
   BanUserResponse,
-  FriendshipEntry,
-  PendingRequest,
 } from '@/types'
+import type { FriendshipEntry, PendingRequest } from '@/services/friendship.service'
 
 export const mockTag: Tag = {
   id: 'tag-1',
@@ -188,6 +187,7 @@ export const mockNotificationLog: NotificationLog = {
   type: 'TASK_DUE:Tarea vencida',
   title: 'Tarea vencida',
   message: 'Tu tarea "Reporte" venció hace 1 hora',
+  isRead: false,
   createdAt: new Date(Date.now() - 3600000).toISOString(),
 }
 

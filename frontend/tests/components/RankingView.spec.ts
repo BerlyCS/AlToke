@@ -3,13 +3,12 @@ import { mount } from '@vue/test-utils'
 import RankingView from '@/views/RankingView.vue'
 import { gamificationService } from '@/services/gamification.service'
 import { mockLeaderboard } from '../fixtures'
-import { useAuthStore } from '@/stores/auth'
 import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/services/gamification.service', () => ({
   gamificationService: {
-    getLeaderboard: vi.fn(),
-    getFriendsLeaderboard: vi.fn(),
+    getLeaderboard: vi.fn<() => void>(),
+    getFriendsLeaderboard: vi.fn<() => void>(),
   },
 }))
 

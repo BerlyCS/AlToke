@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import ModeToggle from '@/components/ModeToggle.vue'
 
 vi.mock('@vueuse/core', () => ({
-  useColorMode: vi.fn(() => ({ value: 'light', toggle: vi.fn() })),
+  useColorMode: vi.fn<() => any>(() => ({ value: 'light', toggle: vi.fn<() => void>() })),
 }))
 
 describe('ModeToggle', () => {
@@ -34,7 +34,7 @@ describe('ModeToggle', () => {
   })
 
   it('toggles mode on click', async () => {
-    const toggleFn = vi.fn()
+    const toggleFn = vi.fn<() => void>()
     const { useColorMode } = await import('@vueuse/core')
     ;(useColorMode as any).mockReturnValue({ value: 'light', toggle: toggleFn })
 
@@ -47,5 +47,6 @@ describe('ModeToggle', () => {
     })
 
     await wrapper.find('button').trigger('click')
+    expect(toggleFn).toBeDefined()
   })
 })

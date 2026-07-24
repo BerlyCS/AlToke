@@ -2,11 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import NotificationsDrawer from '@/components/NotificationsDrawer.vue'
 import { notificationService } from '@/services/notification.service'
-import { mockNotificationLog } from '../fixtures'
 
 vi.mock('@/services/notification.service', () => ({
   notificationService: {
-    getHistory: vi.fn(),
+    getHistory: vi.fn<() => void>(),
   },
 }))
 

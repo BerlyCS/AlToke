@@ -9,9 +9,9 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 
 vi.mock('@/services/admin.service', () => ({
   adminService: {
-    getUsers: vi.fn(),
-    banUser: vi.fn(),
-    unBanUser: vi.fn(),
+    getUsers: vi.fn<() => void>(),
+    banUser: vi.fn<() => void>(),
+    unBanUser: vi.fn<() => void>(),
   },
 }))
 

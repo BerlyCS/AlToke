@@ -1,22 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useAuthStore } from '@/stores/auth'
-import { mockFriendshipEntry, mockPendingRequest, mockProfile } from '../fixtures'
+import { mockFriendshipEntry, mockPendingRequest } from '../fixtures'
 
 vi.mock('@/services/friendship.service', () => ({
   friendshipService: {
-    getFriends: vi.fn(),
-    getPendingRequests: vi.fn(),
-    sendRequest: vi.fn(),
-    acceptRequest: vi.fn(),
-    rejectRequest: vi.fn(),
-    removeFriend: vi.fn(),
-    searchUsers: vi.fn(),
+    getFriends: vi.fn<(...args: any[]) => any>(),
+    getPendingRequests: vi.fn<(...args: any[]) => any>(),
+    sendRequest: vi.fn<(...args: any[]) => any>(),
+    acceptRequest: vi.fn<(...args: any[]) => any>(),
+    rejectRequest: vi.fn<(...args: any[]) => any>(),
+    removeFriend: vi.fn<(...args: any[]) => any>(),
+    searchUsers: vi.fn<(...args: any[]) => any>(),
   },
 }))
 
 vi.mock('vue-sonner', () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn<(...args: any[]) => any>(), error: vi.fn<(...args: any[]) => any>() },
 }))
 
 describe('Friendship Integration', () => {
@@ -31,7 +30,7 @@ describe('Friendship Integration', () => {
     ;(friendshipService.getFriends as any).mockResolvedValue([mockFriendshipEntry])
     const friends = await friendshipService.getFriends()
     expect(friends).toHaveLength(1)
-    expect(friends[0].friend.nickname).toBe('Player2')
+    expect(friends[0]!.friend.nickname).toBe('Player2')
   })
 
   it('loads pending requests', async () => {
@@ -39,7 +38,7 @@ describe('Friendship Integration', () => {
     ;(friendshipService.getPendingRequests as any).mockResolvedValue([mockPendingRequest])
     const requests = await friendshipService.getPendingRequests()
     expect(requests).toHaveLength(1)
-    expect(requests[0].requester.nickname).toBe('Player3')
+    expect(requests[0]!.requester.nickname).toBe('Player3')
   })
 
   it('sends friend request', async () => {
@@ -77,7 +76,7 @@ describe('Friendship Integration', () => {
     ;(friendshipService.searchUsers as any).mockResolvedValue(searchResults)
     const results = await friendshipService.searchUsers('Found')
     expect(results).toHaveLength(1)
-    expect(results[0].nickname).toBe('FoundUser')
+    expect(results[0]!.nickname).toBe('FoundUser')
   })
 
   it('handles send request failure', async () => {

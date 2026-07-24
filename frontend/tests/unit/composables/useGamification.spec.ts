@@ -7,7 +7,7 @@ import {
   isAchievementModalOpen,
   processAchievementsQueue,
 } from '@/composables/useGamification'
-import { mockAchievement, mockLockedAchievement } from '../../fixtures'
+import { mockAchievement } from '../../fixtures'
 
 describe('useGamification composable', () => {
   beforeEach(() => {

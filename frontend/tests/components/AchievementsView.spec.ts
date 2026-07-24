@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AchievementsView from '@/views/AchievementsView.vue'
-import { mockAchievement, mockLockedAchievement, mockSecretAchievement } from '../fixtures'
+import { mockAchievement, mockLockedAchievement } from '../fixtures'
 import { gamificationService } from '@/services/gamification.service'
 
 vi.mock('@/services/gamification.service', () => ({
   gamificationService: {
-    getAchievements: vi.fn(),
+    getAchievements: vi.fn<() => void>(),
   },
 }))
 

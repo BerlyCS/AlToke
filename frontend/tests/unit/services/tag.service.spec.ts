@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockApiResult = vi.fn()
+const mockApiResult = vi.fn<(...args: any[]) => any>()
 vi.mock('@/services/api', () => {
   const createProxy = (): any =>
     new Proxy(function () {}, {
@@ -70,6 +70,6 @@ describe('tagService', () => {
   it('throws on error', async () => {
     const { tagService } = await import('@/services/tag.service')
     mockApiResult.mockResolvedValue({ data: null, error: { value: 'Failed' }, status: 500 })
-    await expect(tagService.getAllTags()).rejects.toThrow()
+    await expect(tagService.getAllTags()).rejects.toThrow('Failed')
   })
 })

@@ -2,22 +2,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import { mockProfile, mockAuthResponse } from '../fixtures'
+import type { User } from '@/types'
 
 vi.mock('@/services/auth.service', () => ({
   authService: {
-    login: vi.fn(),
-    register: vi.fn(),
-    googleLogin: vi.fn(),
-    requestPasswordReset: vi.fn(),
-    resetPassword: vi.fn(),
+    login: vi.fn<(...args: any[]) => any>(),
+    register: vi.fn<(...args: any[]) => any>(),
+    googleLogin: vi.fn<(...args: any[]) => any>(),
+    requestPasswordReset: vi.fn<(...args: any[]) => any>(),
+    resetPassword: vi.fn<(...args: any[]) => any>(),
   },
 }))
 
 vi.mock('@/services/user.service', () => ({
   userService: {
-    getProfile: vi.fn(),
-    updateProfile: vi.fn(),
-    updatePrivacy: vi.fn(),
+    getProfile: vi.fn<(...args: any[]) => any>(),
+    updateProfile: vi.fn<(...args: any[]) => any>(),
+    updatePrivacy: vi.fn<(...args: any[]) => any>(),
   },
 }))
 
@@ -41,7 +42,7 @@ describe('Auth Integration Flow', () => {
     localStorage.setItem('token', loginResult.token)
     const profile = await userService.getProfile()
 
-    store.setAuth(loginResult.user, profile, loginResult.token)
+    store.setAuth(loginResult.user as User, profile, loginResult.token)
     expect(store.token).toBe('mock-jwt-token-abc123')
     expect(store.profile?.nickname).toBe('TestUser')
     expect(localStorage.getItem('token')).toBe('mock-jwt-token-abc123')
@@ -73,7 +74,7 @@ describe('Auth Integration Flow', () => {
 
     localStorage.setItem('token', regResult.token)
     const profile = await userService.getProfile()
-    store.setAuth(regResult.user, profile, regResult.token)
+    store.setAuth(regResult.user as User, profile, regResult.token)
 
     expect(store.token).toBeTruthy()
     expect(store.profile).toBeTruthy()

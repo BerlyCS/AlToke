@@ -2,17 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import FriendsView from '@/views/FriendsView.vue'
 import { friendshipService } from '@/services/friendship.service'
-import { mockFriendshipEntry, mockPendingRequest } from '../fixtures'
+import { mockFriendshipEntry } from '../fixtures'
 
 vi.mock('@/services/friendship.service', () => ({
   friendshipService: {
-    getFriends: vi.fn(),
-    getPendingRequests: vi.fn(),
-    sendRequest: vi.fn(),
-    acceptRequest: vi.fn(),
-    rejectRequest: vi.fn(),
-    removeFriend: vi.fn(),
-    searchUsers: vi.fn(),
+    getFriends: vi.fn<() => void>(),
+    getPendingRequests: vi.fn<() => void>(),
+    sendRequest: vi.fn<() => void>(),
+    acceptRequest: vi.fn<() => void>(),
+    rejectRequest: vi.fn<() => void>(),
+    removeFriend: vi.fn<() => void>(),
+    searchUsers: vi.fn<() => void>(),
   },
 }))
 

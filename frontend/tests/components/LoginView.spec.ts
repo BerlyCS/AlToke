@@ -3,19 +3,18 @@ import { mount } from '@vue/test-utils'
 import LoginView from '@/views/LoginView.vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { setActivePinia, createPinia } from 'pinia'
-import { mockProfile } from '../fixtures'
 
 vi.mock('@/services/auth.service', () => ({
   authService: {
-    login: vi.fn(),
-    register: vi.fn(),
-    googleLogin: vi.fn(),
+    login: vi.fn<() => void>(),
+    register: vi.fn<() => void>(),
+    googleLogin: vi.fn<() => void>(),
   },
 }))
 
 vi.mock('@/services/user.service', () => ({
   userService: {
-    getProfile: vi.fn(),
+    getProfile: vi.fn<() => void>(),
   },
 }))
 
@@ -79,11 +78,9 @@ describe('LoginView', () => {
     await router.isReady()
     const wrapper = mount(LoginView, { global: { plugins: [router], stubs } })
     const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Regístrate'))
-    if (toggleBtn) {
-      await toggleBtn.trigger('click')
-      expect(wrapper.text()).toContain('Crea tu cuenta')
-      expect(wrapper.text()).toContain('Registrarse')
-    }
+    await toggleBtn?.trigger('click')
+    expect(wrapper.text()).toContain('Crea tu cuenta')
+    expect(wrapper.text()).toContain('Registrarse')
   })
 
   it('shows forgot password link', async () => {
@@ -113,9 +110,7 @@ describe('LoginView', () => {
     await router.isReady()
     const wrapper = mount(LoginView, { global: { plugins: [router], stubs } })
     const toggleBtn = wrapper.findAll('button').find((b) => b.text().includes('Regístrate'))
-    if (toggleBtn) {
-      await toggleBtn.trigger('click')
-      expect(wrapper.text()).toContain('Apodo')
-    }
+    await toggleBtn?.trigger('click')
+    expect(wrapper.text()).toContain('Apodo')
   })
 })

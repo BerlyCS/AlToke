@@ -5,19 +5,19 @@ import { mockLeaderboard, mockAchievement, mockProfile, mockCompleteTaskResult }
 
 vi.mock('@/services/gamification.service', () => ({
   gamificationService: {
-    getLeaderboard: vi.fn(),
-    getAchievements: vi.fn(),
+    getLeaderboard: vi.fn<(...args: any[]) => any>(),
+    getAchievements: vi.fn<(...args: any[]) => any>(),
   },
 }))
 
 vi.mock('vue-sonner', () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { success: vi.fn<(...args: any[]) => any>(), error: vi.fn<(...args: any[]) => any>() },
 }))
 
 vi.mock('@/composables/useGamification', () => {
   const levelUpData = { value: { open: false, newLevel: 0 } }
   const unlockedAchievementsQueue = { value: [] as any[] }
-  const processAchievementsQueue = vi.fn(() => {
+  const processAchievementsQueue = vi.fn<() => void>(() => {
     if (!levelUpData.value.open) {
       unlockedAchievementsQueue.value = []
     }
@@ -27,7 +27,7 @@ vi.mock('@/composables/useGamification', () => {
     unlockedAchievementsQueue,
     processAchievementsQueue,
     useGamification: () => ({
-      showReward: vi.fn(() => {
+      showReward: vi.fn<(...args: any[]) => any>(() => {
         levelUpData.value = { open: true, newLevel: 6 }
       }),
     }),
@@ -37,14 +37,14 @@ vi.mock('@/composables/useGamification', () => {
 describe('Gamification Integration', () => {
   let levelUpData: { value: { open: boolean; newLevel: number } }
   let unlockedAchievementsQueue: { value: any[] }
-  let processAchievementsQueue: ReturnType<typeof vi.fn>
+  let processAchievementsQueue: () => void
 
   beforeEach(async () => {
     setActivePinia(createPinia())
     const composable = await import('@/composables/useGamification')
     levelUpData = composable.levelUpData
     unlockedAchievementsQueue = composable.unlockedAchievementsQueue
-    processAchievementsQueue = composable.processAchievementsQueue
+    processAchievementsQueue = composable.processAchievementsQueue as () => void
     levelUpData.value = { open: false, newLevel: 0 }
     unlockedAchievementsQueue.value = []
     vi.clearAllMocks()
@@ -55,7 +55,7 @@ describe('Gamification Integration', () => {
     ;(gamificationService.getLeaderboard as any).mockResolvedValue(mockLeaderboard)
     const leaderboard = await gamificationService.getLeaderboard(50)
     expect(leaderboard).toHaveLength(3)
-    expect(leaderboard[0].rank).toBe(1)
+    expect(leaderboard[0]!.rank).toBe(1)
   })
 
   it('loads achievements', async () => {
