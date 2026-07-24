@@ -46,7 +46,7 @@ export const gamificationController = new Elysia({ prefix: '/gamification' })
     '/inventory',
     async ({ requireAuth }) => {
       const userId = requireAuth()
-      return (await GamificationService.getInventory(userId)) as any
+      return await GamificationService.getInventory(userId)
     },
     {
       response: {

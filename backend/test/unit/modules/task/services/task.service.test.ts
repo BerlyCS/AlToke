@@ -73,7 +73,7 @@ describe('TaskService', () => {
       spyOn(TaskRepository, 'findById').mockResolvedValue(dbTask as any)
       
       const result = await TaskService.completeTask('user-1', 'task-1')
-      const { taskTags, ...rest } = dbTask
+      const { taskTags: _taskTags, ...rest } = dbTask
       expect(result).toEqual({ ...rest, tags: [] })
     })
 

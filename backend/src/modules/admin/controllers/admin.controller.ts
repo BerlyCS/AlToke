@@ -151,7 +151,7 @@ export const adminController = new Elysia({ prefix: '/admin' })
     '/users/:id/moderate',
     async ({ params, body, set }) => {
       try {
-        const result = await AdminService.moderateProfile(params.id, body as any)
+        const result = await AdminService.moderateProfile(params.id, body)
         set.status = 200
         return {
           status: 200,
