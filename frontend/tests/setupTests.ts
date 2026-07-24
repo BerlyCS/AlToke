@@ -24,3 +24,22 @@ if (typeof globalThis.localStorage === 'undefined') {
     key: (index: number) => Object.keys(store)[index] ?? null,
   } as Storage
 }
+
+// Mock vue-sonner
+vi.mock('vue-sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+  Toaster: {
+    name: 'Toaster',
+    template: '<div data-testid="toaster" />',
+  },
+}))
+
+// Mock canvas-confetti
+vi.mock('canvas-confetti', () => ({
+  default: vi.fn(),
+}))
