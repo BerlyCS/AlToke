@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { taskService } from '@/services/task.service'
 import { useAuthStore } from '@/stores/auth'
 import { useGamification } from '@/composables/useGamification'
+import { useTaskDeadline, type TaskWithDeadline } from '@/composables/useTaskDeadline'
 import { toast } from 'vue-sonner'
 import type { Task } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Circle,
+  XCircle,
   Trash2,
   Clock,
   Tag,
@@ -61,13 +63,24 @@ const tasks = ref<Task[]>([])
 const loading = ref(true)
 const selectedTask = ref<Task | null>(null)
 const showViewModal = ref(false)
+const totalActiveTasks = ref(0)
+const pageSize = 50
+const currentPage = ref(0)
+const hasMore = computed(() => tasks.value.length < totalActiveTasks.value)
+
+const { tasksWithDeadline, startWatching, stopWatching } = useTaskDeadline(tasks)
+
+const selectedTaskDeadlineStatus = computed(() => {
+  if (!selectedTask.value) return undefined
+  return tasksWithDeadline.value.find((t) => t.id === selectedTask.value?.id)?.deadlineStatus
+})
 
 const dfMonth = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
 const dfDay = new Intl.DateTimeFormat('es-ES', { weekday: 'long' })
 
 const pendingDayTasks = computed(() => {
   const targetDate = currentDate.value.toDateString()
-  const dayTasks = tasks.value.filter(
+  const dayTasks = tasksWithDeadline.value.filter(
     (t) =>
       t.dueDate && new Date(t.dueDate).toDateString() === targetDate && t.status !== 'COMPLETED',
   )
@@ -79,62 +92,45 @@ const pendingDayTasks = computed(() => {
   return dayTasks
 })
 
-function getTaskColors(task: Task) {
-  if (task.tags && task.tags.length > 0) {
-    const firstTag = task.tags[0]
-    if (firstTag && firstTag.color) {
-      const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-        'bg-red-500': {
-          bg: 'bg-red-500/10',
-          text: 'text-red-600 dark:text-red-400',
-          border: 'border-red-500/20',
-        },
-        'bg-orange-500': {
-          bg: 'bg-orange-500/10',
-          text: 'text-orange-600 dark:text-orange-400',
-          border: 'border-orange-500/20',
-        },
-        'bg-yellow-500': {
-          bg: 'bg-yellow-500/10',
-          text: 'text-yellow-600 dark:text-yellow-400',
-          border: 'border-yellow-500/20',
-        },
-        'bg-green-500': {
-          bg: 'bg-green-500/10',
-          text: 'text-green-600 dark:text-green-400',
-          border: 'border-green-500/20',
-        },
-        'bg-blue-500': {
-          bg: 'bg-blue-500/10',
-          text: 'text-blue-600 dark:text-blue-400',
-          border: 'border-blue-500/20',
-        },
-        'bg-indigo-500': {
-          bg: 'bg-indigo-500/10',
-          text: 'text-indigo-600 dark:text-indigo-400',
-          border: 'border-indigo-500/20',
-        },
-        'bg-purple-500': {
-          bg: 'bg-purple-500/10',
-          text: 'text-purple-600 dark:text-purple-400',
-          border: 'border-purple-500/20',
-        },
-        'bg-pink-500': {
-          bg: 'bg-pink-500/10',
-          text: 'text-pink-600 dark:text-pink-400',
-          border: 'border-pink-500/20',
-        },
-      }
-      return (
-        colorMap[firstTag.color] || {
-          bg: 'bg-primary/10',
-          text: 'text-primary',
-          border: 'border-primary/20',
-        }
-      )
+function getTaskColors(task: TaskWithDeadline) {
+  if (task.deadlineStatus === 'expired') {
+    return {
+      bg: 'bg-red-900/20',
+      text: 'text-red-400',
+      border: 'border-red-500/40',
     }
   }
-  return { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' }
+  const priorityColors: Record<string, { bg: string; text: string; border: string }> = {
+    HIGH: {
+      bg: 'bg-red-500/10',
+      text: 'text-red-500',
+      border: 'border-red-500/20',
+    },
+    MEDIUM: {
+      bg: 'bg-yellow-500/10',
+      text: 'text-yellow-500',
+      border: 'border-yellow-500/20',
+    },
+    LOW: {
+      bg: 'bg-green-500/10',
+      text: 'text-green-500',
+      border: 'border-green-500/20',
+    },
+  }
+  return (
+    priorityColors[task.priority] || {
+      bg: 'bg-primary/10',
+      text: 'text-primary',
+      border: 'border-primary/20',
+    }
+  )
+}
+
+function getDeadlineClass(task: TaskWithDeadline): string {
+  if (task.deadlineStatus === 'expired') return 'opacity-60'
+  if (task.deadlineStatus === 'dueSoon')
+    return 'shadow-[0_0_15px_rgba(239,68,68,0.4)] border-red-500/50'
+  return ''
 }
 
 function formatTimeOnly(dateInput: string | Date) {
@@ -145,16 +141,31 @@ function formatTimeOnly(dateInput: string | Date) {
 
 onMounted(async () => {
   await fetchTasks()
+  startWatching()
 })
 
 async function fetchTasks() {
   try {
     loading.value = true
-    tasks.value = await taskService.getAllTasks()
+    currentPage.value = 0
+    const result = await taskService.getActiveTasks(pageSize, 0)
+    tasks.value = result.tasks
+    totalActiveTasks.value = result.total
   } catch (e) {
     console.error(e)
   } finally {
     loading.value = false
+  }
+}
+
+async function loadMore() {
+  try {
+    currentPage.value++
+    const offset = currentPage.value * pageSize
+    const result = await taskService.getActiveTasks(pageSize, offset)
+    tasks.value = [...tasks.value, ...result.tasks]
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -189,13 +200,18 @@ function handleSelectDay(day: Date) {
 }
 
 async function toggleStatus(task: Task) {
+  const taskWithDeadline = tasksWithDeadline.value.find((t) => t.id === task.id)
+  if (taskWithDeadline && taskWithDeadline.deadlineStatus === 'expired') {
+    toast.error('No se puede completar', { description: 'Esta tarea ya venció' })
+    return
+  }
   try {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
     let updated: Task
     if (newStatus === 'COMPLETED') {
       const result = await taskService.completeTask(task.id)
       updated = { ...task, ...result }
-      if (typeof result.xpAwarded === 'number') {
+      if (result.xpAwarded > 0) {
         authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
         showReward(
           result.xpAwarded,
@@ -362,17 +378,32 @@ async function deleteTask(id: string) {
                 <div
                   v-for="task in pendingDayTasks"
                   :key="task.id"
-                  class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md min-w-0"
-                  :class="[getTaskColors(task).bg, getTaskColors(task).border]"
+                  class="flex items-center justify-between p-3.5 rounded-xl border transition-all min-w-0"
+                  :class="[
+                    getTaskColors(task).bg,
+                    getTaskColors(task).border,
+                    getDeadlineClass(task),
+                    task.status === 'COMPLETED'
+                      ? 'opacity-50'
+                      : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md',
+                  ]"
                   @click="openTask(task)"
                 >
                   <div class="flex items-center gap-3 w-full min-w-0">
                     <button
+                      v-if="task.deadlineStatus !== 'expired'"
                       @click.stop="toggleStatus(task)"
                       class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
                     >
-                      <Circle class="w-6 h-6 text-muted-foreground" />
+                      <CheckCircle2
+                        v-if="task.status === 'COMPLETED'"
+                        class="w-6 h-6 text-green-500"
+                      />
+                      <Circle v-else class="w-6 h-6 text-muted-foreground" />
                     </button>
+                    <div v-else class="p-1 shrink-0">
+                      <XCircle class="w-6 h-6 text-red-500" />
+                    </div>
 
                     <div
                       class="w-10 h-10 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0"
@@ -389,7 +420,13 @@ async function deleteTask(id: string) {
                     </div>
 
                     <div class="flex flex-col flex-1 min-w-0">
-                      <span class="font-bold text-base leading-tight truncate">
+                      <span
+                        class="font-bold text-base leading-tight truncate"
+                        :class="{
+                          'line-through text-muted-foreground': task.status === 'COMPLETED',
+                          'text-red-400': task.deadlineStatus === 'expired',
+                        }"
+                      >
                         {{ task.title }}
                       </span>
                       <div
@@ -398,6 +435,18 @@ async function deleteTask(id: string) {
                         <span class="flex items-center gap-1" v-if="task.dueDate">
                           <Clock class="w-3.5 h-3.5" />
                           {{ formatTimeOnly(task.dueDate) }}
+                        </span>
+                        <span
+                          v-if="task.deadlineStatus === 'dueSoon'"
+                          class="text-red-400 font-bold"
+                        >
+                          ¡Vence pronto!
+                        </span>
+                        <span
+                          v-if="task.deadlineStatus === 'expired'"
+                          class="text-red-500 font-bold"
+                        >
+                          Vencido
                         </span>
                         <span v-if="task.estimatedTime" class="flex items-center gap-1">
                           • {{ task.estimatedTime }} min
@@ -435,6 +484,7 @@ async function deleteTask(id: string) {
     <ViewTaskDialog
       v-model:open="showViewModal"
       :task="selectedTask"
+      :deadline-status="selectedTaskDeadlineStatus"
       @delete-task="deleteTask"
       @toggle-status="toggleStatus"
       @edit-task="() => {}"

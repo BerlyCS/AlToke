@@ -40,8 +40,8 @@
             <Card
               class="flex items-center gap-3 px-5 py-4 rounded-2xl bg-success-500/10 border-success-500/20 shadow-none"
             >
-              <Target class="w-6 h-6 text-success-500" />
-              <span class="font-bold text-success-500">Retos</span>
+              <Users class="w-6 h-6 text-success-500" />
+              <span class="font-bold text-success-500">Amigos</span>
             </Card>
             <Card
               class="flex items-center gap-3 px-5 py-4 rounded-2xl bg-warning-500/10 border-warning-500/20 shadow-none"
@@ -103,6 +103,7 @@
                     <Label for="nickname">Apodo (opcional)</Label>
                     <Input
                       id="nickname"
+                      data-cy="register-nickname"
                       v-model="form.nickname"
                       type="text"
                       placeholder="Tu apodo"
@@ -114,6 +115,7 @@
                     <Label for="email">Correo electrónico</Label>
                     <Input
                       id="email"
+                      data-cy="auth-email"
                       v-model="form.email"
                       type="email"
                       placeholder="ejemplo@correo.com"
@@ -127,14 +129,16 @@
                       <Label for="password">Contraseña</Label>
                       <a
                         v-if="isLogin"
-                        href="#"
+                        href="/forgot-password"
                         class="ml-auto inline-block text-sm underline-offset-4 hover:underline text-muted-foreground"
+                        @click.prevent="router.push('/forgot-password')"
                       >
                         ¿Olvidaste tu contraseña?
                       </a>
                     </div>
                     <Input
                       id="password"
+                      data-cy="auth-password"
                       v-model="form.password"
                       type="password"
                       required
@@ -150,6 +154,7 @@
 
                   <Button
                     type="submit"
+                    data-cy="auth-submit"
                     class="w-full h-11 text-base font-bold shadow-lg"
                     :disabled="isLoading"
                   >
@@ -162,6 +167,7 @@
                 {{ isLogin ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?' }}
                 <button
                   type="button"
+                  data-cy="auth-mode-toggle"
                   @click="toggleMode"
                   class="underline underline-offset-4 text-foreground font-bold hover:text-primary transition-colors ml-1"
                 >
@@ -194,7 +200,7 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import ModeToggle from '@/components/ModeToggle.vue'
 import logoUrl from '@/assets/images/logo.webp'
-import { Trophy, Target, Flame } from 'lucide-vue-next'
+import { Trophy, Users, Flame } from 'lucide-vue-next'
 import { ref, reactive, onMounted } from 'vue'
 import { authService } from '../services/auth.service'
 import { userService } from '../services/user.service'

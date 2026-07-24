@@ -18,6 +18,20 @@ export const taskRoutes = new Elysia({ prefix: '/tasks' })
       response: TaskModel.tasksListResponse,
     },
   )
+  .get(
+    '/active',
+    async ({ requireAuth, query: { limit, offset } }) => {
+      const userId = requireAuth()
+      return await TaskService.findActive(userId, limit, offset)
+    },
+    {
+      query: t.Object({
+        limit: t.Optional(t.Integer({ minimum: 1, maximum: 100 })),
+        offset: t.Optional(t.Integer({ minimum: 0 })),
+      }),
+      response: TaskModel.activeTasksResponse,
+    },
+  )
   .post(
     '/',
     async ({ requireAuth, body }) => {

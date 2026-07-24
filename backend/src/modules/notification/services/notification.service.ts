@@ -37,6 +37,21 @@ export abstract class NotificationService {
     return NotificationRepository.listLogs(userId, limit, offset)
   }
 
+  static async markAsRead(userId: string, notificationId: string) {
+    await assertUserExists(userId)
+    return NotificationRepository.markAsRead(userId, notificationId)
+  }
+
+  static async markAllAsRead(userId: string) {
+    await assertUserExists(userId)
+    return NotificationRepository.markAllAsRead(userId)
+  }
+
+  static async countUnread(userId: string) {
+    await assertUserExists(userId)
+    return NotificationRepository.countUnread(userId)
+  }
+
   static async recordNotification(input: CreateNotificationInput) {
     await assertUserExists(input.userId)
     return NotificationRepository.createLog(input)

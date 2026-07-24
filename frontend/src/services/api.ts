@@ -1,10 +1,14 @@
 import { treaty } from '@elysiajs/eden'
 import type {
   Achievement,
+  ActiveTasksResponse,
+  AdminMetrics,
   CompleteTaskResult,
   Credentials,
   InventoryItem,
   LeaderboardEntry,
+  NotificationLog,
+  NotificationSettings,
   PrivacyUpdateBody,
   ProfileUpdateBody,
   Tag,
@@ -13,6 +17,11 @@ import type {
   TaskSuggestion,
   UseItemResult,
   UserProfile,
+  UsersList,
+  BanUserResponse,
+  TaskMetricsResponse,
+  TopUsersResponse,
+  PerformanceMetricsResponse,
 } from '@/types'
 
 type ApiResult<T> = Promise<{
@@ -43,6 +52,12 @@ type ApiClientContract = {
       login: { post: (body: Credentials) => ApiResult<AuthResponse> }
       register: { post: (body: Credentials) => ApiResult<AuthResponse> }
       google: { post: (body: { idToken: string }) => ApiResult<AuthResponse> }
+      'forgot-password': {
+        post: (body: { email: string }) => ApiResult<{ message: string }>
+      }
+      'reset-password': {
+        post: (body: { token: string; password: string }) => ApiResult<{ message: string }>
+      }
     }
     ai: {
       suggestions: {
@@ -68,6 +83,11 @@ type ApiClientContract = {
     tasks: {
       get: (options: AuthHeaders) => ApiResult<Task[]>
       post: (body: Partial<Task>, options: AuthHeaders) => ApiResult<Task>
+      active: {
+        get: (
+          options: AuthHeaders & { query: { limit?: number; offset?: number } },
+        ) => ApiResult<ActiveTasksResponse>
+      }
       trash: {
         get: (options: AuthHeaders) => ApiResult<Task[]>
       }
@@ -107,6 +127,36 @@ type ApiClientContract = {
         }
       }
     }
+    notifications: {
+      settings: {
+        get: (options: AuthHeaders) => ApiResult<NotificationSettings>
+        patch: (
+          body: { emailEnabled?: boolean; pushEnabled?: boolean; isMuted?: boolean },
+          options: AuthHeaders,
+        ) => ApiResult<NotificationSettings>
+      }
+      history: {
+        get: (
+          options: AuthHeaders & { query: { limit?: number; offset?: number } },
+        ) => ApiResult<NotificationLog[]>
+      }
+      'read-all': {
+        patch: (
+          body: Record<string, never>,
+          options: AuthHeaders,
+        ) => ApiResult<{ success: boolean }>
+      }
+      'unread-count': {
+        get: (options: AuthHeaders) => ApiResult<{ count: number }>
+      }
+    } & ((params: { id: string }) => {
+      read: {
+        patch: (
+          body: Record<string, never>,
+          options: AuthHeaders,
+        ) => ApiResult<{ success: boolean }>
+      }
+    })
     friendships: {
       '': {
         get: (options: AuthHeaders) => ApiResult<any[]>
@@ -129,6 +179,32 @@ type ApiClientContract = {
     } & ((params: { id: string }) => {
       delete: (body?: any, options?: AuthHeaders) => ApiResult<any>
     })
+    admin: {
+      metrics: {
+        get: (options: AuthHeaders) => ApiResult<AdminMetrics>
+      }
+      users: {
+        get: (
+          options: AuthHeaders & { query?: { limit?: number; offset?: number } },
+        ) => ApiResult<UsersList>
+      } & ((params: { userId: string }) => {
+        ban: {
+          post: (options: AuthHeaders, body: string) => ApiResult<BanUserResponse>
+        }
+        unban: {
+          post: (options: AuthHeaders, body: string) => ApiResult<BanUserResponse>
+        }
+      })
+      taskMetrics: {
+        get: (options: AuthHeaders) => ApiResult<TaskMetricsResponse>
+      }
+      topUsers: {
+        get: (options: AuthHeaders & { query?: { limit?: number } }) => ApiResult<TopUsersResponse>
+      }
+      performanceMetrics: {
+        get: (options: AuthHeaders) => ApiResult<PerformanceMetricsResponse>
+      }
+    }
   }
 }
 

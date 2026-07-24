@@ -12,6 +12,7 @@ import {
   unlockedAchievementsQueue,
   processAchievementsQueue,
 } from '@/composables/useGamification'
+import { useTaskDeadline, type TaskWithDeadline } from '@/composables/useTaskDeadline'
 import type { Task, Tag, TaskSuggestion } from '@/types'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -33,6 +34,7 @@ import {
   CheckCircle2,
   CheckCircle,
   Circle,
+  XCircle,
   Clock,
   ListTodo,
   Minus,
@@ -71,38 +73,33 @@ const IconMap: Record<string, Component> = {
   AlignLeft,
 }
 
-const colorMap: Record<string, { bg: string; border: string; text: string }> = {
-  'bg-red-500': { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' },
-  'bg-orange-500': {
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500/30',
-    text: 'text-orange-500',
-  },
-  'bg-yellow-500': {
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
-    text: 'text-yellow-500',
-  },
-  'bg-green-500': { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
-  'bg-blue-500': { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-500' },
-  'bg-indigo-500': {
-    bg: 'bg-indigo-500/10',
-    border: 'border-indigo-500/30',
-    text: 'text-indigo-500',
-  },
-  'bg-purple-500': {
-    bg: 'bg-purple-500/10',
-    border: 'border-purple-500/30',
-    text: 'text-purple-500',
-  },
-  'bg-pink-500': { bg: 'bg-pink-500/10', border: 'border-pink-500/30', text: 'text-pink-500' },
+function getTaskColors(task: TaskWithDeadline) {
+  if (task.deadlineStatus === 'expired') {
+    return {
+      bg: 'bg-red-900/20',
+      border: 'border-red-500/40',
+      text: 'text-red-400',
+    }
+  }
+  const priorityColors: Record<string, { bg: string; border: string; text: string }> = {
+    HIGH: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' },
+    MEDIUM: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-500' },
+    LOW: { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
+  }
+  return (
+    priorityColors[task.priority] || {
+      bg: 'bg-primary/10',
+      border: 'border-primary/30',
+      text: 'text-primary',
+    }
+  )
 }
 
-function getTaskColors(task: Task) {
-  const defaultColors = { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary' }
-  if (!task.tags || task.tags.length === 0) return defaultColors
-  const color = task.tags?.[0]?.color
-  return (color ? colorMap[color] : undefined) || defaultColors
+function getDeadlineClass(task: TaskWithDeadline): string {
+  if (task.deadlineStatus === 'expired') return 'opacity-60'
+  if (task.deadlineStatus === 'dueSoon')
+    return 'shadow-[0_0_15px_rgba(239,68,68,0.4)] border-red-500/50'
+  return ''
 }
 
 const authStore = useAuthStore()
@@ -128,9 +125,17 @@ const aiSuggestions = ref<TaskSuggestion[]>([])
 const aiLoading = ref(false)
 const aiError = ref('')
 const showAiDialog = ref(false)
+const totalActiveTasks = ref(0)
+
+const { tasksWithDeadline, startWatching, stopWatching } = useTaskDeadline(tasks)
+
+const selectedTaskDeadlineStatus = computed(() => {
+  if (!selectedTask.value) return undefined
+  return tasksWithDeadline.value.find((t) => t.id === selectedTask.value?.id)?.deadlineStatus
+})
 
 const filteredTasks = computed(() => {
-  let result = tasks.value
+  let result = tasksWithDeadline.value
   if (filterStatus.value !== 'ALL') {
     result = result.filter((t) => t.status === filterStatus.value)
   }
@@ -163,12 +168,15 @@ onMounted(async () => {
     return
   }
   await Promise.all([fetchTasks(), fetchTags()])
+  startWatching()
 })
 
 async function fetchTasks() {
   try {
     loading.value = true
-    tasks.value = await taskService.getAllTasks()
+    const result = await taskService.getAllTasks()
+    tasks.value = result
+    totalActiveTasks.value = result.length
   } catch (e) {
     console.error(e)
   } finally {
@@ -240,14 +248,18 @@ async function acceptSuggestion(s: TaskSuggestion) {
   }
 }
 
-async function toggleStatus(task: Task) {
+async function toggleStatus(task: TaskWithDeadline) {
+  if (task.deadlineStatus === 'expired') {
+    toast.error('No se puede completar', { description: 'Esta tarea ya venció' })
+    return
+  }
   try {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
     let updated: Task
     if (newStatus === 'COMPLETED') {
       const result = await taskService.completeTask(task.id)
       updated = { ...task, ...result }
-      if (typeof result.xpAwarded === 'number') {
+      if (result.xpAwarded > 0) {
         authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
         showReward(
           result.xpAwarded,
@@ -298,6 +310,7 @@ function onTaskUpdated(updated: Task) {
 
 function onTaskCreated(created: Task) {
   tasks.value.unshift(created)
+  totalActiveTasks.value++
   if (created.unlockedAchievements?.length) {
     unlockedAchievementsQueue.value.push(...created.unlockedAchievements)
     processAchievementsQueue()
@@ -329,6 +342,7 @@ function formatTime(val: string | Date) {
       </div>
 
       <Button
+        data-cy="create-task"
         class="h-12 px-5 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg flex items-center gap-3 hover:scale-[1.02] transition duration-300"
         @click="showCreateModal = true"
       >
@@ -353,6 +367,7 @@ function formatTime(val: string | Date) {
 
     <div class="flex items-center gap-2">
       <button
+        data-cy="tasks-tab"
         class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200 flex items-center gap-2"
         :class="
           !showTrash
@@ -365,6 +380,7 @@ function formatTime(val: string | Date) {
         Tareas
       </button>
       <button
+        data-cy="trash-tab"
         class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200 flex items-center gap-2"
         :class="
           showTrash
@@ -384,6 +400,7 @@ function formatTime(val: string | Date) {
           <div
             v-for="task in trashedTasks"
             :key="task.id"
+            :data-cy="`trashed-task-${task.id}`"
             class="flex items-center justify-between p-4 rounded-xl border border-destructive/20 bg-destructive/5 transition-all min-w-0"
           >
             <div class="flex items-center gap-4 w-full min-w-0">
@@ -406,6 +423,7 @@ function formatTime(val: string | Date) {
             </div>
             <div class="flex items-center gap-2 pl-2">
               <button
+                :data-cy="`task-restore-${task.id}`"
                 class="p-2 rounded-lg hover:bg-success/10 text-success/50 hover:text-success transition-colors shrink-0"
                 @click="restoreTask(task.id)"
                 title="Restaurar"
@@ -625,22 +643,31 @@ function formatTime(val: string | Date) {
           <div
             v-for="task in filteredTasks"
             :key="task.id"
-            class="flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md min-w-0"
+            :data-cy="`task-row-${task.id}`"
+            class="flex items-center justify-between p-4 rounded-xl border transition-all min-w-0"
             :class="[
               getTaskColors(task).bg,
               getTaskColors(task).border,
-              task.status === 'COMPLETED' ? 'opacity-50' : '',
+              getDeadlineClass(task),
+              task.status === 'COMPLETED'
+                ? 'opacity-50'
+                : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md',
             ]"
             @click="openTask(task)"
           >
             <div class="flex items-center gap-4 w-full min-w-0">
               <button
+                v-if="task.deadlineStatus !== 'expired'"
+                :data-cy="`task-toggle-${task.id}`"
                 @click.stop="toggleStatus(task)"
                 class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
               >
                 <CheckCircle2 v-if="task.status === 'COMPLETED'" class="w-6 h-6 text-green-500" />
                 <Circle v-else class="w-6 h-6 text-muted-foreground" />
               </button>
+              <div v-else class="p-1 shrink-0">
+                <XCircle class="w-6 h-6 text-red-500" />
+              </div>
 
               <div
                 class="w-12 h-12 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0"
@@ -657,7 +684,10 @@ function formatTime(val: string | Date) {
               <div class="flex flex-col flex-1 min-w-0">
                 <span
                   class="font-bold text-lg leading-tight truncate"
-                  :class="{ 'line-through text-muted-foreground': task.status === 'COMPLETED' }"
+                  :class="{
+                    'line-through text-muted-foreground': task.status === 'COMPLETED',
+                    'text-red-400': task.deadlineStatus === 'expired',
+                  }"
                 >
                   {{ task.title }}
                 </span>
@@ -667,6 +697,18 @@ function formatTime(val: string | Date) {
                   <span class="flex items-center gap-1.5" v-if="task.dueDate">
                     <Clock class="w-4 h-4" />
                     {{ formatTime(task.dueDate) }}
+                  </span>
+                  <span
+                    v-if="task.deadlineStatus === 'dueSoon'"
+                    class="text-red-400 font-bold text-xs"
+                  >
+                    ¡Vence pronto!
+                  </span>
+                  <span
+                    v-if="task.deadlineStatus === 'expired'"
+                    class="text-red-500 font-bold text-xs"
+                  >
+                    Vencido
                   </span>
                   <span v-if="task.estimatedTime" class="flex items-center gap-1.5">
                     • {{ task.estimatedTime }} min
@@ -686,6 +728,7 @@ function formatTime(val: string | Date) {
 
             <div class="flex items-center gap-2 pl-2">
               <button
+                :data-cy="`task-delete-${task.id}`"
                 class="p-2 rounded-lg hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
                 @click.stop="deleteTask(task.id)"
               >
@@ -725,6 +768,7 @@ function formatTime(val: string | Date) {
     <ViewTaskDialog
       v-model:open="showViewModal"
       :task="selectedTask"
+      :deadline-status="selectedTaskDeadlineStatus"
       @delete-task="deleteTask"
       @toggle-status="toggleStatus"
       @edit-task="editTask"

@@ -6,3 +6,6 @@
 /node_modules
 /.husky/_
 .codegraph
+/e2e-results
+/e2e-report
+/test-results

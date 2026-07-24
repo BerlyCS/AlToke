@@ -2,6 +2,8 @@ import { eq, and, isNull, isNotNull, ilike, or, lt, sql } from 'drizzle-orm'
 import { db } from '../../db'
 import { tasks, taskTags } from '../../db/schema'
 import { GamificationService } from '../gamification/services'
+import { NotificationService } from '../notification/services'
+import { UserRepository } from '../user/repositories/user.repository'
 import type { TaskModel } from './model'
 
 const XP_BASE = 10
@@ -89,6 +91,46 @@ export abstract class TaskService {
     })
   }
 
+  static async findActive(userId: string, limit: number = 50, offset: number = 0) {
+    const where = and(
+      eq(tasks.userId, userId),
+      isNull(tasks.deletedAt),
+      or(eq(tasks.status, 'PENDING'), eq(tasks.status, 'IN_PROGRESS')),
+    )
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tasks)
+      .where(where)
+
+    const tasksData = await db.query.tasks.findMany({
+      where,
+      with: {
+        taskTags: {
+          with: {
+            tag: true,
+          },
+        },
+      },
+      orderBy: (tasks, { desc }) => [desc(tasks.createdAt)],
+      limit,
+      offset,
+    })
+
+    return {
+      tasks: tasksData.map((task) => {
+        const { taskTags, ...rest } = task
+        return {
+          ...rest,
+          tags: taskTags.map((tt) => tt.tag),
+        }
+      }),
+      total: countResult?.count ?? 0,
+      limit,
+      offset,
+    }
+  }
+
   static async findById(userId: string, taskId: string) {
     const task = await db.query.tasks.findFirst({
       where: and(eq(tasks.id, taskId), eq(tasks.userId, userId)),
@@ -151,13 +193,15 @@ export abstract class TaskService {
     if (task.status === 'COMPLETED') return task
 
     const now = new Date()
-    const completedOnTime = !task.dueDate || now <= new Date(task.dueDate)
-    const estimatedMinutes = task.estimatedTime ?? 0
-    const xpAmount = XP_BASE + estimatedMinutes * XP_PER_MINUTE
+    const alreadyCompletedBefore = task.completedAt !== null
 
     const [updated] = await db
       .update(tasks)
-      .set({ status: 'COMPLETED', completedAt: now, updatedAt: now })
+      .set({
+        status: 'COMPLETED',
+        completedAt: now,
+        updatedAt: now,
+      })
       .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
       .returning()
 
@@ -209,6 +253,31 @@ export abstract class TaskService {
         await db.insert(taskTags).values(taskTagsData)
       }
     }
+
+    NotificationService.recordNotification({
+      userId,
+      type: 'TASK_COMPLETED',
+      title: 'Tarea Completada',
+      message: `Completaste: "${task.title}"`,
+    }).catch(() => {})
+
+    // XP and achievements are only awarded the first time the task is completed
+    if (alreadyCompletedBefore) {
+      const user = await UserRepository.findById(userId)
+      return {
+        ...updated,
+        tags: task.tags,
+        xpAwarded: 0,
+        leveledUp: false,
+        newLevel: user?.level ?? 1,
+        newStreak: user?.currentStreak ?? 0,
+        unlockedAchievements: [],
+      }
+    }
+
+    const completedOnTime = !task.dueDate || now <= new Date(task.dueDate)
+    const estimatedMinutes = task.estimatedTime ?? 0
+    const xpAmount = XP_BASE + estimatedMinutes * XP_PER_MINUTE
 
     const xpResult = await GamificationService.addXP(
       userId,

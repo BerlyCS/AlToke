@@ -88,3 +88,44 @@ export const notificationRoutes = new Elysia({ prefix: '/notifications' })
       },
     },
   )
+  .patch(
+    '/:id/read',
+    async ({ requireAuth, params }) => {
+      const result = await NotificationService.markAsRead(requireAuth(), params.id)
+      return { success: result }
+    },
+    {
+      params: NotificationModel.markReadParams,
+      response: {
+        200: NotificationModel.markReadResponse,
+        401: NotificationModel.unauthorizedError,
+        404: NotificationModel.userError,
+      },
+    },
+  )
+  .patch(
+    '/read-all',
+    async ({ requireAuth }) => {
+      await NotificationService.markAllAsRead(requireAuth())
+      return { success: true }
+    },
+    {
+      response: {
+        200: NotificationModel.markReadResponse,
+        401: NotificationModel.unauthorizedError,
+      },
+    },
+  )
+  .get(
+    '/unread-count',
+    async ({ requireAuth }) => {
+      const count = await NotificationService.countUnread(requireAuth())
+      return { count }
+    },
+    {
+      response: {
+        200: NotificationModel.unreadCountResponse,
+        401: NotificationModel.unauthorizedError,
+      },
+    },
+  )

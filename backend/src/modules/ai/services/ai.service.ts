@@ -16,13 +16,13 @@ const getDeepSeek = () => {
   if (!_deepseek) {
     _deepseek = new OpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY || '',
-      baseURL: 'https://api.deepseek.com',
+      baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
     })
   }
   return _deepseek
 }
 
-const recommendationSchema = z.object({
+export const recommendationSchema = z.object({
   suggestions: z
     .array(
       z.object({
@@ -34,7 +34,7 @@ const recommendationSchema = z.object({
     .max(3),
 })
 
-const overloadSchema = z.object({
+export const overloadSchema = z.object({
   isOverloaded: z.boolean(),
   riskLevel: z.enum(['low', 'medium', 'high']),
   explanation: z.string().min(1),
@@ -44,20 +44,20 @@ const sleep = async (milliseconds: number) => {
   await new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
 
-const sameDay = (left: Date, right: Date) =>
+export const sameDay = (left: Date, right: Date) =>
   left.getFullYear() === right.getFullYear() &&
   left.getMonth() === right.getMonth() &&
   left.getDate() === right.getDate()
 
-const toDateKey = (date: Date) => date.toISOString().slice(0, 10)
+export const toDateKey = (date: Date) => date.toISOString().slice(0, 10)
 
-const activityAt = (task: {
+export const activityAt = (task: {
   completionDate: Date | null
   dueDate: Date | null
   startTime: Date | null
 }) => task.completionDate ?? task.dueDate ?? task.startTime
 
-const buildSystemPrompt = (title: string, example: string) =>
+export const buildSystemPrompt = (title: string, example: string) =>
   [
     title,
     'Responde en formato json, sin markdown, sin texto adicional fuera del objeto.',
@@ -77,7 +77,7 @@ const parseWithRetry = async <TInput, TOutput>(options: {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const response = await getDeepSeek().chat.completions.create({
-        model: 'deepseek-v4-flash',
+        model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
         response_format: { type: 'json_object' },
         max_tokens: attempt === 0 ? options.maxTokens : Math.round(options.maxTokens * 1.5),
         messages: [
@@ -115,9 +115,9 @@ const parseWithRetry = async <TInput, TOutput>(options: {
   throw status(503, 'AI service unavailable')
 }
 
-const buildTimeSlotKey = (date: Date) => `${date.getDay()}-${date.getHours()}`
+export const buildTimeSlotKey = (date: Date) => `${date.getDay()}-${date.getHours()}`
 
-const adjustHabitAnalysisAfterRejection = (
+export const adjustHabitAnalysisAfterRejection = (
   analysis: HabitAnalysis,
   suggestionTime: Date,
 ): HabitAnalysis => {

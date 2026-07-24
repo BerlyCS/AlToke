@@ -9,6 +9,7 @@
     "seed": "bun run src/db/seeders/index.ts",
     "start": "bun run src/index.ts",
     "test": "bun test",
+    "test:report": "mkdir -p ../test-results/backend && bun test --reporter=junit --reporter-outfile=../test-results/backend/junit.xml",
     "type-check": "tsc --noEmit",
     "lint": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint . --fix\"",
     "lint:check": "bun ../scripts/run-lint-non-blocking.mjs \"oxlint .\"",
@@ -25,11 +26,13 @@
     "drizzle-typebox": "^0.3.3",
     "elysia": "latest",
     "google-auth-library": "^10.9.0",
+    "nodemailer": "^9.0.3",
     "openai": "^6.45.0",
     "postgres": "^3.4.9",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/nodemailer": "^8.0.1",
     "bun-types": "latest",
     "drizzle-kit": "^0.31.10",
     "oxfmt": "^0.45.0",

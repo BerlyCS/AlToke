@@ -1,5 +1,6 @@
 import { status } from 'elysia'
 import { FriendshipRepository } from '../repositories/friendship.repository'
+import { NotificationService } from '../../notification/services'
 
 export class FriendshipService {
   static async sendRequest(requesterId: string, addresseeId: string) {
@@ -24,7 +25,19 @@ export class FriendshipService {
       throw status(404, 'Friendship request not found or unauthorized')
     }
 
-    return await FriendshipRepository.updateStatus(friendshipId, 'ACCEPTED')
+    const accepted = await FriendshipRepository.updateStatus(friendshipId, 'ACCEPTED')
+
+    if (accepted) {
+      const requesterNickname = request.requester?.nickname ?? 'Un usuario'
+      NotificationService.recordNotification({
+        userId: accepted.requesterId,
+        type: 'FRIEND_ACCEPTED',
+        title: 'Solicitud de amistad aceptada',
+        message: `${requesterNickname} aceptó tu solicitud de amistad`,
+      }).catch(() => {})
+    }
+
+    return accepted
   }
 
   static async rejectRequest(userId: string, friendshipId: string) {

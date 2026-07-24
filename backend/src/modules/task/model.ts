@@ -48,6 +48,17 @@ export const TaskModel = {
       t.Object({ tags: t.Optional(t.Array(t.Object(dbModel.select.tags as any))) }),
     ]),
   ),
+  activeTasksResponse: t.Object({
+    tasks: t.Array(
+      t.Intersect([
+        t.Object(dbModel.select.tasks as any),
+        t.Object({ tags: t.Optional(t.Array(t.Object(dbModel.select.tags as any))) }),
+      ]),
+    ),
+    total: t.Number(),
+    limit: t.Number(),
+    offset: t.Number(),
+  }),
   errorNotFound: t.Literal('Task not found'),
   completeTaskResponse: t.Intersect([
     t.Object(dbModel.select.tasks as any),

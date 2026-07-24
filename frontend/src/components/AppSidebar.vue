@@ -21,15 +21,23 @@ import logoUrl from '@/assets/images/logo.webp'
 const authStore = useAuthStore()
 const route = useRoute()
 
-const menuItems = [
-  { title: 'Dashboard', icon: Home, url: '/dashboard' },
-  { title: 'Mis tareas', icon: ListTodo, url: '/tasks' },
-  { title: 'Calendario', icon: Calendar, url: '/calendar' },
-  { title: 'Ranking', icon: Trophy, url: '/ranking' },
-  { title: 'Logros', icon: Medal, url: '/logros' },
-  { title: 'Amigos', icon: Users, url: '/amigos' },
-  { title: 'Configuración', icon: Settings, url: '/configuracion' },
+const menuAllItems = [
+  { title: 'Dashboard', icon: Home, url: '/dashboard', roles: ['ADMIN', 'USER'] },
+  { title: 'Mis tareas', icon: ListTodo, url: '/tasks', roles: ['USER'] },
+  { title: 'Calendario', icon: Calendar, url: '/calendar', roles: ['USER'] },
+  { title: 'Ranking', icon: Trophy, url: '/ranking', roles: ['USER'] },
+  { title: 'Logros', icon: Medal, url: '/logros', roles: ['USER'] },
+  { title: 'Amigos', icon: Users, url: '/amigos', roles: ['USER'] },
+  { title: 'Usuarios', icon: Users, url: '/usuarios', roles: ['ADMIN'] },
+  { title: 'Configuración', icon: Settings, url: '/configuracion', roles: ['ADMIN', 'USER'] },
 ]
+
+const menuItems = computed(() => {
+  return menuAllItems.filter((item) => {
+    if (!item.roles || item.roles.length === 0) return true
+    return item.roles.includes(authStore.profile?.role || 'USER')
+  })
+})
 
 const userXp = computed(() => authStore.profile?.xp || 0)
 const currentLevel = computed(() => authStore.profile?.level || 1)
@@ -109,13 +117,19 @@ const xpProgress = computed(() => {
             <span class="font-bold text-base truncate">{{
               authStore.profile?.nickname || 'Jugador'
             }}</span>
-            <span class="text-sm text-primary-foreground/80 font-bold"
-              >Nivel {{ currentLevel }}</span
+            <span
+              v-if="authStore.profile?.role == 'ADMIN'"
+              class="text-sm text-primary-foreground/80 font-bold"
             >
+              ADMIN
+            </span>
+            <span v-else class="text-sm text-primary-foreground/80 font-bold">
+              Nivel {{ currentLevel }}
+            </span>
           </div>
         </div>
 
-        <div class="flex flex-col gap-2 mt-1">
+        <div v-if="authStore.profile?.role != 'ADMIN'" class="flex flex-col gap-2 mt-1">
           <div
             class="flex justify-between text-xs font-black uppercase tracking-wider text-primary-foreground/90"
           >

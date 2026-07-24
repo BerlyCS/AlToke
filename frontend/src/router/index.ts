@@ -15,6 +15,16 @@ const router = createRouter({
       component: () => import('../views/LoginView.vue'),
     },
     {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('../views/PasswordRecoveryView.vue'),
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: () => import('../views/PasswordRecoveryView.vue'),
+    },
+    {
       path: '/app',
       component: () => import('../layouts/MainLayout.vue'),
       meta: { requiresAuth: true },
@@ -22,7 +32,7 @@ const router = createRouter({
         {
           path: '/dashboard',
           name: 'dashboard',
-          component: () => import('../views/DashboardView.vue'),
+          component: () => import('../views/Dashboard.vue'),
         },
         {
           path: '/tasks',
@@ -53,6 +63,11 @@ const router = createRouter({
           path: '/logros',
           name: 'achievements',
           component: () => import('../views/AchievementsView.vue'),
+        },
+        {
+          path: '/usuarios',
+          name: 'users',
+          component: () => import('../views/UsersView.vue'),
         },
       ],
     },

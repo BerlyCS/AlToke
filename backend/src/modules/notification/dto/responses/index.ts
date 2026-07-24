@@ -20,15 +20,24 @@ export const NotificationLogResponse = t.Object({
   type: t.String(),
   title: t.String(),
   message: t.String(),
+  isRead: t.Boolean(),
   createdAt: t.String(),
 })
 
 export const NotificationHistoryResponse = t.Array(NotificationLogResponse)
+export const MarkReadResponse = t.Object({
+  success: t.Boolean(),
+})
+export const UnreadCountResponse = t.Object({
+  count: t.Number(),
+})
 export const UnauthorizedResponse = t.Literal('Unauthorized')
 export const UserNotFoundResponse = t.Literal('User not found')
 
 export type NotificationSettingsResponse = UnwrapSchema<typeof NotificationSettingsResponse>
 export type NotificationLogResponse = UnwrapSchema<typeof NotificationLogResponse>
 export type NotificationHistoryResponse = UnwrapSchema<typeof NotificationHistoryResponse>
+export type MarkReadResponse = UnwrapSchema<typeof MarkReadResponse>
+export type UnreadCountResponse = UnwrapSchema<typeof UnreadCountResponse>
 export type UnauthorizedResponse = UnwrapSchema<typeof UnauthorizedResponse>
 export type UserNotFoundResponse = UnwrapSchema<typeof UserNotFoundResponse>

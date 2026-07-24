@@ -1,0 +1,73 @@
+name: altoke-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: altoke_e2e
+      POSTGRES_USER: altoke_e2e
+      POSTGRES_PASSWORD: altoke_e2e
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U altoke_e2e -d altoke_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  migrate:
+    image: ghcr.io/berlycs/altoke-backend:production
+    command: bun run migrate
+    environment:
+      DATABASE_URL: postgres://altoke_e2e:altoke_e2e@postgres:5432/altoke_e2e
+      JWT_SECRET: e2e-only-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  seed:
+    image: ghcr.io/berlycs/altoke-backend:production
+    command: bun run seed
+    environment:
+      DATABASE_URL: postgres://altoke_e2e:altoke_e2e@postgres:5432/altoke_e2e
+      JWT_SECRET: e2e-only-secret
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  backend:
+    image: ghcr.io/berlycs/altoke-backend:production
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: postgres://altoke_e2e:altoke_e2e@postgres:5432/altoke_e2e
+      JWT_SECRET: e2e-only-secret
+      APP_BASE_URL: http://localhost:${E2E_FRONTEND_PORT:-8080}
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_SECURE: "false"
+      EMAIL_FROM_ADDRESS: no-reply@e2e.altoke.test
+      EMAIL_FROM_NAME: AlToke E2E
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "bun -e \"fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  frontend:
+    image: ghcr.io/berlycs/altoke-frontend:production
+    ports:
+      - "127.0.0.1:${E2E_FRONTEND_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy

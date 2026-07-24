@@ -1,1 +1,103 @@
-export {}
+import { t } from 'elysia'
+
+export const UserDetailResponse = t.Object({
+  id: t.String(),
+  email: t.String(),
+  avatarUrl: t.Union([t.String(), t.Null()]),
+  nickname: t.Optional(t.String()),
+  bio: t.Union([t.String(), t.Null()]),
+  role: t.String(),
+  level: t.Number(),
+  xp: t.Number(),
+  lastActiveAt: t.Optional(t.String()),
+  createdAt: t.String(),
+})
+
+export const SystemMetricsResponse = t.Object({
+  totalUsers: t.Number(),
+  activeUsersDaily: t.Number(),
+  tasksCompletedToday: t.Number(),
+  totalTasks: t.Number(),
+})
+
+export const UserSummaryResponse = t.Object({
+  userId: t.String(),
+  nickname: t.Optional(t.String()),
+  level: t.Number(),
+  xp: t.Number(),
+  lastActiveAt: t.Optional(t.String()),
+  createdAt: t.String(),
+})
+
+export const ActivityLogResponse = t.Object({
+  id: t.String(),
+  adminId: t.String(),
+  targetId: t.String(),
+  targetType: t.String(),
+  action: t.String(),
+  createdAt: t.String(),
+})
+
+export const BanUserResponse = t.Object({
+  success: t.Boolean(),
+  message: t.String(),
+  userId: t.String(),
+})
+
+export const ModerateProfileResponse = t.Object({
+  success: t.Boolean(),
+  message: t.String(),
+  userId: t.String(),
+})
+
+export const AssignTaskResponse = t.Object({
+  success: t.Boolean(),
+  message: t.String(),
+  taskId: t.String(),
+  assignedToUserId: t.String(),
+})
+
+export const UsersResponse = t.Object({
+  users: t.Array(UserDetailResponse),
+  total: t.Number(),
+  limit: t.Number(),
+  offset: t.Number(),
+})
+
+export const TaskMeticsResponse = t.Object({
+  typeTask: t.Array(
+    t.Object({
+      type: t.String(),
+      count: t.Number(),
+    }),
+  ),
+  totalTasks: t.Number(),
+})
+
+export const TopUsersResponse = t.Object({
+  users: t.Array(
+    t.Object({
+      id: t.String(),
+      nickname: t.Optional(t.String()),
+      level: t.Number(),
+      xp: t.Number(),
+      streak: t.Number(),
+    }),
+  ),
+  totalUsers: t.Number(),
+})
+
+export const PerformanceMetricsResponse = t.Object({
+  completionRate: t.Number(),
+  totalXp: t.Number(),
+})
+
+export type UserDetailResponseType = typeof UserDetailResponse.static
+export type SystemMetricsResponseType = typeof SystemMetricsResponse.static
+export type UserSummaryResponseType = typeof UserSummaryResponse.static
+export type ActivityLogResponseType = typeof ActivityLogResponse.static
+export type UsersResponseType = typeof UsersResponse.static
+export type BanUserResponseType = typeof BanUserResponse.static
+export type TaskMeticsResponseType = typeof TaskMeticsResponse.static
+export type TopUsersResponseType = typeof TopUsersResponse.static
+export type PerformanceMetricsResponseType = typeof PerformanceMetricsResponse.static

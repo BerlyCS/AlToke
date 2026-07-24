@@ -11,6 +11,8 @@ import { taskRoutes } from './modules/task'
 import { TaskService } from './modules/task/service'
 import { tagRoutes } from './modules/tag'
 import { friendshipRoutes } from './modules/friendship'
+import { checkDueTasks } from './modules/notification'
+import { adminController } from './modules/admin'
 
 export const app = new Elysia()
   .use(cors())
@@ -36,7 +38,8 @@ export const app = new Elysia()
       .use(gamificationModule)
       .use(notificationRoutes)
       .use(aiModule)
-      .use(friendshipRoutes),
+      .use(friendshipRoutes)
+      .use(adminController),
   )
 
 export type App = typeof app
@@ -57,4 +60,16 @@ if (import.meta.main) {
 
   runCleanup()
   setInterval(runCleanup, 60 * 60 * 1000)
+
+  const runDueCheck = async () => {
+    try {
+      const count = await checkDueTasks()
+      if (count > 0) console.log(`Notifications: ${count} due-task notification(s) sent`)
+    } catch (e) {
+      console.error('Due task check error:', e)
+    }
+  }
+
+  runDueCheck()
+  setInterval(runDueCheck, 30 * 1000)
 }

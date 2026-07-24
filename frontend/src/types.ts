@@ -14,6 +14,7 @@ export interface Task {
   priority: string
   estimatedTime?: number
   dueDate?: string | Date
+  completedAt?: string | Date | null
   recurrence?: string
   tags?: Tag[]
   unlockedAchievements?: Achievement[]
@@ -38,6 +39,7 @@ export interface Privacy {
 export interface UserProfile {
   id: string
   email: string
+  role: 'USER' | 'ADMIN'
   nickname: string
   bio?: string | null
   avatarUrl?: string | null
@@ -129,4 +131,89 @@ export interface CompleteTaskResult extends Task {
   newLevel: number
   newStreak: number
   unlockedAchievements?: Achievement[]
+}
+
+export type NotificationChannel = 'EMAIL' | 'PUSH' | 'IN_APP' | 'SYSTEM'
+
+export interface NotificationSettings {
+  userId: string
+  emailEnabled: boolean
+  pushEnabled: boolean
+  isMuted: boolean
+  updatedAt: string
+}
+
+export interface NotificationLog {
+  id: string
+  userId: string
+  channel: NotificationChannel
+  type: string
+  title: string
+  message: string
+  isRead: boolean
+  createdAt: string
+}
+
+export interface ActiveTasksResponse {
+  tasks: Task[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface AdminMetrics {
+  totalUsers: number
+  activeUsersDaily: number
+  tasksCompletedToday: number
+  totalTasks: number
+}
+
+export interface UserSummary {
+  id: string
+  email: string
+  avatarUrl?: string | null
+  nickname: string
+  bio?: string | null
+  role: 'USER' | 'ADMIN' | 'BANNED'
+  level: number
+  xp: number
+  lastActiveAt: string
+  createdAt: string
+}
+
+export interface UsersList {
+  users: UserSummary[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface BanUserResponse {
+  success: boolean
+  message: string
+  userId: string
+}
+
+export interface TaskMetricsResponse {
+  typeTask: {
+    type: string
+    count: number
+  }[]
+  totalTasks: number
+}
+
+export interface TopUsersResponse {
+  users: {
+    id: string
+    nickname?: string
+    level: number
+    xp: number
+    streak: number
+  }[]
+  totalUsers: number
+}
+
+export interface PerformanceMetricsResponse {
+  completionRate: number
+  totalXp: number
 }

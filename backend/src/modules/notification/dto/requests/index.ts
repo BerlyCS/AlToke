@@ -11,5 +11,10 @@ export const NotificationHistoryQuery = t.Object({
   offset: t.Optional(t.Integer({ minimum: 0 })),
 })
 
+export const MarkReadParams = t.Object({
+  id: t.String({ format: 'uuid' }),
+})
+
 export type NotificationSettingsUpdateBody = UnwrapSchema<typeof NotificationSettingsUpdateBody>
 export type NotificationHistoryQuery = UnwrapSchema<typeof NotificationHistoryQuery>
+export type MarkReadParams = UnwrapSchema<typeof MarkReadParams>

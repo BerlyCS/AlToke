@@ -25,6 +25,7 @@ export interface NotificationLog {
   type: string
   title: string
   message: string
+  isRead: boolean
   createdAt: string
 }
 

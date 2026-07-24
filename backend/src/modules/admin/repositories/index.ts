@@ -1,1 +1,1 @@
-export {}
+export { AdminRepository } from './admin.repository'

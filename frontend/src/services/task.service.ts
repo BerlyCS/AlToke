@@ -1,6 +1,6 @@
 import { api, ApiError } from './api'
 import { useAuthStore } from '@/stores/auth'
-import type { CompleteTaskResult, Task } from '@/types'
+import type { ActiveTasksResponse, CompleteTaskResult, Task } from '@/types'
 
 // Helper to get auth headers automatically
 const getHeaders = () => {
@@ -15,6 +15,15 @@ export const taskService = {
     const { data, error, status } = await api.api.tasks.get({ headers: getHeaders() })
     if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch tasks')
     return data as unknown as Task[]
+  },
+
+  getActiveTasks: async (limit = 50, offset = 0): Promise<ActiveTasksResponse> => {
+    const { data, error, status } = await api.api.tasks.active.get({
+      query: { limit, offset },
+      headers: getHeaders(),
+    })
+    if (error) throw new ApiError(status, String(error.value) || 'Failed to fetch active tasks')
+    return data as unknown as ActiveTasksResponse
   },
 
   createTask: async (task: Partial<Task>): Promise<Task> => {
