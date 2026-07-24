@@ -14,6 +14,7 @@ export interface Task {
   priority: string
   estimatedTime?: number
   dueDate?: string | Date
+  completedAt?: string | Date | null
   recurrence?: string
   tags?: Tag[]
   unlockedAchievements?: Achievement[]
@@ -149,7 +150,15 @@ export interface NotificationLog {
   type: string
   title: string
   message: string
+  isRead: boolean
   createdAt: string
+}
+
+export interface ActiveTasksResponse {
+  tasks: Task[]
+  total: number
+  limit: number
+  offset: number
 }
 
 export interface AdminMetrics {

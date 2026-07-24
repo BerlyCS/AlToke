@@ -8,6 +8,7 @@ import {
   unlockedAchievementsQueue,
   processAchievementsQueue,
 } from '@/composables/useGamification'
+import { useTaskDeadline } from '@/composables/useTaskDeadline'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import type { Task, LeaderboardEntry } from '@/types'
@@ -41,6 +42,12 @@ const showViewModal = ref(false)
 const showEditModal = ref(false)
 const selectedTask = ref<Task | null>(null)
 const editingTask = ref<Task | null>(null)
+const totalActiveTasks = ref(0)
+const pageSize = 50
+const currentPage = ref(0)
+const hasMore = computed(() => tasks.value.length < totalActiveTasks.value)
+
+const { tasksWithDeadline, startWatching, stopWatching } = useTaskDeadline(tasks)
 
 const completedTasksCount = computed(() => {
   return tasks.value.filter((t) => t.status === 'COMPLETED').length
@@ -79,11 +86,25 @@ async function loadLeaderboard() {
 async function fetchTasks() {
   try {
     loading.value = true
-    tasks.value = await taskService.getAllTasks()
+    currentPage.value = 0
+    const result = await taskService.getActiveTasks(pageSize, 0)
+    tasks.value = result.tasks
+    totalActiveTasks.value = result.total
   } catch (e) {
     console.error(e)
   } finally {
     loading.value = false
+  }
+}
+
+async function loadMore() {
+  try {
+    currentPage.value++
+    const offset = currentPage.value * pageSize
+    const result = await taskService.getActiveTasks(pageSize, offset)
+    tasks.value = [...tasks.value, ...result.tasks]
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -129,6 +150,7 @@ async function deleteTask(id: string) {
 }
 
 function logout() {
+  stopWatching()
   authStore.logout()
   router.push('/')
 }
@@ -150,6 +172,7 @@ function onTaskUpdated(updated: Task) {
 
 function onTaskCreated(created: Task) {
   tasks.value.unshift(created)
+  totalActiveTasks.value++
   if (created.unlockedAchievements?.length) {
     unlockedAchievementsQueue.value.push(...created.unlockedAchievements)
     processAchievementsQueue()
@@ -221,12 +244,20 @@ function onTaskCreated(created: Task) {
       <div class="grid xl:grid-cols-3 gap-6">
         <div class="xl:col-span-2 min-w-0">
           <UpcomingTasks
-            :tasks="tasks"
+            :tasks="tasksWithDeadline"
             @toggle-status="toggleStatus"
             @delete-task="deleteTask"
             @open-task="openTask"
           />
-          <div class="mt-4 flex justify-center">
+          <div class="mt-4 flex flex-col items-center gap-3">
+            <Button
+              v-if="hasMore"
+              variant="outline"
+              class="rounded-2xl h-12 px-8 font-bold border-border gap-2"
+              @click="loadMore"
+            >
+              Cargar más
+            </Button>
             <Button
               variant="outline"
               class="rounded-2xl h-12 px-8 font-bold border-border gap-2"

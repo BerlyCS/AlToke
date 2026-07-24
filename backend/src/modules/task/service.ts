@@ -90,6 +90,46 @@ export abstract class TaskService {
     })
   }
 
+  static async findActive(userId: string, limit: number = 50, offset: number = 0) {
+    const where = and(
+      eq(tasks.userId, userId),
+      isNull(tasks.deletedAt),
+      or(eq(tasks.status, 'PENDING'), eq(tasks.status, 'IN_PROGRESS')),
+    )
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tasks)
+      .where(where)
+
+    const tasksData = await db.query.tasks.findMany({
+      where,
+      with: {
+        taskTags: {
+          with: {
+            tag: true,
+          },
+        },
+      },
+      orderBy: (tasks, { desc }) => [desc(tasks.createdAt)],
+      limit,
+      offset,
+    })
+
+    return {
+      tasks: tasksData.map((task) => {
+        const { taskTags, ...rest } = task
+        return {
+          ...rest,
+          tags: taskTags.map((tt) => tt.tag),
+        }
+      }),
+      total: countResult?.count ?? 0,
+      limit,
+      offset,
+    }
+  }
+
   static async findById(userId: string, taskId: string) {
     const task = await db.query.tasks.findFirst({
       where: and(eq(tasks.id, taskId), eq(tasks.userId, userId)),

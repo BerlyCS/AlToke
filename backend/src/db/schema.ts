@@ -142,6 +142,7 @@ export const notificationLogs = pgTable(
     type: varchar('type', { length: 100 }).notNull(),
     title: varchar('title', { length: 150 }).notNull(),
     message: text('message').notNull(),
+    isRead: boolean('is_read').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [index('notification_logs_user_id_created_at_idx').on(table.userId, table.createdAt)],

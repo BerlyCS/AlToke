@@ -19,20 +19,12 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { notificationService } from '@/services/notification.service'
 import type { NotificationLog } from '@/types'
 
-const LAST_SEEN_KEY = 'altoke_last_seen_notification_id'
-
 const open = ref(false)
 const logs = ref<NotificationLog[]>([])
 const loading = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
-const lastSeenId = ref(localStorage.getItem(LAST_SEEN_KEY) ?? '')
-
-const unreadCount = computed(() => {
-  if (!lastSeenId.value) return 0
-  const idx = logs.value.findIndex((l) => l.id === lastSeenId.value)
-  return idx === -1 ? logs.value.length : idx
-})
+const unreadCount = ref(0)
 
 const showBadge = computed(() => unreadCount.value > 0)
 
@@ -86,10 +78,19 @@ async function loadHistory() {
   }
 }
 
-function markAllSeen() {
-  if (logs.value.length > 0) {
-    lastSeenId.value = logs.value[0]!.id
-    localStorage.setItem(LAST_SEEN_KEY, lastSeenId.value)
+async function fetchUnreadCount() {
+  try {
+    unreadCount.value = await notificationService.getUnreadCount()
+  } catch {
+    // silent
+  }
+}
+
+async function markAllSeen() {
+  if (unreadCount.value > 0) {
+    await notificationService.markAllAsRead()
+    unreadCount.value = 0
+    logs.value = logs.value.map((l) => ({ ...l, isRead: true }))
   }
 }
 
@@ -113,40 +114,32 @@ function formatDate(iso: string) {
   return d.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })
 }
 
-let lastToastId = ''
-
 function pollNotifications() {
+  fetchUnreadCount()
   notificationService
     .getHistory(5)
     .then((recent) => {
       if (recent.length === 0) return
 
-      const prevLen = logs.value.length
-      logs.value = recent
-
-      if (lastSeenId.value && prevLen > 0) {
-        const newOnes = recent.filter((l) => {
-          const idx = recent.findIndex((r) => r.id === lastSeenId.value)
-          return idx === -1 || recent.indexOf(l) < idx
-        })
-        for (const n of newOnes) {
-          if (n.id === lastToastId) continue
-          lastToastId = n.id
-          import('vue-sonner').then(({ toast }) => {
-            toast(n.title, {
-              description: n.message,
-              duration: 5000,
-            })
+      const newOnes = recent.filter((n) => !n.isRead)
+      for (const n of newOnes) {
+        import('vue-sonner').then(({ toast }) => {
+          toast(n.title, {
+            description: n.message,
+            duration: 5000,
           })
-        }
+        })
       }
+
+      logs.value = recent
     })
     .catch(() => {})
 }
 
 onMounted(() => {
   loadHistory()
-  pollTimer = setInterval(pollNotifications, 15 * 1000)
+  fetchUnreadCount()
+  pollTimer = setInterval(pollNotifications, 30 * 1000)
 })
 
 onUnmounted(() => {
@@ -204,8 +197,7 @@ onUnmounted(() => {
             :key="log.id"
             class="flex gap-3 py-4 transition hover:bg-muted/30 -mx-2 px-2 rounded-lg"
             :class="{
-              'opacity-60':
-                lastSeenId && logs.indexOf(log) >= logs.findIndex((l) => l.id === lastSeenId),
+              'opacity-60': log.isRead,
             }"
           >
             <div

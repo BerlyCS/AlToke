@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import { db } from '../../../db'
 import { notificationLogs, notificationSettings, users } from '../../../db/schema'
 import {
@@ -36,6 +36,7 @@ const toLogDomain = (log: NotificationLogRow): NotificationLog => ({
   type: log.type,
   title: log.title,
   message: log.message,
+  isRead: log.isRead ?? false,
   createdAt: log.createdAt.toISOString(),
 })
 
@@ -98,6 +99,30 @@ export abstract class NotificationRepository {
       .offset(offset)
 
     return rows.map(toLogDomain)
+  }
+
+  static async markAsRead(userId: string, notificationId: string): Promise<boolean> {
+    const result = await db
+      .update(notificationLogs)
+      .set({ isRead: true })
+      .where(and(eq(notificationLogs.id, notificationId), eq(notificationLogs.userId, userId)))
+      .returning({ id: notificationLogs.id })
+    return result.length > 0
+  }
+
+  static async markAllAsRead(userId: string): Promise<void> {
+    await db
+      .update(notificationLogs)
+      .set({ isRead: true })
+      .where(and(eq(notificationLogs.userId, userId), eq(notificationLogs.isRead, false)))
+  }
+
+  static async countUnread(userId: string): Promise<number> {
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(notificationLogs)
+      .where(and(eq(notificationLogs.userId, userId), eq(notificationLogs.isRead, false)))
+    return count
   }
 
   static async findExistingByType(userId: string, type: string): Promise<NotificationLog | null> {

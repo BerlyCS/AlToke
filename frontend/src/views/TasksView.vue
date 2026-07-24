@@ -12,6 +12,7 @@ import {
   unlockedAchievementsQueue,
   processAchievementsQueue,
 } from '@/composables/useGamification'
+import { useTaskDeadline, type TaskWithDeadline } from '@/composables/useTaskDeadline'
 import type { Task, Tag, TaskSuggestion } from '@/types'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -33,6 +34,7 @@ import {
   CheckCircle2,
   CheckCircle,
   Circle,
+  XCircle,
   Clock,
   ListTodo,
   Minus,
@@ -98,11 +100,25 @@ const colorMap: Record<string, { bg: string; border: string; text: string }> = {
   'bg-pink-500': { bg: 'bg-pink-500/10', border: 'border-pink-500/30', text: 'text-pink-500' },
 }
 
-function getTaskColors(task: Task) {
+function getTaskColors(task: TaskWithDeadline) {
+  if (task.deadlineStatus === 'expired') {
+    return {
+      bg: 'bg-red-900/20',
+      border: 'border-red-500/40',
+      text: 'text-red-400',
+    }
+  }
   const defaultColors = { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary' }
   if (!task.tags || task.tags.length === 0) return defaultColors
   const color = task.tags?.[0]?.color
   return (color ? colorMap[color] : undefined) || defaultColors
+}
+
+function getDeadlineClass(task: TaskWithDeadline): string {
+  if (task.deadlineStatus === 'expired') return 'opacity-60'
+  if (task.deadlineStatus === 'dueSoon')
+    return 'shadow-[0_0_15px_rgba(239,68,68,0.4)] border-red-500/50'
+  return ''
 }
 
 const authStore = useAuthStore()
@@ -128,9 +144,15 @@ const aiSuggestions = ref<TaskSuggestion[]>([])
 const aiLoading = ref(false)
 const aiError = ref('')
 const showAiDialog = ref(false)
+const totalActiveTasks = ref(0)
+const pageSize = 50
+const currentPage = ref(0)
+const hasMore = computed(() => tasks.value.length < totalActiveTasks.value)
+
+const { tasksWithDeadline, startWatching, stopWatching } = useTaskDeadline(tasks)
 
 const filteredTasks = computed(() => {
-  let result = tasks.value
+  let result = tasksWithDeadline.value
   if (filterStatus.value !== 'ALL') {
     result = result.filter((t) => t.status === filterStatus.value)
   }
@@ -163,16 +185,31 @@ onMounted(async () => {
     return
   }
   await Promise.all([fetchTasks(), fetchTags()])
+  startWatching()
 })
 
 async function fetchTasks() {
   try {
     loading.value = true
-    tasks.value = await taskService.getAllTasks()
+    currentPage.value = 0
+    const result = await taskService.getActiveTasks(pageSize, 0)
+    tasks.value = result.tasks
+    totalActiveTasks.value = result.total
   } catch (e) {
     console.error(e)
   } finally {
     loading.value = false
+  }
+}
+
+async function loadMore() {
+  try {
+    currentPage.value++
+    const offset = currentPage.value * pageSize
+    const result = await taskService.getActiveTasks(pageSize, offset)
+    tasks.value = [...tasks.value, ...result.tasks]
+  } catch (e) {
+    console.error(e)
   }
 }
 
@@ -240,7 +277,11 @@ async function acceptSuggestion(s: TaskSuggestion) {
   }
 }
 
-async function toggleStatus(task: Task) {
+async function toggleStatus(task: TaskWithDeadline) {
+  if (task.deadlineStatus === 'expired') {
+    toast.error('No se puede completar', { description: 'Esta tarea ya venció' })
+    return
+  }
   try {
     const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
     let updated: Task
@@ -298,6 +339,7 @@ function onTaskUpdated(updated: Task) {
 
 function onTaskCreated(created: Task) {
   tasks.value.unshift(created)
+  totalActiveTasks.value++
   if (created.unlockedAchievements?.length) {
     unlockedAchievementsQueue.value.push(...created.unlockedAchievements)
     processAchievementsQueue()
@@ -631,16 +673,20 @@ function formatTime(val: string | Date) {
             v-for="task in filteredTasks"
             :key="task.id"
             :data-cy="`task-row-${task.id}`"
-            class="flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md min-w-0"
+            class="flex items-center justify-between p-4 rounded-xl border transition-all min-w-0"
             :class="[
               getTaskColors(task).bg,
               getTaskColors(task).border,
-              task.status === 'COMPLETED' ? 'opacity-50' : '',
+              getDeadlineClass(task),
+              task.status === 'COMPLETED'
+                ? 'opacity-50'
+                : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md',
             ]"
             @click="openTask(task)"
           >
             <div class="flex items-center gap-4 w-full min-w-0">
               <button
+                v-if="task.deadlineStatus !== 'expired'"
                 :data-cy="`task-toggle-${task.id}`"
                 @click.stop="toggleStatus(task)"
                 class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
@@ -648,6 +694,9 @@ function formatTime(val: string | Date) {
                 <CheckCircle2 v-if="task.status === 'COMPLETED'" class="w-6 h-6 text-green-500" />
                 <Circle v-else class="w-6 h-6 text-muted-foreground" />
               </button>
+              <div v-else class="p-1 shrink-0">
+                <XCircle class="w-6 h-6 text-red-500" />
+              </div>
 
               <div
                 class="w-12 h-12 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0"
@@ -664,7 +713,10 @@ function formatTime(val: string | Date) {
               <div class="flex flex-col flex-1 min-w-0">
                 <span
                   class="font-bold text-lg leading-tight truncate"
-                  :class="{ 'line-through text-muted-foreground': task.status === 'COMPLETED' }"
+                  :class="{
+                    'line-through text-muted-foreground': task.status === 'COMPLETED',
+                    'text-red-400': task.deadlineStatus === 'expired',
+                  }"
                 >
                   {{ task.title }}
                 </span>
@@ -674,6 +726,18 @@ function formatTime(val: string | Date) {
                   <span class="flex items-center gap-1.5" v-if="task.dueDate">
                     <Clock class="w-4 h-4" />
                     {{ formatTime(task.dueDate) }}
+                  </span>
+                  <span
+                    v-if="task.deadlineStatus === 'dueSoon'"
+                    class="text-red-400 font-bold text-xs"
+                  >
+                    ¡Vence pronto!
+                  </span>
+                  <span
+                    v-if="task.deadlineStatus === 'expired'"
+                    class="text-red-500 font-bold text-xs"
+                  >
+                    Vencida
                   </span>
                   <span v-if="task.estimatedTime" class="flex items-center gap-1.5">
                     • {{ task.estimatedTime }} min
@@ -700,6 +764,12 @@ function formatTime(val: string | Date) {
                 <Trash2 class="w-5 h-5" />
               </button>
             </div>
+          </div>
+
+          <div v-if="hasMore" class="flex justify-center pt-4">
+            <Button variant="outline" class="rounded-xl font-bold border-border" @click="loadMore">
+              Cargar más
+            </Button>
           </div>
 
           <div v-if="filteredTasks.length === 0" class="text-center py-16 text-muted-foreground">
