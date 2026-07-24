@@ -54,6 +54,31 @@ describe.skipIf(!databaseAvailable)('Task API', () => {
     expect(data?.status).toBe('COMPLETED')
   })
 
+  it('should complete a task and return XP/gamification data', async () => {
+    // 1. Create a new task to complete
+    const { data: newTask } = await api.api.tasks.post(
+      {
+        title: 'Complete Me',
+        type: 'TASK',
+        priority: 'MEDIUM',
+        estimatedTime: 15,
+      },
+      { headers: { authorization: `Bearer ${token}` } }
+    )
+    
+    // 2. Complete it via the specific endpoint
+    const { data, error, status } = await api.api.tasks({ id: newTask!.id }).complete.patch(
+      undefined as any,
+      { headers: { authorization: `Bearer ${token}` } }
+    )
+
+    expect(status).toBe(200)
+    expect(error).toBeNull()
+    expect(data?.status).toBe('COMPLETED')
+    expect(data?.xpAwarded).toBeDefined()
+    expect(data?.newLevel).toBeDefined()
+  })
+
   it('should soft delete a task', async () => {
     const { data, error, status } = await api.api.tasks({ id: taskId }).delete(undefined as any, {
       headers: { authorization: `Bearer ${token}` },

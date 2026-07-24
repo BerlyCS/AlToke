@@ -1,10 +1,8 @@
-import { eq, and, isNull, isNotNull, ilike, or, lt, sql } from 'drizzle-orm'
-import { db } from '../../db'
-import { tasks, taskTags } from '../../db/schema'
 import { GamificationService } from '../gamification/services'
 import { NotificationService } from '../notification/services'
 import { UserRepository } from '../user/repositories/user.repository'
 import type { TaskModel } from './model'
+import { TaskRepository } from './repositories/task.repository'
 
 const XP_BASE = 10
 const XP_PER_MINUTE = 2
@@ -23,36 +21,25 @@ export abstract class TaskService {
       recurrence,
     } = data
 
-    const [task] = await db
-      .insert(tasks)
-      .values({
-        userId,
-        title,
-        description,
-        type,
-        priority,
-        estimatedTime,
-        startDate,
-        dueDate,
-        recurrence,
-      })
-      .returning()
+    const task = await TaskRepository.createTask({
+      userId,
+      title,
+      description,
+      type,
+      priority,
+      estimatedTime,
+      startDate,
+      dueDate,
+      recurrence,
+    })
 
     if (task && tagIds && tagIds.length > 0) {
-      const taskTagsData = tagIds.map((tagId: string) => ({
-        taskId: task.id,
-        tagId: tagId,
-      }))
-      await db.insert(taskTags).values(taskTagsData)
+      await TaskRepository.addTaskTags(task.id, tagIds as string[])
     }
 
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(tasks)
-      .where(eq(tasks.userId, userId))
-
+    const count = await TaskRepository.countTasks(userId)
     let newAchievement = null
-    if (Number(count) === 1) {
+    if (count === 1) {
       newAchievement = await GamificationService.triggerAchievement(userId, 'first_task_created')
     }
 
@@ -64,23 +51,7 @@ export abstract class TaskService {
   }
 
   static async findAll(userId: string, search?: string) {
-    const tasksData = await db.query.tasks.findMany({
-      where: and(
-        eq(tasks.userId, userId),
-        isNull(tasks.deletedAt),
-        search
-          ? or(ilike(tasks.title, `%${search}%`), ilike(tasks.description, `%${search}%`))
-          : undefined,
-      ),
-      with: {
-        taskTags: {
-          with: {
-            tag: true,
-          },
-        },
-      },
-      orderBy: (tasks, { desc }) => [desc(tasks.createdAt)],
-    })
+    const tasksData = await TaskRepository.findAll(userId, search)
 
     return tasksData.map((task) => {
       const { taskTags, ...rest } = task
@@ -92,30 +63,8 @@ export abstract class TaskService {
   }
 
   static async findActive(userId: string, limit: number = 50, offset: number = 0) {
-    const where = and(
-      eq(tasks.userId, userId),
-      isNull(tasks.deletedAt),
-      or(eq(tasks.status, 'PENDING'), eq(tasks.status, 'IN_PROGRESS')),
-    )
-
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(tasks)
-      .where(where)
-
-    const tasksData = await db.query.tasks.findMany({
-      where,
-      with: {
-        taskTags: {
-          with: {
-            tag: true,
-          },
-        },
-      },
-      orderBy: (tasks, { desc }) => [desc(tasks.createdAt)],
-      limit,
-      offset,
-    })
+    const total = await TaskRepository.countActiveTasks(userId)
+    const tasksData = await TaskRepository.findActiveTasks(userId, limit, offset)
 
     return {
       tasks: tasksData.map((task) => {
@@ -125,24 +74,14 @@ export abstract class TaskService {
           tags: taskTags.map((tt) => tt.tag),
         }
       }),
-      total: countResult?.count ?? 0,
+      total,
       limit,
       offset,
     }
   }
 
   static async findById(userId: string, taskId: string) {
-    const task = await db.query.tasks.findFirst({
-      where: and(eq(tasks.id, taskId), eq(tasks.userId, userId)),
-      with: {
-        taskTags: {
-          with: {
-            tag: true,
-          },
-        },
-      },
-    })
-
+    const task = await TaskRepository.findById(userId, taskId)
     if (!task) return null
 
     const { taskTags, ...rest } = task
@@ -155,35 +94,21 @@ export abstract class TaskService {
   static async update(userId: string, taskId: string, data: TaskModel['updateTaskBody']) {
     const { tagIds, ...taskData } = data
 
-    const [task] = await db
-      .update(tasks)
-      .set({ ...taskData, updatedAt: new Date() })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-      .returning()
-
+    const task = await TaskRepository.update(userId, taskId, taskData)
     if (!task) return null
 
     if (tagIds) {
-      await db.delete(taskTags).where(eq(taskTags.taskId, taskId))
+      await TaskRepository.removeTaskTags(taskId)
       if (tagIds.length > 0) {
-        const taskTagsData = tagIds.map((tagId: string) => ({
-          taskId: task.id,
-          tagId,
-        }))
-        await db.insert(taskTags).values(taskTagsData)
+        await TaskRepository.addTaskTags(taskId, tagIds as string[])
       }
     }
 
-    return await this.findById(userId, task.id)
+    return await this.findById(userId, taskId)
   }
 
   static async softDelete(userId: string, taskId: string) {
-    const [task] = await db
-      .update(tasks)
-      .set({ deletedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-      .returning()
-    return task || null
+    return await TaskRepository.softDelete(userId, taskId)
   }
 
   static async completeTask(userId: string, taskId: string) {
@@ -195,15 +120,8 @@ export abstract class TaskService {
     const now = new Date()
     const alreadyCompletedBefore = task.completedAt !== null
 
-    const [updated] = await db
-      .update(tasks)
-      .set({
-        status: 'COMPLETED',
-        completedAt: now,
-        updatedAt: now,
-      })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-      .returning()
+    const updated = await TaskRepository.markCompleted(userId, taskId, now)
+    if (!updated) return null
 
     // Handle recurrence
     if (task.recurrence && task.recurrence !== 'NONE') {
@@ -229,28 +147,24 @@ export abstract class TaskService {
           break
       }
 
-      const [newTask] = await db
-        .insert(tasks)
-        .values({
-          userId: task.userId,
-          title: task.title,
-          description: task.description,
-          type: task.type,
-          priority: task.priority,
-          status: 'PENDING',
-          estimatedTime: task.estimatedTime,
-          recurrence: task.recurrence,
-          startDate: nextStartDate,
-          dueDate: nextDueDate,
-        })
-        .returning()
+      const newTask = await TaskRepository.createTask({
+        userId: task.userId,
+        title: task.title,
+        description: task.description,
+        type: task.type,
+        priority: task.priority,
+        status: 'PENDING',
+        estimatedTime: task.estimatedTime,
+        recurrence: task.recurrence,
+        startDate: nextStartDate,
+        dueDate: nextDueDate,
+      })
 
       if (newTask && task.tags && task.tags.length > 0) {
-        const taskTagsData = task.tags.map((tag) => ({
-          taskId: newTask.id,
-          tagId: tag.id,
-        }))
-        await db.insert(taskTags).values(taskTagsData)
+        await TaskRepository.addTaskTags(
+          newTask.id,
+          task.tags.map((t) => t.id),
+        )
       }
     }
 
@@ -287,20 +201,16 @@ export abstract class TaskService {
     )
 
     // Check task count achievements
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(tasks)
-      .where(and(eq(tasks.userId, userId), eq(tasks.status, 'COMPLETED')))
-
+    const count = await TaskRepository.countCompletedTasks(userId)
     const taskAchs = []
-    const numCount = Number(count)
-    if (numCount === 1)
+    
+    if (count === 1)
       taskAchs.push(await GamificationService.triggerAchievement(userId, 'first_task_completed'))
-    if (numCount === 10)
+    if (count === 10)
       taskAchs.push(await GamificationService.triggerAchievement(userId, 'tasks_10'))
-    if (numCount === 50)
+    if (count === 50)
       taskAchs.push(await GamificationService.triggerAchievement(userId, 'tasks_50'))
-    if (numCount === 100)
+    if (count === 100)
       taskAchs.push(await GamificationService.triggerAchievement(userId, 'tasks_100'))
 
     const unlockedAchievements = [...xpResult.unlockedAchievements, ...taskAchs.filter(Boolean)]
@@ -317,15 +227,7 @@ export abstract class TaskService {
   }
 
   static async findTrashed(userId: string) {
-    const tasksData = await db.query.tasks.findMany({
-      where: and(eq(tasks.userId, userId), isNotNull(tasks.deletedAt)),
-      with: {
-        taskTags: {
-          with: { tag: true },
-        },
-      },
-      orderBy: (tasks, { desc }) => [desc(tasks.deletedAt)],
-    })
+    const tasksData = await TaskRepository.findTrashed(userId)
 
     return tasksData.map((task) => {
       const { taskTags, ...rest } = task
@@ -334,21 +236,10 @@ export abstract class TaskService {
   }
 
   static async restore(userId: string, taskId: string) {
-    const [task] = await db
-      .update(tasks)
-      .set({ deletedAt: null, updatedAt: new Date() })
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId), isNotNull(tasks.deletedAt)))
-      .returning()
-    return task || null
+    return await TaskRepository.restore(userId, taskId)
   }
 
   static async permanentlyDeleteOld() {
-    const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - 30)
-    const result = await db
-      .delete(tasks)
-      .where(and(isNotNull(tasks.deletedAt), lt(tasks.deletedAt, cutoff)))
-      .returning({ id: tasks.id })
-    return result.length
+    return await TaskRepository.permanentlyDeleteOld()
   }
 }
