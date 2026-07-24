@@ -16,10 +16,10 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
   const insertTask = async (
     overrides: {
       title?: string
-      dueDate?: string
-      startDate?: string
+      dueDate?: Date
+      startDate?: Date
       status?: string
-      deletedAt?: string
+      deletedAt?: Date
     } = {},
   ) => {
     const result = await db.execute(sql`
@@ -31,9 +31,9 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
         'TASK',
         'MEDIUM',
         ${overrides.status ?? 'PENDING'},
-        ${overrides.dueDate ? sql.raw(overrides.dueDate) : sql`NULL`},
-        ${overrides.startDate ? sql.raw(overrides.startDate) : sql`NULL`},
-        ${overrides.deletedAt ? sql.raw(overrides.deletedAt) : sql`NULL`}
+        ${overrides.dueDate ? overrides.dueDate.toISOString() : sql`NULL`},
+        ${overrides.startDate ? overrides.startDate.toISOString() : sql`NULL`},
+        ${overrides.deletedAt ? overrides.deletedAt.toISOString() : sql`NULL`}
       )
       RETURNING id
     `)
@@ -91,7 +91,7 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
     await cleanNotifications()
     await insertTask({
       title: 'Already Due',
-      dueDate: "NOW() - interval '30 seconds'",
+      dueDate: new Date(Date.now() - 30 * 1000),
     })
 
     const count = await checkDueTasks()
@@ -106,7 +106,7 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
     await cleanNotifications()
     await insertTask({
       title: 'Due Soon',
-      dueDate: "NOW() + interval '3 minutes'",
+      dueDate: new Date(Date.now() + 3 * 60 * 1000),
     })
 
     const count = await checkDueTasks()
@@ -121,7 +121,7 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
     await cleanNotifications()
     await insertTask({
       title: 'Start Time Reached',
-      startDate: "NOW() - interval '20 seconds'",
+      startDate: new Date(Date.now() - 20 * 1000),
     })
 
     const count = await checkDueTasks()
@@ -136,7 +136,7 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
     await cleanNotifications()
     await insertTask({
       title: 'Completed Task',
-      dueDate: "NOW() - interval '10 seconds'",
+      dueDate: new Date(Date.now() - 10 * 1000),
       status: 'COMPLETED',
     })
 
@@ -149,8 +149,8 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
     await cleanNotifications()
     await insertTask({
       title: 'Deleted Task',
-      dueDate: "NOW() - interval '10 seconds'",
-      deletedAt: 'NOW()',
+      dueDate: new Date(Date.now() - 10 * 1000),
+      deletedAt: new Date(),
     })
 
     const count = await checkDueTasks()
@@ -162,7 +162,7 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
     await cleanNotifications()
     await insertTask({
       title: 'Duplicate Check',
-      dueDate: "NOW() - interval '15 seconds'",
+      dueDate: new Date(Date.now() - 15 * 1000),
     })
 
     await checkDueTasks()
@@ -175,17 +175,23 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
   it('handles multiple tasks and returns correct count', async () => {
     await cleanTasks()
     await cleanNotifications()
+
+    // Task A: Due soon
     await insertTask({
-      title: 'Task A - Due',
-      dueDate: "NOW() - interval '10 seconds'",
+      title: 'Task A - Due Soon',
+      dueDate: new Date(Date.now() + 2 * 60 * 1000),
     })
+
+    // Task B: Due now
     await insertTask({
-      title: 'Task B - Due Soon',
-      dueDate: "NOW() + interval '2 minutes'",
+      title: 'Task B - Due',
+      dueDate: new Date(Date.now() - 5 * 1000),
     })
+
+    // Task C: Start time reached
     await insertTask({
       title: 'Task C - Start',
-      startDate: "NOW() - interval '5 seconds'",
+      startDate: new Date(Date.now() - 5 * 1000),
     })
 
     const count = await checkDueTasks()
@@ -197,7 +203,7 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
     await cleanNotifications()
     await insertTask({
       title: 'Far Future',
-      dueDate: "NOW() + interval '10 minutes'",
+      dueDate: new Date(Date.now() + 10 * 60 * 1000),
     })
 
     const count = await checkDueTasks()
@@ -207,9 +213,11 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
   it('does not trigger TASK_DUE_SOON for past dueDate', async () => {
     await cleanTasks()
     await cleanNotifications()
+
+    // Due 30 seconds ago
     await insertTask({
       title: 'Past Due Not Soon',
-      dueDate: "NOW() - interval '30 seconds'",
+      dueDate: new Date(Date.now() - 30 * 1000),
     })
 
     const count = await checkDueTasks()
@@ -226,9 +234,9 @@ describe.skipIf(!databaseAvailable)('checkDueTasks', () => {
     await cleanTasks()
     await cleanNotifications()
     await insertTask({
-      title: 'Both Dates',
-      dueDate: "NOW() - interval '20 seconds'",
-      startDate: "NOW() - interval '10 seconds'",
+      title: 'Both In Range',
+      dueDate: new Date(Date.now() - 20 * 1000),
+      startDate: new Date(Date.now() - 10 * 1000),
     })
 
     const count = await checkDueTasks()
