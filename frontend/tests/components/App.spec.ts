@@ -4,6 +4,7 @@ import App from '@/App.vue'
 
 vi.mock('@vueuse/core', () => ({
   useColorMode: vi.fn(() => ({ value: 'light' })),
+  useMediaQuery: vi.fn(() => ({ value: false })),
 }))
 
 vi.mock('vue-sonner', () => ({
@@ -16,6 +17,10 @@ vi.mock('@/components/LevelUpModal.vue', () => ({
 
 vi.mock('@/components/AchievementModal.vue', () => ({
   default: { name: 'AchievementModal', template: '<div data-testid="achievement-modal" />' },
+}))
+
+vi.mock('@/components/ExpiredTaskModal.vue', () => ({
+  default: { name: 'ExpiredTaskModal', template: '<div data-testid="expired-task-modal" />' },
 }))
 
 vi.mock('@/components/ui/sonner', () => ({
