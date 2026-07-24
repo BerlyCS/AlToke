@@ -203,7 +203,7 @@ export abstract class TaskService {
     // Check task count achievements
     const count = await TaskRepository.countCompletedTasks(userId)
     const taskAchs = []
-    
+
     if (count === 1)
       taskAchs.push(await GamificationService.triggerAchievement(userId, 'first_task_completed'))
     if (count === 10)

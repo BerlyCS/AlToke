@@ -63,14 +63,13 @@ describe.skipIf(!databaseAvailable)('Task API', () => {
         priority: 'MEDIUM',
         estimatedTime: 15,
       },
-      { headers: { authorization: `Bearer ${token}` } }
+      { headers: { authorization: `Bearer ${token}` } },
     )
-    
+
     // 2. Complete it via the specific endpoint
-    const { data, error, status } = await api.api.tasks({ id: newTask!.id }).complete.patch(
-      undefined as any,
-      { headers: { authorization: `Bearer ${token}` } }
-    )
+    const { data, error, status } = await api.api
+      .tasks({ id: newTask!.id })
+      .complete.patch(undefined as any, { headers: { authorization: `Bearer ${token}` } })
 
     expect(status).toBe(200)
     expect(error).toBeNull()

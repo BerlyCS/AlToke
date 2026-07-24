@@ -224,4 +224,3 @@ export abstract class TaskRepository {
     return rows.map(toTaskDomain)
   }
 }
-

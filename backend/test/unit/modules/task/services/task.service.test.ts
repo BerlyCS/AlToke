@@ -51,7 +51,9 @@ describe('TaskService', () => {
       const task = makeTask()
       spyOn(TaskRepository, 'createTask').mockResolvedValue(task as any)
       spyOn(TaskRepository, 'countTasks').mockResolvedValue(1) // First task!
-      const achievementSpy = spyOn(GamificationService, 'triggerAchievement').mockResolvedValue({ id: 'ach-1' } as any)
+      const achievementSpy = spyOn(GamificationService, 'triggerAchievement').mockResolvedValue({
+        id: 'ach-1',
+      } as any)
       spyOn(TaskRepository, 'findById').mockResolvedValue(task as any)
 
       const result = await TaskService.create('user-1', { title: 'T' } as any)
@@ -71,7 +73,7 @@ describe('TaskService', () => {
     it('returns task directly if already completed', async () => {
       const dbTask = makeTask({ status: 'COMPLETED', taskTags: [] })
       spyOn(TaskRepository, 'findById').mockResolvedValue(dbTask as any)
-      
+
       const result = await TaskService.completeTask('user-1', 'task-1')
       const { taskTags: _taskTags, ...rest } = dbTask
       expect(result).toEqual({ ...rest, tags: [] })
@@ -85,11 +87,16 @@ describe('TaskService', () => {
         dueDate: new Date(Date.now() + 1000000000), // Far in the future
       })
       spyOn(TaskRepository, 'findById').mockResolvedValue(dbTask as any)
-      spyOn(TaskRepository, 'markCompleted').mockResolvedValue({ ...dbTask, status: 'COMPLETED' } as any)
-      
-      const createTaskSpy = spyOn(TaskRepository, 'createTask').mockResolvedValue({ id: 'new-task' } as any)
+      spyOn(TaskRepository, 'markCompleted').mockResolvedValue({
+        ...dbTask,
+        status: 'COMPLETED',
+      } as any)
+
+      const createTaskSpy = spyOn(TaskRepository, 'createTask').mockResolvedValue({
+        id: 'new-task',
+      } as any)
       const addTagsSpy = spyOn(TaskRepository, 'addTaskTags').mockResolvedValue(undefined)
-      
+
       const xpSpy = spyOn(GamificationService, 'addXP').mockResolvedValue({
         gainedXp: 70, // XP_BASE(10) + 30 * XP_PER_MINUTE(2)
         totalXp: 70,
@@ -98,9 +105,11 @@ describe('TaskService', () => {
         streakCount: 2,
         unlockedAchievements: [],
       })
-      
+
       spyOn(TaskRepository, 'countCompletedTasks').mockResolvedValue(5) // Not a milestone
-      const notifSpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue(undefined as any)
+      const notifSpy = spyOn(NotificationService, 'recordNotification').mockResolvedValue(
+        undefined as any,
+      )
 
       const result = await TaskService.completeTask('user-1', 'task-1')
 
@@ -109,10 +118,10 @@ describe('TaskService', () => {
       const newRecurrenceCall = createTaskSpy.mock.calls[0][0] as any
       expect(newRecurrenceCall.recurrence).toBe('DAILY')
       expect(newRecurrenceCall.status).toBe('PENDING')
-      
+
       // Original start was July 1st, so next should be July 2nd
       expect(newRecurrenceCall.startDate.getDate()).toBe(2)
-      
+
       // Verify tags carried over
       expect(addTagsSpy).toHaveBeenCalledWith('new-task', ['tag-1'])
 
@@ -132,15 +141,25 @@ describe('TaskService', () => {
     it('awards milestone achievements on exactly 10, 50, 100 completions', async () => {
       const task = makeTask()
       spyOn(TaskRepository, 'findById').mockResolvedValue(task as any)
-      spyOn(TaskRepository, 'markCompleted').mockResolvedValue({ ...task, status: 'COMPLETED' } as any)
+      spyOn(TaskRepository, 'markCompleted').mockResolvedValue({
+        ...task,
+        status: 'COMPLETED',
+      } as any)
       spyOn(GamificationService, 'addXP').mockResolvedValue({
-        gainedXp: 10, totalXp: 10, leveledUp: false, currentLevel: 1, streakCount: 1, unlockedAchievements: [],
+        gainedXp: 10,
+        totalXp: 10,
+        leveledUp: false,
+        currentLevel: 1,
+        streakCount: 1,
+        unlockedAchievements: [],
       })
       spyOn(NotificationService, 'recordNotification').mockResolvedValue(undefined as any)
-      
+
       // Mock exactly 10 tasks completed
       spyOn(TaskRepository, 'countCompletedTasks').mockResolvedValue(10)
-      const achSpy = spyOn(GamificationService, 'triggerAchievement').mockResolvedValue({ id: 'ach-10' } as any)
+      const achSpy = spyOn(GamificationService, 'triggerAchievement').mockResolvedValue({
+        id: 'ach-10',
+      } as any)
 
       const result = await TaskService.completeTask('user-1', 'task-1')
 

@@ -15,7 +15,7 @@ export const friendshipRoutes = new Elysia({ prefix: '/friendships' })
       response: {
         200: FriendshipModel.friendsResponse,
       },
-    }
+    },
   )
   .get(
     '/pending',
@@ -27,7 +27,7 @@ export const friendshipRoutes = new Elysia({ prefix: '/friendships' })
       response: {
         200: FriendshipModel.pendingRequestsResponse,
       },
-    }
+    },
   )
   .post(
     '/request',
@@ -59,13 +59,10 @@ export const friendshipRoutes = new Elysia({ prefix: '/friendships' })
       body: FriendshipModel.acceptRequestParams,
     },
   )
-  .delete(
-    '/:id',
-    async ({ requireAuth, params }) => {
-      const userId = requireAuth()
-      return await FriendshipService.removeFriend(userId, params.id)
-    }
-  )
+  .delete('/:id', async ({ requireAuth, params }) => {
+    const userId = requireAuth()
+    return await FriendshipService.removeFriend(userId, params.id)
+  })
   .get(
     '/search',
     async ({ requireAuth, query }) => {

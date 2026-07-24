@@ -13,7 +13,7 @@ describe.skipIf(!databaseAvailable)('Gamification API', () => {
 
   it('should fetch global leaderboard', async () => {
     const { data, error, status } = await api.api.gamification.leaderboard.get()
-    
+
     expect(status).toBe(200)
     expect(error).toBeNull()
     expect(Array.isArray(data)).toBe(true)
@@ -21,9 +21,9 @@ describe.skipIf(!databaseAvailable)('Gamification API', () => {
 
   it('should fetch friends leaderboard', async () => {
     const { data, error, status } = await api.api.gamification.leaderboard.friends.get({
-      headers: { authorization: `Bearer ${token}` }
+      headers: { authorization: `Bearer ${token}` },
     })
-    
+
     expect(status).toBe(200)
     expect(error).toBeNull()
     expect(Array.isArray(data)).toBe(true)
@@ -33,9 +33,9 @@ describe.skipIf(!databaseAvailable)('Gamification API', () => {
 
   it('should fetch achievements', async () => {
     const { data, error, status } = await api.api.gamification.achievements.get({
-      headers: { authorization: `Bearer ${token}` }
+      headers: { authorization: `Bearer ${token}` },
     })
-    
+
     expect(status).toBe(200)
     expect(error).toBeNull()
     // It returns an object with achievements array
@@ -44,13 +44,13 @@ describe.skipIf(!databaseAvailable)('Gamification API', () => {
 
   it('should fetch inventory', async () => {
     const { data, error, status } = await api.api.gamification.inventory.get({
-      headers: { authorization: `Bearer ${token}` }
+      headers: { authorization: `Bearer ${token}` },
     })
-    
+
     if (status !== 200) console.log('INVENTORY ERROR:', error)
     expect(status).toBe(200)
     expect(error).toBeNull()
-    
+
     // Returns array of items
     expect(Array.isArray(data)).toBe(true)
   })
@@ -58,9 +58,9 @@ describe.skipIf(!databaseAvailable)('Gamification API', () => {
   it('should return 404 when using nonexistent item', async () => {
     const { error, status } = await api.api.gamification.inventory.use.post(
       { itemId: '00000000-0000-0000-0000-000000000000' },
-      { headers: { authorization: `Bearer ${token}` } }
+      { headers: { authorization: `Bearer ${token}` } },
     )
-    
+
     // Expecting 404 because the user does not have this item
     if (status !== 404) console.log('USE ERROR:', error)
     expect(status).toBe(404)
