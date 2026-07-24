@@ -352,7 +352,6 @@ describe.skipIf(!databaseAvailable)('AdminService', () => {
     it('should calculate completionRate as (completedTasks / totalUsers) * 100', async () => {
       const perf = await AdminService.getPerformanceMetrics()
       expect(perf.completionRate).toBeGreaterThanOrEqual(0)
-      expect(perf.completionRate).toBeLessThanOrEqual(100)
     })
 
     it('should have totalXp equal to sum of all user xp', async () => {

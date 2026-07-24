@@ -85,9 +85,8 @@ export const adminController = new Elysia({ prefix: '/admin' })
 
   .post(
     '/users/:id/ban',
-    async ({ params: { id } }) => {
-      //const userId = requireAuth()
-
+    async ({ requireAuth, params: { id } }) => {
+      requireAuth()
       return await AdminService.banUser(id)
     },
     {
@@ -100,9 +99,8 @@ export const adminController = new Elysia({ prefix: '/admin' })
 
   .post(
     '/users/:id/unban',
-    async ({ params: { id } }) => {
-      //const userId = requireAuth()
-
+    async ({ requireAuth, params: { id } }) => {
+      requireAuth()
       return await AdminService.unbanUser(id)
     },
     {

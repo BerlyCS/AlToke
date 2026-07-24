@@ -155,35 +155,35 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
 
   describe('POST /admin/users/:id/ban', () => {
     it('should ban a user and return 200', async () => {
-      const { status, json } = await request('POST', `/admin/users/${targetUserId}/ban`)
+      const { status, json } = await request('POST', `/admin/users/${targetUserId}/ban`, undefined, adminToken)
       expect(status).toBe(200)
       expect(json.success).toBe(true)
       expect(json.userId).toBe(targetUserId)
     })
 
     it('should return error when the user is already banned', async () => {
-      await request('POST', `/admin/users/${targetUserId}/ban`)
-      const { status } = await request('POST', `/admin/users/${targetUserId}/ban`)
+      await request('POST', `/admin/users/${targetUserId}/ban`, undefined, adminToken)
+      const { status } = await request('POST', `/admin/users/${targetUserId}/ban`, undefined, adminToken)
       expect(status).not.toBe(200)
     })
 
     it('should return error when the user does not exist', async () => {
-      const { status } = await request('POST', `/admin/users/${NON_EXISTENT_ID}/ban`)
+      const { status } = await request('POST', `/admin/users/${NON_EXISTENT_ID}/ban`, undefined, adminToken)
       expect(status).not.toBe(200)
     })
   })
 
   describe('POST /admin/users/:id/unban', () => {
     it('should unban a banned user and return 200', async () => {
-      await request('POST', `/admin/users/${targetUserId}/ban`)
-      const { status, json } = await request('POST', `/admin/users/${targetUserId}/unban`)
+      await request('POST', `/admin/users/${targetUserId}/ban`, undefined, adminToken)
+      const { status, json } = await request('POST', `/admin/users/${targetUserId}/unban`, undefined, adminToken)
       expect(status).toBe(200)
       expect(json.success).toBe(true)
       expect(json.userId).toBe(targetUserId)
     })
 
     it('should return error when the user does not exist', async () => {
-      const { status } = await request('POST', `/admin/users/${NON_EXISTENT_ID}/unban`)
+      const { status } = await request('POST', `/admin/users/${NON_EXISTENT_ID}/unban`, undefined, adminToken)
       expect(status).not.toBe(200)
     })
   })
@@ -195,7 +195,7 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
         bio: 'Moderated bio',
         avatarUrl: 'https://example.com/avatar.png',
         reason: 'Test moderation',
-      })
+      }, adminToken)
       expect(status).toBe(200)
       expect(json.status).toBe(200)
       expect(json.data.success).toBe(true)
@@ -205,7 +205,7 @@ describe.skipIf(!databaseAvailable)('Admin Controller', () => {
     it('should return 404 when the user does not exist', async () => {
       const { status, json } = await request('POST', `/admin/users/${NON_EXISTENT_ID}/moderate`, {
         reason: 'Test moderation',
-      })
+      }, adminToken)
       expect(status).toBe(404)
       expect(json.status).toBe(404)
       expect(json.error).toBe('User not found')
