@@ -269,7 +269,8 @@ function onTaskCreated(created: Task) {
       </Button>
       <Button
         variant="outline"
-        class="h-12 px-5 rounded-2xl font-bold border-border gap-2 relative overflow-hidden"
+        class="h-12 px-5 rounded-2xl font-bold border-border gap-2 relative overflow-hidden animate-fadeInUp"
+        style="animation-delay: 0.2s; animation-fill-mode: both;"
         :disabled="aiLoading"
         @click="fetchAiSuggestions()"
       >
@@ -283,7 +284,7 @@ function onTaskCreated(created: Task) {
       </Button>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 animate-fadeInUp" style="animation-delay: 0.3s; animation-fill-mode: both;">
       <button
         data-cy="tasks-tab"
         class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200 flex items-center gap-2"
@@ -360,7 +361,7 @@ function onTaskCreated(created: Task) {
     </template>
 
     <template v-else>
-      <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center gap-3 flex-wrap animate-fadeInUp" style="animation-delay: 0.4s; animation-fill-mode: both;">
         <button
           class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
           :class="
@@ -419,7 +420,7 @@ function onTaskCreated(created: Task) {
         </button>
       </div>
 
-      <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center gap-3 flex-wrap animate-fadeInUp" style="animation-delay: 0.5s; animation-fill-mode: both;">
         <div class="relative">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
@@ -486,7 +487,7 @@ function onTaskCreated(created: Task) {
         </button>
       </div>
 
-      <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center gap-3 flex-wrap animate-fadeInUp" style="animation-delay: 0.6s; animation-fill-mode: both;">
         <span class="text-sm text-muted-foreground font-semibold mr-1">Tipo:</span>
         <button
           class="px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200"
@@ -543,7 +544,7 @@ function onTaskCreated(created: Task) {
         </button>
       </div>
 
-      <div v-if="tags.length > 0" class="flex items-center gap-2 flex-wrap">
+      <div v-if="tags.length > 0" class="flex items-center gap-2 flex-wrap animate-fadeInUp" style="animation-delay: 0.7s; animation-fill-mode: both;">
         <span class="text-sm text-muted-foreground font-semibold mr-1">
           <Filter class="w-3.5 h-3.5 inline mr-1" />
           Tags:
@@ -570,7 +571,7 @@ function onTaskCreated(created: Task) {
         ></div>
       </div>
 
-      <Card v-else class="border-border bg-card/60 backdrop-blur-xl shadow-2xl">
+      <Card v-else class="border-border bg-card/60 backdrop-blur-xl shadow-2xl animate-fadeInUp" style="animation-delay: 0.8s; animation-fill-mode: both;">
         <CardContent class="grid gap-3 p-6">
           <TaskCard
             v-for="task in filteredTasks"

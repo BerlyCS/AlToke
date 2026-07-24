@@ -159,6 +159,8 @@ function onTaskCreated(created: Task) {
     <template v-else>
       <div class="grid md:grid-cols-3 gap-6">
         <StatCard
+          class="animate-fadeInUp"
+          style="animation-delay: 0.1s; animation-fill-mode: both;"
           title="Tareas completadas"
           :value="completedTasksCount"
           :icon="CheckCircle"
@@ -167,6 +169,8 @@ function onTaskCreated(created: Task) {
           textColor="text-primary"
         />
         <StatCard
+          class="animate-fadeInUp"
+          style="animation-delay: 0.2s; animation-fill-mode: both;"
           title="XP Ganada"
           :value="authStore.profile?.xp || 0"
           :icon="Zap"
@@ -175,6 +179,8 @@ function onTaskCreated(created: Task) {
           textColor="text-yellow-500"
         />
         <StatCard
+          class="animate-fadeInUp"
+          style="animation-delay: 0.3s; animation-fill-mode: both;"
           title="Ranking Global"
           :value="globalRanking"
           :icon="Trophy"
@@ -185,7 +191,7 @@ function onTaskCreated(created: Task) {
       </div>
 
       <div class="grid xl:grid-cols-3 gap-6">
-        <div class="xl:col-span-2 min-w-0">
+        <div class="xl:col-span-2 min-w-0 animate-fadeInUp" style="animation-delay: 0.4s; animation-fill-mode: both;">
           <UpcomingTasks
             :tasks="tasksWithDeadline"
             @toggle-status="toggleStatus"
@@ -207,7 +213,8 @@ function onTaskCreated(created: Task) {
 
         <div class="space-y-6">
           <Card
-            class="rounded-3xl border-0 bg-primary text-primary-foreground shadow-2xl overflow-hidden"
+            class="rounded-3xl border-0 bg-primary text-primary-foreground shadow-2xl overflow-hidden animate-fadeInUp"
+            style="animation-delay: 0.5s; animation-fill-mode: both;"
           >
             <CardContent class="p-8 bg-linear-to-br from-primary to-primary/80">
               <div class="flex items-center justify-between">
@@ -225,7 +232,7 @@ function onTaskCreated(created: Task) {
           </Card>
 
           <!-- Quick Actions -->
-          <Card class="rounded-[35px] shadow-xl border-border bg-card">
+          <Card class="rounded-[35px] shadow-xl border-border bg-card animate-fadeInUp" style="animation-delay: 0.6s; animation-fill-mode: both;">
             <CardContent class="p-8">
               <h3 class="text-2xl font-black">Acciones rápidas</h3>
               <div class="grid grid-cols-2 gap-4 mt-6">

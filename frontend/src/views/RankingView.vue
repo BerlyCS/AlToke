@@ -121,7 +121,8 @@ const thirdPlace = computed(() => top3.value[2])
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <!-- Card 1 (Tu Posición) -->
       <Card
-        class="bg-primary text-primary-foreground border-none shadow-lg shadow-primary/20 relative overflow-hidden"
+        class="bg-primary text-primary-foreground border-none shadow-lg shadow-primary/20 relative overflow-hidden animate-fadeInUp"
+        style="animation-delay: 0.1s; animation-fill-mode: both;"
       >
         <div class="absolute right-0 top-0 opacity-10 scale-150 translate-x-4 -translate-y-4">
           <Trophy class="w-32 h-32" />
@@ -166,7 +167,7 @@ const thirdPlace = computed(() => top3.value[2])
       </Card>
 
       <!-- Card 2 (Nivel Actual) -->
-      <Card class="shadow-sm hover:shadow-md transition-shadow">
+      <Card class="shadow-sm hover:shadow-md transition-shadow animate-fadeInUp" style="animation-delay: 0.2s; animation-fill-mode: both;">
         <CardContent class="p-6 flex flex-col h-full">
           <div class="flex justify-between items-start">
             <div>
@@ -193,7 +194,8 @@ const thirdPlace = computed(() => top3.value[2])
 
       <!-- Card 3 (Racha Actual) -->
       <Card
-        class="shadow-sm hover:shadow-md transition-shadow border-orange-200 dark:border-orange-900/30"
+        class="shadow-sm hover:shadow-md transition-shadow border-orange-200 dark:border-orange-900/30 animate-fadeInUp"
+        style="animation-delay: 0.3s; animation-fill-mode: both;"
       >
         <CardContent
           class="p-6 flex flex-col h-full bg-gradient-to-br from-card to-orange-50 dark:to-orange-950/10"
@@ -247,7 +249,7 @@ const thirdPlace = computed(() => top3.value[2])
       />
 
       <!-- Tabla de Posiciones -->
-      <Card class="rounded-2xl overflow-hidden border shadow-sm mt-12 max-w-5xl mx-auto">
+      <Card class="rounded-2xl overflow-hidden border shadow-sm mt-12 max-w-5xl mx-auto animate-fadeInUp" style="animation-delay: 0.5s; animation-fill-mode: both;">
         <CardHeader class="bg-muted/50 border-b pb-4">
           <CardTitle>Tabla de posiciones</CardTitle>
           <CardDescription>Clasificación completa de todos los jugadores</CardDescription>

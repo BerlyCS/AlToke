@@ -144,8 +144,11 @@ function handleDeleteTask(id: string) {
 
 <template>
   <div class="flex flex-col h-[calc(100vh-2rem)] w-full max-w-[1600px] mx-auto gap-4">
-    <!-- Header -->
-    <div class="flex flex-col lg:flex-row items-center justify-between gap-4">
+    <!-- Header Actions -->
+    <div
+      class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-4 shrink-0 animate-fadeInUp"
+      style="animation-delay: 0.1s; animation-fill-mode: both;"
+    >
       <div class="text-center lg:text-left w-full lg:w-auto">
         <h2 class="text-3xl font-black capitalize">{{ dfMonth.format(currentDate) }}</h2>
         <p class="text-muted-foreground font-semibold">Organiza tu tiempo de manera visual</p>
@@ -198,7 +201,7 @@ function handleDeleteTask(id: string) {
     <!-- Main Layout -->
     <div class="flex flex-col xl:flex-row gap-4 flex-1 min-h-0">
       <!-- Calendar Area -->
-      <div class="flex-1 flex flex-col min-h-0">
+      <div class="flex-1 flex flex-col min-h-0 animate-fadeInUp" style="animation-delay: 0.2s; animation-fill-mode: both;">
         <CalendarDayView
           v-if="viewMode === 'day'"
           :current-date="currentDate"
@@ -225,7 +228,8 @@ function handleDeleteTask(id: string) {
       <div class="w-full xl:w-70 flex flex-col gap-4 min-h-0 shrink-0">
         <!-- Summary Card -->
         <Card
-          class="bg-primary text-primary-foreground border-primary shadow-xl rounded-3xl overflow-hidden shrink-0 relative"
+          class="bg-primary text-primary-foreground border-primary shadow-xl rounded-3xl overflow-hidden shrink-0 relative animate-fadeInUp"
+          style="animation-delay: 0.3s; animation-fill-mode: both;"
         >
           <div class="absolute -right-4 -bottom-4 opacity-20 pointer-events-none">
             <CalendarCheck class="w-36 h-36" />
@@ -247,7 +251,8 @@ function handleDeleteTask(id: string) {
 
         <!-- Upcoming Tasks Card -->
         <Card
-          class="flex-1 flex flex-col min-h-0 border-border shadow-xl rounded-3xl bg-card/60 backdrop-blur-xl"
+          class="flex-1 flex flex-col min-h-0 border-border shadow-xl rounded-3xl bg-card/60 backdrop-blur-xl animate-fadeInUp"
+          style="animation-delay: 0.4s; animation-fill-mode: both;"
         >
           <CardHeader class="pb-4 shrink-0 border-b border-border/50">
             <CardTitle class="text-xl font-black flex items-center justify-between">
