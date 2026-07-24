@@ -91,6 +91,7 @@ describe('TaskService', () => {
       
       const xpSpy = spyOn(GamificationService, 'addXP').mockResolvedValue({
         gainedXp: 70, // XP_BASE(10) + 30 * XP_PER_MINUTE(2)
+        totalXp: 70,
         leveledUp: false,
         currentLevel: 1,
         streakCount: 2,
@@ -122,8 +123,9 @@ describe('TaskService', () => {
       expect(notifSpy).toHaveBeenCalled()
 
       // Verify Result
-      expect(result!.xpAwarded).toBe(70)
-      expect(result!.newStreak).toBe(2)
+      const successResult = result as any
+      expect(successResult.xpAwarded).toBe(70)
+      expect(successResult.newStreak).toBe(2)
     })
 
     it('awards milestone achievements on exactly 10, 50, 100 completions', async () => {
@@ -131,7 +133,7 @@ describe('TaskService', () => {
       spyOn(TaskRepository, 'findById').mockResolvedValue(task as any)
       spyOn(TaskRepository, 'markCompleted').mockResolvedValue({ ...task, status: 'COMPLETED' } as any)
       spyOn(GamificationService, 'addXP').mockResolvedValue({
-        gainedXp: 10, leveledUp: false, currentLevel: 1, streakCount: 1, unlockedAchievements: [],
+        gainedXp: 10, totalXp: 10, leveledUp: false, currentLevel: 1, streakCount: 1, unlockedAchievements: [],
       })
       spyOn(NotificationService, 'recordNotification').mockResolvedValue(undefined as any)
       
@@ -142,7 +144,8 @@ describe('TaskService', () => {
       const result = await TaskService.completeTask('user-1', 'task-1')
 
       expect(achSpy).toHaveBeenCalledWith('user-1', 'tasks_10')
-      expect(result!.unlockedAchievements.length).toBe(1)
+      const successResult = result as any
+      expect(successResult.unlockedAchievements.length).toBe(1)
     })
   })
 })
