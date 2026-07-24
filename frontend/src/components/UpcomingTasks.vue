@@ -43,15 +43,18 @@ defineEmits(['toggleStatus', 'deleteTask', 'openTask'])
 
 const todayTasks = computed(() => {
   const now = new Date()
-  return props.tasks.filter((task) => {
-    if (!task.dueDate) return false
-    const d = new Date(task.dueDate)
-    return (
-      d.getDate() === now.getDate() &&
-      d.getMonth() === now.getMonth() &&
-      d.getFullYear() === now.getFullYear()
-    )
-  })
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const endOfWindow = new Date(startOfToday)
+  endOfWindow.setDate(startOfToday.getDate() + 7)
+
+  return props.tasks
+    .filter((task) => {
+      if (!task.dueDate) return false
+      if (task.status === 'COMPLETED') return false
+      const d = new Date(task.dueDate)
+      return d >= startOfToday && d < endOfWindow
+    })
+    .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
 })
 
 function formatTime(val: string | Date) {
