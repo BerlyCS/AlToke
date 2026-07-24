@@ -90,3 +90,45 @@ vi.mock('lucide-vue-next', async (importOriginal) => {
     },
   })
 })
+
+// Stub global components that are used everywhere
+config.global.stubs = {
+  RouterLink: {
+    template: '<a><slot /></a>',
+    props: ['to'],
+  },
+  RouterView: {
+    template: '<div />',
+  },
+  Dialog: {
+    template: '<div v-if="open"><slot /></div>',
+    props: ['open'],
+  },
+  DialogContent: {
+    template: '<div><slot /></div>',
+    props: ['class', 'showCloseButton'],
+  },
+  DialogHeader: {
+    template: '<div><slot /></div>',
+  },
+  DialogTitle: {
+    template: '<div><slot /></div>',
+  },
+  DialogDescription: {
+    template: '<div><slot /></div>',
+  },
+  DialogFooter: {
+    template: '<div><slot /></div>',
+  },
+  DialogClose: {
+    template: '<button><slot /></button>',
+  },
+  DialogTrigger: {
+    template: '<span><slot /></span>',
+  },
+}
+
+// Global beforeEach to set up a fresh pinia for each test
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
