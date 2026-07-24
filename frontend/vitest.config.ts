@@ -9,6 +9,8 @@ export default mergeConfig(
       environment: 'jsdom',
       exclude: [...configDefaults.exclude, 'cypress/**', 'node_modules/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
+      setupFiles: ['./tests/setupTests.ts'],
+      include: ['src/**/*.{spec,test}.ts', 'tests/**/*.{spec,test}.ts'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'lcov'],
