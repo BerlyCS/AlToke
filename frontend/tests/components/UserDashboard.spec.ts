@@ -10,6 +10,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 vi.mock('@/services/task.service', () => ({
   taskService: {
     getAllTasks: vi.fn<() => void>(),
+    getActiveTasks: vi.fn<() => void>(),
     completeTask: vi.fn<() => void>(),
     updateTask: vi.fn<() => void>(),
     deleteTask: vi.fn<() => void>(),

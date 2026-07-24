@@ -16,6 +16,7 @@ export const mockUserService = {
 
 export const mockTaskService = {
   getAllTasks: vi.fn<(...args: any[]) => any>(),
+  getActiveTasks: vi.fn<(...args: any[]) => any>(),
   createTask: vi.fn<(...args: any[]) => any>(),
   updateTask: vi.fn<(...args: any[]) => any>(),
   deleteTask: vi.fn<(...args: any[]) => any>(),
