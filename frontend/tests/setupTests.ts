@@ -58,3 +58,35 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 vi.mock('@elysiajs/eden', () => ({
   treaty: vi.fn(() => ({})),
 }))
+
+// Mock lucide-vue-next icons as simple Vue stubs
+vi.mock('lucide-vue-next', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('lucide-vue-next')>()
+  const stub = (name: string) => ({
+    name,
+    render() {
+      return null
+    },
+  })
+  const mock: Record<string, any> = {}
+  for (const key of Object.keys(actual)) {
+    const val = (actual as Record<string, any>)[key]
+    if (typeof val === 'function' && val.prototype?.constructor === val) {
+      mock[key] = stub(key)
+    } else if (typeof val === 'function') {
+      mock[key] = stub(key)
+    } else {
+      mock[key] = val
+    }
+  }
+  return new Proxy(mock, {
+    get(target, prop, receiver) {
+      if (prop in target) return Reflect.get(target, prop, receiver)
+      if (typeof prop === 'symbol') return undefined
+      return stub(String(prop))
+    },
+    has(target, prop) {
+      return true
+    },
+  })
+})
