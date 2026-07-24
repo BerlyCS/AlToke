@@ -36,7 +36,10 @@ describe('LoginView', () => {
   })
 
   const stubs = {
-    Button: { template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>', props: ['disabled'] },
+    Button: {
+      template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+      props: ['disabled'],
+    },
     Input: { template: '<input />', props: ['modelValue'] },
     Label: { template: '<label><slot /></label>' },
     Card: { template: '<div><slot /></div>' },

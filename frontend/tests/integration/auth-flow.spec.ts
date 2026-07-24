@@ -49,11 +49,7 @@ describe('Auth Integration Flow', () => {
 
   it('completes logout flow: store clear -> localStorage clear', async () => {
     const store = useAuthStore()
-    store.setAuth(
-      { id: '1', email: 'test@test.com', nickname: 'Test' },
-      mockProfile,
-      'some-token',
-    )
+    store.setAuth({ id: '1', email: 'test@test.com', nickname: 'Test' }, mockProfile, 'some-token')
 
     expect(store.token).toBe('some-token')
     store.logout()
@@ -88,9 +84,9 @@ describe('Auth Integration Flow', () => {
     const store = useAuthStore()
     ;(authService.login as any).mockRejectedValue(new Error('Invalid credentials'))
 
-    await expect(
-      authService.login({ email: 'test@test.com', password: 'wrong' }),
-    ).rejects.toThrow('Invalid credentials')
+    await expect(authService.login({ email: 'test@test.com', password: 'wrong' })).rejects.toThrow(
+      'Invalid credentials',
+    )
 
     expect(store.token).toBeNull()
     expect(store.profile).toBeNull()
@@ -98,11 +94,7 @@ describe('Auth Integration Flow', () => {
 
   it('persists profile updates across sessions', async () => {
     const store = useAuthStore()
-    store.setAuth(
-      { id: '1', email: 'test@test.com', nickname: 'Test' },
-      mockProfile,
-      'token',
-    )
+    store.setAuth({ id: '1', email: 'test@test.com', nickname: 'Test' }, mockProfile, 'token')
 
     store.updateProfile({ ...mockProfile, nickname: 'UpdatedName' })
     expect(store.profile?.nickname).toBe('UpdatedName')
@@ -113,11 +105,7 @@ describe('Auth Integration Flow', () => {
 
   it('addXP updates profile correctly after task completion', async () => {
     const store = useAuthStore()
-    store.setAuth(
-      { id: '1', email: 'test@test.com', nickname: 'Test' },
-      mockProfile,
-      'token',
-    )
+    store.setAuth({ id: '1', email: 'test@test.com', nickname: 'Test' }, mockProfile, 'token')
 
     store.addXP(50, 6, 8)
     expect(store.profile!.xp).toBe(550)

@@ -68,11 +68,7 @@ describe('Gamification Integration', () => {
   it('complete task triggers XP reward with level up', async () => {
     const { useGamification } = await import('@/composables/useGamification')
     const store = useAuthStore()
-    store.setAuth(
-      { id: '1', email: 'test@test.com', nickname: 'Test' },
-      mockProfile,
-      'token',
-    )
+    store.setAuth({ id: '1', email: 'test@test.com', nickname: 'Test' }, mockProfile, 'token')
 
     const { showReward } = useGamification()
     const result = { ...mockCompleteTaskResult, leveledUp: true, newLevel: 6, xpAwarded: 100 }

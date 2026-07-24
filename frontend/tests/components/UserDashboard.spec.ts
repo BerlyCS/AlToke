@@ -44,7 +44,11 @@ vi.mock('@/components/UpcomingTasks.vue', () => ({
 }))
 
 vi.mock('@/components/StatCard.vue', () => ({
-  default: { name: 'StatCard', props: ['title', 'value'], template: '<div>{{ title }}: {{ value }}</div>' },
+  default: {
+    name: 'StatCard',
+    props: ['title', 'value'],
+    template: '<div>{{ title }}: {{ value }}</div>',
+  },
 }))
 
 describe('UserDashboard', () => {
@@ -54,7 +58,14 @@ describe('UserDashboard', () => {
     localStorage.setItem('token', 'test-token')
     setActivePinia(createPinia())
     const store = useAuthStore()
-    store.profile = { id: 'user-1', nickname: 'TestUser', xp: 500, level: 5, currentStreak: 7, role: 'USER' } as any
+    store.profile = {
+      id: 'user-1',
+      nickname: 'TestUser',
+      xp: 500,
+      level: 5,
+      currentStreak: 7,
+      role: 'USER',
+    } as any
     router = createRouter({
       history: createMemoryHistory(),
       routes: [

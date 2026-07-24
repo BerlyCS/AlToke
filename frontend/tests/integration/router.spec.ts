@@ -48,7 +48,16 @@ describe('Router navigation guards', () => {
     const store = useAuthStore()
     store.setAuth(
       { id: '1', email: 'test@test.com', nickname: 'Test' },
-      { id: '1', role: 'USER', xp: 0, level: 1, currentStreak: 0, maxStreak: 0, nickname: 'Test', email: 'test@test.com' },
+      {
+        id: '1',
+        role: 'USER',
+        xp: 0,
+        level: 1,
+        currentStreak: 0,
+        maxStreak: 0,
+        nickname: 'Test',
+        email: 'test@test.com',
+      },
       'valid-token',
     )
 
@@ -71,7 +80,16 @@ describe('Router navigation guards', () => {
     const store = useAuthStore()
     store.setAuth(
       { id: '1', email: 'test@test.com', nickname: 'Test' },
-      { id: '1', role: 'USER', xp: 0, level: 1, currentStreak: 0, maxStreak: 0, nickname: 'Test', email: 'test@test.com' },
+      {
+        id: '1',
+        role: 'USER',
+        xp: 0,
+        level: 1,
+        currentStreak: 0,
+        maxStreak: 0,
+        nickname: 'Test',
+        email: 'test@test.com',
+      },
       'valid-token',
     )
 

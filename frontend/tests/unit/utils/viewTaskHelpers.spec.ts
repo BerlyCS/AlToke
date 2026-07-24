@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { mockTasks, mockTask, mockCompletedTask, mockMeetingTask, mockEventTask } from '../../fixtures'
+import {
+  mockTasks,
+  mockTask,
+  mockCompletedTask,
+  mockMeetingTask,
+  mockEventTask,
+} from '../../fixtures'
 
 describe('ViewTaskDialog helper functions', () => {
   function getPriorityIcon(priority: string) {

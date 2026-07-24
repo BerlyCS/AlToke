@@ -52,7 +52,10 @@ export async function mountComponent(
     Input: { template: '<input />' },
     Label: { template: '<label><slot /></label>' },
     Textarea: { template: '<textarea><slot /></textarea>' },
-    Progress: { template: '<div role="progressbar" :style="{ width: modelValue + \'%\' }"><slot /></div>', props: ['modelValue'] },
+    Progress: {
+      template: '<div role="progressbar" :style="{ width: modelValue + \'%\' }"><slot /></div>',
+      props: ['modelValue'],
+    },
     Avatar: { template: '<div><slot /></div>' },
     AvatarImage: { template: '<img />', props: ['src'] },
     AvatarFallback: { template: '<div><slot /></div>' },
