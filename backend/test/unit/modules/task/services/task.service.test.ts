@@ -16,6 +16,7 @@ const makeTask = (overrides: any = {}) => ({
   recurrence: 'NONE',
   startDate: new Date('2026-07-01T10:00:00Z'),
   dueDate: new Date('2026-07-01T12:00:00Z'),
+  completedAt: null,
   deletedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
