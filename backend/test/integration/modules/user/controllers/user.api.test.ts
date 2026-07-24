@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeAll } from 'bun:test'
-import { api, createTestUserAndLogin, isDatabaseAvailable } from '../utils'
+import { api, createTestUserAndLogin, isDatabaseAvailable } from '../../../../utils'
 
 const databaseAvailable = await isDatabaseAvailable()
 

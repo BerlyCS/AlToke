@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { api, isDatabaseAvailable, createTestUserAndLogin } from '../utils'
+import { api, isDatabaseAvailable, createTestUserAndLogin } from '../../../../utils'
 
 const databaseAvailable = await isDatabaseAvailable()
 
@@ -35,7 +35,6 @@ describe.skipIf(!databaseAvailable)('Friendship API', () => {
     const user1 = await createTestUserAndLogin()
     const user2 = await createTestUserAndLogin()
 
-    // user1 sends request to user2
     const request = await api.api.friendships.request.post(
       { addresseeId: user2.userId },
       { headers: { authorization: `Bearer ${user1.token}` } },
@@ -43,7 +42,6 @@ describe.skipIf(!databaseAvailable)('Friendship API', () => {
 
     const friendshipId = request.data!.id
 
-    // user2 accepts the request
     const { data, error, status } = await api.api.friendships.accept.post(
       { friendshipId },
       { headers: { authorization: `Bearer ${user2.token}` } },
@@ -110,7 +108,6 @@ describe.skipIf(!databaseAvailable)('Friendship API', () => {
     expect(status).toBe(200)
     expect(error).toBeNull()
     expect(data).toBeInstanceOf(Array)
-    // Should not contain user1
     const foundUser1 = data?.find((u) => u.id === user1.userId)
     expect(foundUser1).toBeUndefined()
   })

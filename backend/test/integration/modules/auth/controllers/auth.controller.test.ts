@@ -1,9 +1,9 @@
 import { describe, expect, it, spyOn } from 'bun:test'
 import { createHash, randomBytes } from 'node:crypto'
-import { api, isDatabaseAvailable } from '../utils'
-import { db } from '../../src/db'
-import { passwordResetTokens, users } from '../../src/db/schema'
-import { EmailService } from '../../src/modules/email/email.service'
+import { api, isDatabaseAvailable } from '../../../../utils'
+import { db } from '../../../../../src/db'
+import { passwordResetTokens, users } from '../../../../../src/db/schema'
+import { EmailService } from '../../../../../src/modules/email/email.service'
 import { eq } from 'drizzle-orm'
 
 const testUserEmail = `auth-test-${Date.now()}@example.com`
