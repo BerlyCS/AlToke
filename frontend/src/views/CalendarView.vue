@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
+import confetti from 'canvas-confetti'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
 import TaskCard from '@/components/TaskCard.vue'
 
@@ -130,12 +131,30 @@ function handleSelectDay(day: Date) {
   viewMode.value = 'day'
 }
 
-function toggleStatus(task: Task) {
+async function toggleStatus(task: Task) {
   const taskWithDeadline = tasksWithDeadline.value.find((t) => t.id === task.id)
+  const isCompleting = task.status !== 'COMPLETED'
+  if (isCompleting && taskWithDeadline?.deadlineStatus !== 'expired') {
+    const el = document.querySelector(`[data-cy="task-row-${task.id}"]`)
+    if (el) {
+      el.classList.add('anim-task-complete')
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      })
+      await new Promise((r) => setTimeout(r, 800))
+    }
+  }
   toggleTaskStatus(task, taskWithDeadline?.deadlineStatus === 'expired')
 }
 
-function handleDeleteTask(id: string) {
+async function handleDeleteTask(id: string) {
+  const el = document.querySelector(`[data-cy="task-row-${id}"]`)
+  if (el) {
+    el.classList.add('anim-task-delete')
+    await new Promise((r) => setTimeout(r, 600))
+  }
   deleteTask(id, () => {
     showViewModal.value = false
   })
@@ -275,14 +294,17 @@ function handleDeleteTask(id: string) {
                   <p class="text-sm opacity-80">Para esta fecha</p>
                 </div>
 
-                <TaskCard
-                  v-for="task in pendingDayTasks"
-                  :key="task.id"
-                  :task="task"
-                  @click="openTask(task)"
-                  @toggle-status="toggleTaskStatus"
-                  @delete-task="deleteTask"
-                />
+                <TransitionGroup name="task-list" tag="div" class="grid gap-3 relative">
+                  <TaskCard
+                    v-for="task in pendingDayTasks"
+                    :key="task.id"
+                    :task="task"
+                    :data-cy="`task-row-${task.id}`"
+                    @click="openTask(task)"
+                    @toggle-status="toggleStatus"
+                    @delete-task="handleDeleteTask"
+                  />
+                </TransitionGroup>
               </div>
             </ScrollArea>
           </CardContent>

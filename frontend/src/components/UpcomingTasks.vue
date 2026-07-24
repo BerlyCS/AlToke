@@ -86,16 +86,17 @@ const totalUpcomingCount = computed(
           <AlertCircle class="w-4 h-4" />
           <span>Próximas a vencer</span>
         </div>
-        <div class="grid gap-3">
+        <TransitionGroup name="task-list" tag="div" class="grid gap-3 relative">
           <TaskCard
             v-for="task in expiringTasks"
             :key="task.id"
             :task="task"
+            :data-cy="`task-row-${task.id}`"
             @click="emit('openTask', task)"
             @toggle-status="emit('toggleStatus', $event)"
             @delete-task="emit('deleteTask', $event)"
           />
-        </div>
+        </TransitionGroup>
       </div>
 
       <!-- Sección: Para hoy -->
@@ -104,16 +105,17 @@ const totalUpcomingCount = computed(
           <Sun class="w-4 h-4" />
           <span>Para hoy</span>
         </div>
-        <div class="grid gap-3">
+        <TransitionGroup name="task-list" tag="div" class="grid gap-3 relative">
           <TaskCard
             v-for="task in todayTasks"
             :key="task.id"
             :task="task"
+            :data-cy="`task-row-${task.id}`"
             @click="emit('openTask', task)"
             @toggle-status="emit('toggleStatus', $event)"
             @delete-task="emit('deleteTask', $event)"
           />
-        </div>
+        </TransitionGroup>
       </div>
 
       <!-- Sección: Próximas (General) -->
@@ -122,16 +124,17 @@ const totalUpcomingCount = computed(
           <Calendar class="w-4 h-4" />
           <span>Próximos días</span>
         </div>
-        <div class="grid gap-3">
+        <TransitionGroup name="task-list" tag="div" class="grid gap-3 relative">
           <TaskCard
             v-for="task in generalTasks"
             :key="task.id"
             :task="task"
+            :data-cy="`task-row-${task.id}`"
             @click="emit('openTask', task)"
             @toggle-status="emit('toggleStatus', $event)"
             @delete-task="emit('deleteTask', $event)"
           />
-        </div>
+        </TransitionGroup>
       </div>
 
       <!-- Empty State -->

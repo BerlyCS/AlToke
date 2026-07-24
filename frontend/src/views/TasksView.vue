@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useTaskManager } from '@/composables/useTaskManager'
 import { useTaskDeadline, type TaskWithDeadline } from '@/composables/useTaskDeadline'
 import type { Task, Tag, TaskSuggestion } from '@/types'
+import confetti from 'canvas-confetti'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import TaskCard from '@/components/TaskCard.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -232,8 +233,30 @@ async function acceptSuggestion(s: TaskSuggestion) {
   }
 }
 
-function toggleStatus(task: TaskWithDeadline) {
+async function handleToggleStatus(task: TaskWithDeadline) {
+  const isCompleting = task.status !== 'COMPLETED'
+  if (isCompleting && task.deadlineStatus !== 'expired') {
+    const el = document.querySelector(`[data-cy="task-row-${task.id}"]`)
+    if (el) {
+      el.classList.add('anim-task-complete')
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      })
+      await new Promise((r) => setTimeout(r, 800))
+    }
+  }
   toggleTaskStatus(task as any, task.deadlineStatus === 'expired')
+}
+
+async function handleDeleteTask(id: string) {
+  const el = document.querySelector(`[data-cy="task-row-${id}"]`)
+  if (el) {
+    el.classList.add('anim-task-delete')
+    await new Promise((r) => setTimeout(r, 600))
+  }
+  deleteTask(id)
 }
 
 function onTaskCreated(created: Task) {
@@ -572,16 +595,18 @@ function onTaskCreated(created: Task) {
       </div>
 
       <Card v-else class="border-border bg-card/60 backdrop-blur-xl shadow-2xl animate-fadeInUp" style="animation-delay: 0.8s; animation-fill-mode: both;">
-        <CardContent class="grid gap-3 p-6">
-          <TaskCard
-            v-for="task in filteredTasks"
-            :key="task.id"
-            :task="(task as any)"
-            :data-cy="`task-row-${task.id}`"
-            @click="openTask(task)"
-            @toggle-status="toggleStatus"
-            @delete-task="deleteTask"
-          />
+        <CardContent class="p-0">
+          <TransitionGroup name="task-list" tag="div" class="grid gap-3 p-6 relative">
+            <TaskCard
+              v-for="task in filteredTasks"
+              :key="task.id"
+              :task="(task as any)"
+              :data-cy="`task-row-${task.id}`"
+              @click="openTask(task)"
+              @toggle-status="handleToggleStatus"
+              @delete-task="handleDeleteTask"
+            />
+          </TransitionGroup>
 
           <div v-if="filteredTasks.length === 0" class="text-center py-16 text-muted-foreground">
             <ListTodo class="w-12 h-12 mx-auto text-muted-foreground/50 mb-4"></ListTodo>

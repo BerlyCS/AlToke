@@ -8,6 +8,7 @@ import { useTaskDeadline } from '@/composables/useTaskDeadline'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import type { Task, LeaderboardEntry } from '@/types'
+import confetti from 'canvas-confetti'
 
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
@@ -107,9 +108,31 @@ async function fetchTasks() {
   }
 }
 
-function toggleStatus(task: Task) {
+async function toggleStatus(task: Task) {
   const taskWithDeadline = tasksWithDeadline.value.find((t) => t.id === task.id)
+  const isCompleting = task.status !== 'COMPLETED'
+  if (isCompleting && taskWithDeadline?.deadlineStatus !== 'expired') {
+    const el = document.querySelector(`[data-cy="task-row-${task.id}"]`)
+    if (el) {
+      el.classList.add('anim-task-complete')
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      })
+      await new Promise((r) => setTimeout(r, 800))
+    }
+  }
   toggleTaskStatus(task, taskWithDeadline?.deadlineStatus === 'expired')
+}
+
+async function handleDeleteTask(id: string) {
+  const el = document.querySelector(`[data-cy="task-row-${id}"]`)
+  if (el) {
+    el.classList.add('anim-task-delete')
+    await new Promise((r) => setTimeout(r, 600))
+  }
+  deleteTask(id)
 }
 
 function logout() {
@@ -195,7 +218,7 @@ function onTaskCreated(created: Task) {
           <UpcomingTasks
             :tasks="tasksWithDeadline"
             @toggle-status="toggleStatus"
-            @delete-task="deleteTask"
+            @delete-task="handleDeleteTask"
             @open-task="openTask"
           />
           <div class="mt-4 flex flex-col items-center gap-3">
