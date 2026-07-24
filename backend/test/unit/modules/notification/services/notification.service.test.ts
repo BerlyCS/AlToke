@@ -52,6 +52,7 @@ describe('NotificationService', () => {
       type: 'SYSTEM_NOTICE',
       title: 'Welcome',
       message: 'Hello there',
+      isRead: false,
       createdAt: '2026-07-04T00:00:00.000Z',
     })
 
