@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { taskService } from '@/services/task.service'
 import { gamificationService } from '@/services/gamification.service'
 import { useAuthStore } from '@/stores/auth'
-import {
-  useGamification,
-  unlockedAchievementsQueue,
-  processAchievementsQueue,
-} from '@/composables/useGamification'
+import { useTaskManager } from '@/composables/useTaskManager'
 import { useTaskDeadline } from '@/composables/useTaskDeadline'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -32,20 +28,24 @@ import {
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
-const { showReward } = useGamification()
 const router = useRouter()
 
-const tasks = ref<Task[]>([])
-const loading = ref(true)
-const showCreateModal = ref(false)
-const showViewModal = ref(false)
-const showEditModal = ref(false)
-const selectedTask = ref<Task | null>(null)
-const editingTask = ref<Task | null>(null)
+const {
+  tasks,
+  loading,
+  showCreateModal,
+  showViewModal,
+  showEditModal,
+  selectedTask,
+  editingTask,
+  openTask,
+  editTask,
+  onTaskCreated: baseOnTaskCreated,
+  onTaskUpdated,
+  toggleTaskStatus,
+  deleteTask
+} = useTaskManager()
 const totalActiveTasks = ref(0)
-const pageSize = 50
-const currentPage = ref(0)
-const hasMore = computed(() => tasks.value.length < totalActiveTasks.value)
 
 const { tasksWithDeadline, startWatching, stopWatching } = useTaskDeadline(tasks)
 
@@ -78,6 +78,12 @@ onMounted(async () => {
     return
   }
   await Promise.all([fetchTasks(), loadLeaderboard()])
+  startWatching()
+  window.addEventListener('altoke:refresh-tasks', fetchTasks)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('altoke:refresh-tasks', fetchTasks)
 })
 
 async function loadLeaderboard() {
@@ -91,10 +97,9 @@ async function loadLeaderboard() {
 async function fetchTasks() {
   try {
     loading.value = true
-    currentPage.value = 0
-    const result = await taskService.getActiveTasks(pageSize, 0)
-    tasks.value = result.tasks
-    totalActiveTasks.value = result.total
+    const result = await taskService.getAllTasks()
+    tasks.value = result
+    totalActiveTasks.value = result.filter(t => t.status !== 'COMPLETED' && t.status !== 'FAILED').length
   } catch (e) {
     console.error(e)
   } finally {
@@ -102,61 +107,9 @@ async function fetchTasks() {
   }
 }
 
-async function loadMore() {
-  try {
-    currentPage.value++
-    const offset = currentPage.value * pageSize
-    const result = await taskService.getActiveTasks(pageSize, offset)
-    tasks.value = [...tasks.value, ...result.tasks]
-  } catch (e) {
-    console.error(e)
-  }
-}
-
-async function toggleStatus(task: Task) {
+function toggleStatus(task: Task) {
   const taskWithDeadline = tasksWithDeadline.value.find((t) => t.id === task.id)
-  if (taskWithDeadline && taskWithDeadline.deadlineStatus === 'expired') {
-    toast.error('No se puede completar', { description: 'Esta tarea ya venció' })
-    return
-  }
-  try {
-    const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-    let updated: Task
-    if (newStatus === 'COMPLETED') {
-      const result = await taskService.completeTask(task.id)
-      updated = { ...task, ...result }
-      if (result.xpAwarded > 0) {
-        authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
-        showReward(
-          result.xpAwarded,
-          task.title,
-          result.leveledUp ?? false,
-          result.newLevel,
-          result.unlockedAchievements,
-        )
-      }
-    } else {
-      const result = await taskService.updateTask(task.id, { status: newStatus })
-      updated = { ...task, ...result }
-    }
-    const index = tasks.value.findIndex((t) => t.id === task.id)
-    if (index !== -1) tasks.value[index] = updated
-  } catch (e: any) {
-    console.error(e)
-    toast.error('Error al completar tarea', { description: e?.message })
-  }
-}
-
-async function deleteTask(id: string) {
-  if (!confirm('¿Seguro que deseas enviar esta tarea a la papelera?')) return
-  try {
-    await taskService.deleteTask(id)
-    tasks.value = tasks.value.filter((t) => t.id !== id)
-    toast.success('Tarea enviada a la papelera')
-  } catch (e: any) {
-    console.error(e)
-    toast.error('Error al eliminar tarea', { description: e?.message })
-  }
+  toggleTaskStatus(task, taskWithDeadline?.deadlineStatus === 'expired')
 }
 
 function logout() {
@@ -165,28 +118,8 @@ function logout() {
   router.push('/')
 }
 
-function openTask(task: Task) {
-  selectedTask.value = task
-  showViewModal.value = true
-}
-
-function editTask(task: Task) {
-  editingTask.value = task
-  showEditModal.value = true
-}
-
-function onTaskUpdated(updated: Task) {
-  const index = tasks.value.findIndex((t) => t.id === updated.id)
-  if (index !== -1) tasks.value[index] = updated
-}
-
 function onTaskCreated(created: Task) {
-  tasks.value.unshift(created)
-  totalActiveTasks.value++
-  if (created.unlockedAchievements?.length) {
-    unlockedAchievementsQueue.value.push(...created.unlockedAchievements)
-    processAchievementsQueue()
-  }
+  baseOnTaskCreated(created, () => totalActiveTasks.value++)
 }
 </script>
 
@@ -260,14 +193,7 @@ function onTaskCreated(created: Task) {
             @open-task="openTask"
           />
           <div class="mt-4 flex flex-col items-center gap-3">
-            <Button
-              v-if="hasMore"
-              variant="outline"
-              class="rounded-2xl h-12 px-8 font-bold border-border gap-2"
-              @click="loadMore"
-            >
-              Cargar más
-            </Button>
+
             <Button
               variant="outline"
               class="rounded-2xl h-12 px-8 font-bold border-border gap-2"

@@ -69,6 +69,7 @@ export const TaskModel = {
       newLevel: t.Number(),
       newStreak: t.Optional(t.Number()),
       unlockedAchievements: t.Optional(t.Array(t.Any())),
+      nextTask: t.Optional(t.Any()),
     }),
   ]),
 } as const

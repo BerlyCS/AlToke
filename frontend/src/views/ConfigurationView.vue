@@ -228,6 +228,7 @@ async function saveChanges() {
               <img
                 :src="editProfile.avatarUrl"
                 alt="Avatar"
+                referrerpolicy="no-referrer"
                 class="w-38 h-38 object-cover bg-background"
               />
               <Button

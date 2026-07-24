@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AdminDashboard from '@/views/AdminDashboard.vue'
 import { adminService } from '@/services/admin.service'
-import { mockAdminMetrics, mockTaskMetrics, mockTopUsers, mockPerformanceMetrics } from '../fixtures'
+import {
+  mockAdminMetrics,
+  mockTaskMetrics,
+  mockTopUsers,
+  mockPerformanceMetrics,
+} from '../fixtures'
 import { useAuthStore } from '@/stores/auth'
 import { setActivePinia, createPinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
@@ -17,7 +22,11 @@ vi.mock('@/services/admin.service', () => ({
 }))
 
 vi.mock('@/components/StatCard.vue', () => ({
-  default: { name: 'StatCard', props: ['title', 'value'], template: '<div>{{ title }}: {{ value }}</div>' },
+  default: {
+    name: 'StatCard',
+    props: ['title', 'value'],
+    template: '<div>{{ title }}: {{ value }}</div>',
+  },
 }))
 
 describe('AdminDashboard', () => {

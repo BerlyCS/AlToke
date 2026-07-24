@@ -23,6 +23,7 @@ const open = ref(false)
 const logs = ref<NotificationLog[]>([])
 const loading = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
+const toastedIds = new Set<string>()
 
 const unreadCount = ref(0)
 
@@ -121,8 +122,9 @@ function pollNotifications() {
     .then((recent) => {
       if (recent.length === 0) return
 
-      const newOnes = recent.filter((n) => !n.isRead)
+      const newOnes = recent.filter((n) => !n.isRead && !toastedIds.has(n.id))
       for (const n of newOnes) {
+        toastedIds.add(n.id)
         import('vue-sonner').then(({ toast }) => {
           toast(n.title, {
             description: n.message,
@@ -139,7 +141,7 @@ function pollNotifications() {
 onMounted(() => {
   loadHistory()
   fetchUnreadCount()
-  pollTimer = setInterval(pollNotifications, 30 * 1000)
+  pollTimer = setInterval(pollNotifications, 120 * 1000) // 2 minutes
 })
 
 onUnmounted(() => {

@@ -129,8 +129,9 @@ export interface CompleteTaskResult extends Task {
   xpAwarded: number
   leveledUp: boolean
   newLevel: number
-  newStreak: number
+  newStreak?: number
   unlockedAchievements?: Achievement[]
+  nextTask?: Task
 }
 
 export type NotificationChannel = 'EMAIL' | 'PUSH' | 'IN_APP' | 'SYSTEM'

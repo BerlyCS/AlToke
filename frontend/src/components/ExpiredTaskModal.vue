@@ -31,6 +31,7 @@ const isOpen = computed({
     if (!val) {
       setTimeout(() => {
         processExpiredTaskQueue()
+        window.dispatchEvent(new CustomEvent('altoke:refresh-tasks'))
       }, 300)
     }
   },

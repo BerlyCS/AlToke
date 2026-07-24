@@ -37,7 +37,12 @@ describe('adminService', () => {
 
   it('getMetrics returns admin metrics', async () => {
     const { adminService } = await import('@/services/admin.service')
-    const metrics = { totalUsers: 100, activeUsersDaily: 50, tasksCompletedToday: 25, totalTasks: 500 }
+    const metrics = {
+      totalUsers: 100,
+      activeUsersDaily: 50,
+      tasksCompletedToday: 25,
+      totalTasks: 500,
+    }
     mockApiResult.mockResolvedValue({ data: metrics, error: null, status: 200 })
     const result = await adminService.getMetrics()
     expect(result).toEqual(metrics)

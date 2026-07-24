@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { taskService } from '@/services/task.service'
-import { useAuthStore } from '@/stores/auth'
-import { useGamification } from '@/composables/useGamification'
+import { useTaskManager } from '@/composables/useTaskManager'
 import { useTaskDeadline, type TaskWithDeadline } from '@/composables/useTaskDeadline'
 import { toast } from 'vue-sonner'
 import type { Task } from '@/types'
@@ -14,55 +13,32 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   CalendarCheck,
-  ArrowRight,
   CheckCircle2,
-  Circle,
-  XCircle,
-  Trash2,
-  Clock,
-  Tag,
-  Briefcase,
-  Home,
-  Code,
-  Heart,
-  Star,
-  Book,
-  Coffee,
-  Dumbbell,
-  Music,
-  AlignLeft,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
+import TaskCard from '@/components/TaskCard.vue'
 
 import CalendarWeekView from '@/components/calendar/CalendarWeekView.vue'
 import CalendarDayView from '@/components/calendar/CalendarDayView.vue'
 import CalendarMonthView from '@/components/calendar/CalendarMonthView.vue'
 
-const authStore = useAuthStore()
-const { showReward } = useGamification()
+const {
+  tasks,
+  loading,
+  showViewModal,
+  selectedTask,
+  openTask,
+  onTaskUpdated,
+  deleteTask,
+  toggleTaskStatus
+} = useTaskManager()
 
-const IconMap: Record<string, Component> = {
-  Tag,
-  Briefcase,
-  Home,
-  Code,
-  Heart,
-  Star,
-  Book,
-  Coffee,
-  Dumbbell,
-  Music,
-  AlignLeft,
-}
+
 
 const currentDate = ref(new Date())
 const viewMode = ref<'day' | 'week' | 'month'>('week')
 
-const tasks = ref<Task[]>([])
-const loading = ref(true)
-const selectedTask = ref<Task | null>(null)
-const showViewModal = ref(false)
 const totalActiveTasks = ref(0)
 const pageSize = 50
 const currentPage = ref(0)
@@ -92,56 +68,16 @@ const pendingDayTasks = computed(() => {
   return dayTasks
 })
 
-function getTaskColors(task: TaskWithDeadline) {
-  if (task.deadlineStatus === 'expired') {
-    return {
-      bg: 'bg-red-900/20',
-      text: 'text-red-400',
-      border: 'border-red-500/40',
-    }
-  }
-  const priorityColors: Record<string, { bg: string; text: string; border: string }> = {
-    HIGH: {
-      bg: 'bg-red-500/10',
-      text: 'text-red-500',
-      border: 'border-red-500/20',
-    },
-    MEDIUM: {
-      bg: 'bg-yellow-500/10',
-      text: 'text-yellow-500',
-      border: 'border-yellow-500/20',
-    },
-    LOW: {
-      bg: 'bg-green-500/10',
-      text: 'text-green-500',
-      border: 'border-green-500/20',
-    },
-  }
-  return (
-    priorityColors[task.priority] || {
-      bg: 'bg-primary/10',
-      text: 'text-primary',
-      border: 'border-primary/20',
-    }
-  )
-}
 
-function getDeadlineClass(task: TaskWithDeadline): string {
-  if (task.deadlineStatus === 'expired') return 'opacity-60'
-  if (task.deadlineStatus === 'dueSoon')
-    return 'shadow-[0_0_15px_rgba(239,68,68,0.4)] border-red-500/50'
-  return ''
-}
-
-function formatTimeOnly(dateInput: string | Date) {
-  return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(
-    new Date(dateInput),
-  )
-}
 
 onMounted(async () => {
   await fetchTasks()
   startWatching()
+  window.addEventListener('altoke:refresh-tasks', fetchTasks)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('altoke:refresh-tasks', fetchTasks)
 })
 
 async function fetchTasks() {
@@ -189,61 +125,20 @@ function goToToday() {
   currentDate.value = new Date()
 }
 
-function openTask(task: Task) {
-  selectedTask.value = task
-  showViewModal.value = true
-}
-
 function handleSelectDay(day: Date) {
   currentDate.value = day
   viewMode.value = 'day'
 }
 
-async function toggleStatus(task: Task) {
+function toggleStatus(task: Task) {
   const taskWithDeadline = tasksWithDeadline.value.find((t) => t.id === task.id)
-  if (taskWithDeadline && taskWithDeadline.deadlineStatus === 'expired') {
-    toast.error('No se puede completar', { description: 'Esta tarea ya venció' })
-    return
-  }
-  try {
-    const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-    let updated: Task
-    if (newStatus === 'COMPLETED') {
-      const result = await taskService.completeTask(task.id)
-      updated = { ...task, ...result }
-      if (result.xpAwarded > 0) {
-        authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
-        showReward(
-          result.xpAwarded,
-          task.title,
-          result.leveledUp ?? false,
-          result.newLevel,
-          result.unlockedAchievements,
-        )
-      }
-    } else {
-      const result = await taskService.updateTask(task.id, { status: newStatus })
-      updated = { ...task, ...result }
-    }
-    const index = tasks.value.findIndex((t) => t.id === task.id)
-    if (index !== -1) tasks.value[index] = updated
-  } catch (e: any) {
-    console.error(e)
-    toast.error('Error al cambiar estado de la tarea', { description: e?.message })
-  }
+  toggleTaskStatus(task, taskWithDeadline?.deadlineStatus === 'expired')
 }
 
-async function deleteTask(id: string) {
-  if (!confirm('¿Seguro que deseas eliminar esta tarea?')) return
-  try {
-    await taskService.deleteTask(id)
-    tasks.value = tasks.value.filter((t) => t.id !== id)
+function handleDeleteTask(id: string) {
+  deleteTask(id, () => {
     showViewModal.value = false
-    toast.success('Tarea eliminada con éxito')
-  } catch (e: any) {
-    console.error(e)
-    toast.error('Error al eliminar tarea', { description: e?.message })
-  }
+  })
 }
 </script>
 
@@ -375,95 +270,14 @@ async function deleteTask(id: string) {
                   <p class="text-sm opacity-80">Para esta fecha</p>
                 </div>
 
-                <div
+                <TaskCard
                   v-for="task in pendingDayTasks"
                   :key="task.id"
-                  class="flex items-center justify-between p-3.5 rounded-xl border transition-all min-w-0"
-                  :class="[
-                    getTaskColors(task).bg,
-                    getTaskColors(task).border,
-                    getDeadlineClass(task),
-                    task.status === 'COMPLETED'
-                      ? 'opacity-50'
-                      : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md',
-                  ]"
+                  :task="task"
                   @click="openTask(task)"
-                >
-                  <div class="flex items-center gap-3 w-full min-w-0">
-                    <button
-                      v-if="task.deadlineStatus !== 'expired'"
-                      @click.stop="toggleStatus(task)"
-                      class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
-                    >
-                      <CheckCircle2
-                        v-if="task.status === 'COMPLETED'"
-                        class="w-6 h-6 text-green-500"
-                      />
-                      <Circle v-else class="w-6 h-6 text-muted-foreground" />
-                    </button>
-                    <div v-else class="p-1 shrink-0">
-                      <XCircle class="w-6 h-6 text-red-500" />
-                    </div>
-
-                    <div
-                      class="w-10 h-10 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0"
-                      :class="getTaskColors(task).text"
-                    >
-                      <component
-                        :is="
-                          IconMap[
-                            task.tags && task.tags.length > 0 ? task.tags[0]?.icon || 'Tag' : 'Tag'
-                          ]
-                        "
-                        class="w-5 h-5"
-                      />
-                    </div>
-
-                    <div class="flex flex-col flex-1 min-w-0">
-                      <span
-                        class="font-bold text-base leading-tight truncate"
-                        :class="{
-                          'line-through text-muted-foreground': task.status === 'COMPLETED',
-                          'text-red-400': task.deadlineStatus === 'expired',
-                        }"
-                      >
-                        {{ task.title }}
-                      </span>
-                      <div
-                        class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground font-medium mt-1"
-                      >
-                        <span class="flex items-center gap-1" v-if="task.dueDate">
-                          <Clock class="w-3.5 h-3.5" />
-                          {{ formatTimeOnly(task.dueDate) }}
-                        </span>
-                        <span
-                          v-if="task.deadlineStatus === 'dueSoon'"
-                          class="text-red-400 font-bold"
-                        >
-                          ¡Vence pronto!
-                        </span>
-                        <span
-                          v-if="task.deadlineStatus === 'expired'"
-                          class="text-red-500 font-bold"
-                        >
-                          Vencido
-                        </span>
-                        <span v-if="task.estimatedTime" class="flex items-center gap-1">
-                          • {{ task.estimatedTime }} min
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center pl-1">
-                    <button
-                      class="p-2 rounded-lg hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
-                      @click.stop="deleteTask(task.id)"
-                    >
-                      <Trash2 class="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                  @toggle-status="toggleTaskStatus"
+                  @delete-task="deleteTask"
+                />
               </div>
             </ScrollArea>
           </CardContent>
@@ -485,7 +299,7 @@ async function deleteTask(id: string) {
       v-model:open="showViewModal"
       :task="selectedTask"
       :deadline-status="selectedTaskDeadlineStatus"
-      @delete-task="deleteTask"
+      @delete-task="handleDeleteTask"
       @toggle-status="toggleStatus"
       @edit-task="() => {}"
     />

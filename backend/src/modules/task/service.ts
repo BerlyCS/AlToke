@@ -51,6 +51,7 @@ export abstract class TaskService {
   }
 
   static async findAll(userId: string, search?: string) {
+    await this.rollForwardExpiredRecurringTasks()
     const tasksData = await TaskRepository.findAll(userId, search)
 
     return tasksData.map((task) => {
@@ -63,6 +64,7 @@ export abstract class TaskService {
   }
 
   static async findActive(userId: string, limit: number = 50, offset: number = 0) {
+    await this.rollForwardExpiredRecurringTasks()
     const total = await TaskRepository.countActiveTasks(userId)
     const tasksData = await TaskRepository.findActiveTasks(userId, limit, offset)
 
@@ -124,6 +126,7 @@ export abstract class TaskService {
     if (!updated) return null
 
     // Handle recurrence
+    let nextTaskResponse = null
     if (task.recurrence && task.recurrence !== 'NONE') {
       const nextStartDate = task.startDate ? new Date(task.startDate) : new Date()
       const nextDueDate = task.dueDate ? new Date(task.dueDate) : new Date()
@@ -166,6 +169,13 @@ export abstract class TaskService {
           task.tags.map((t) => t.id),
         )
       }
+
+      if (newTask) {
+        const fullNewTask = await this.findById(userId, newTask.id)
+        if (fullNewTask) {
+          nextTaskResponse = fullNewTask
+        }
+      }
     }
 
     NotificationService.recordNotification({
@@ -186,6 +196,7 @@ export abstract class TaskService {
         newLevel: user?.level ?? 1,
         newStreak: user?.currentStreak ?? 0,
         unlockedAchievements: [],
+        nextTask: nextTaskResponse,
       }
     }
 
@@ -223,6 +234,7 @@ export abstract class TaskService {
       newLevel: xpResult.currentLevel,
       newStreak: xpResult.streakCount,
       unlockedAchievements,
+      nextTask: nextTaskResponse,
     }
   }
 
@@ -241,5 +253,82 @@ export abstract class TaskService {
 
   static async permanentlyDeleteOld() {
     return await TaskRepository.permanentlyDeleteOld()
+  }
+
+  static async rollForwardExpiredRecurringTasks() {
+    const now = new Date()
+    const { db } = await import('../../db')
+    const { tasks } = await import('../../db/schema')
+    const { and, lt, ne, isNull } = await import('drizzle-orm')
+
+    const expiredRecurring = await db.query.tasks.findMany({
+      where: and(
+        lt(tasks.dueDate, now),
+        ne(tasks.status, 'COMPLETED'),
+        ne(tasks.status, 'FAILED'),
+        ne(tasks.recurrence, 'NONE'),
+        isNull(tasks.deletedAt)
+      )
+    })
+
+    let count = 0
+    for (const task of expiredRecurring) {
+      if (!task.recurrence || task.recurrence === 'NONE') continue
+
+      const nextStartDate = task.startDate ? new Date(task.startDate) : new Date()
+      const nextDueDate = task.dueDate ? new Date(task.dueDate) : new Date()
+
+      while (nextDueDate < now) {
+        switch (task.recurrence) {
+          case 'DAILY':
+            nextStartDate.setDate(nextStartDate.getDate() + 1)
+            nextDueDate.setDate(nextDueDate.getDate() + 1)
+            break
+          case 'WEEKLY':
+            nextStartDate.setDate(nextStartDate.getDate() + 7)
+            nextDueDate.setDate(nextDueDate.getDate() + 7)
+            break
+          case 'MONTHLY':
+            nextStartDate.setMonth(nextStartDate.getMonth() + 1)
+            nextDueDate.setMonth(nextDueDate.getMonth() + 1)
+            break
+          case 'YEARLY':
+            nextStartDate.setFullYear(nextStartDate.getFullYear() + 1)
+            nextDueDate.setFullYear(nextDueDate.getFullYear() + 1)
+            break
+        }
+      }
+
+      await db.update(tasks).set({
+        status: 'FAILED',
+        updatedAt: new Date()
+      }).where(and(eq(tasks.id, task.id), eq(tasks.userId, task.userId)))
+
+      const [newTask] = await db.insert(tasks).values({
+        userId: task.userId,
+        title: task.title,
+        description: task.description,
+        type: task.type,
+        priority: task.priority,
+        status: 'PENDING',
+        estimatedTime: task.estimatedTime,
+        recurrence: task.recurrence,
+        startDate: nextStartDate,
+        dueDate: nextDueDate,
+      }).returning()
+
+      const fullOldTask = await this.findById(task.userId, task.id)
+      if (fullOldTask && fullOldTask.tags && fullOldTask.tags.length > 0) {
+        const taskTagsData = fullOldTask.tags.map(t => ({
+          taskId: newTask.id,
+          tagId: t.id
+        }))
+        await db.insert(taskTags).values(taskTagsData)
+      }
+
+      count++
+    }
+    
+    return count
   }
 }

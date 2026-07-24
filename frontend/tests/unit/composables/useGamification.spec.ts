@@ -33,7 +33,7 @@ describe('useGamification composable', () => {
   })
 
   it('showReward without level up shows toast', async () => {
-    const { toast } = await import('vue-sonner') as any
+    const { toast } = (await import('vue-sonner')) as any
     const { showReward } = useGamification()
     showReward(50, 'Test Task', false)
     expect(toast.success).toHaveBeenCalledWith('¡Tarea Completada!', expect.any(Object))

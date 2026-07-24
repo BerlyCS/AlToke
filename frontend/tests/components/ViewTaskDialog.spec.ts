@@ -5,7 +5,9 @@ import { mockTask, mockCompletedTask } from '../fixtures'
 
 vi.mock('@internationalized/date', () => ({
   DateFormatter: class {
-    format() { return '1 enero 2025' }
+    format() {
+      return '1 enero 2025'
+    }
   },
 }))
 

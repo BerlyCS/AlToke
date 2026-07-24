@@ -63,6 +63,9 @@ if (import.meta.main) {
 
   const runDueCheck = async () => {
     try {
+      const rolled = await TaskService.rollForwardExpiredRecurringTasks()
+      if (rolled > 0) console.log(`Tasks: Rolled forward ${rolled} expired recurring task(s)`)
+
       const count = await checkDueTasks()
       if (count > 0) console.log(`Notifications: ${count} due-task notification(s) sent`)
     } catch (e) {

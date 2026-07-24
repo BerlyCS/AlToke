@@ -31,7 +31,7 @@ function calculateDeadlineStatus(task: Task): {
   status: TaskDeadlineStatus
   minutesRemaining: number | null
 } {
-  if (!task.dueDate || task.status === 'COMPLETED') {
+  if (!task.dueDate || task.status === 'COMPLETED' || task.status === 'FAILED') {
     return { status: 'normal', minutesRemaining: null }
   }
 

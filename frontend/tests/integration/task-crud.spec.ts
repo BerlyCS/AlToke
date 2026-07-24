@@ -54,11 +54,7 @@ describe('Task CRUD Integration', () => {
   it('completes a task and gets XP', async () => {
     const { taskService } = await import('@/services/task.service')
     const store = useAuthStore()
-    store.setAuth(
-      { id: '1', email: 'test@test.com', nickname: 'Test' },
-      mockProfile,
-      'token',
-    )
+    store.setAuth({ id: '1', email: 'test@test.com', nickname: 'Test' }, mockProfile, 'token')
 
     ;(taskService.completeTask as any).mockResolvedValue(mockCompleteTaskResult)
     const result = await taskService.completeTask('task-1')
@@ -82,7 +78,11 @@ describe('Task CRUD Integration', () => {
 
   it('restores a trashed task', async () => {
     const { taskService } = await import('@/services/task.service')
-    ;(taskService.restoreTask as any).mockResolvedValue({ ...mockTask, id: 'task-1', deletedAt: null })
+    ;(taskService.restoreTask as any).mockResolvedValue({
+      ...mockTask,
+      id: 'task-1',
+      deletedAt: null,
+    })
 
     const restored = await taskService.restoreTask('task-1')
     expect(restored.deletedAt).toBeNull()

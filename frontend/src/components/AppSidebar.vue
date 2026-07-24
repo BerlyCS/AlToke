@@ -103,6 +103,7 @@ const xpProgress = computed(() => {
               class="rounded-xl"
               :src="authStore.profile?.avatarUrl || ''"
               alt="Avatar del usuario"
+              referrerpolicy="no-referrer"
             />
             <AvatarFallback class="rounded-xl font-bold text-primary bg-background">
               {{

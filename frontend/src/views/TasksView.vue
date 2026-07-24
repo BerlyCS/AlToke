@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Component } from 'vue'
 import { useRouter } from 'vue-router'
 import { taskService } from '@/services/task.service'
@@ -7,14 +7,11 @@ import { tagService } from '@/services/tag.service'
 import { toast } from 'vue-sonner'
 import { aiService } from '@/services/ai.service'
 import { useAuthStore } from '@/stores/auth'
-import {
-  useGamification,
-  unlockedAchievementsQueue,
-  processAchievementsQueue,
-} from '@/composables/useGamification'
+import { useTaskManager } from '@/composables/useTaskManager'
 import { useTaskDeadline, type TaskWithDeadline } from '@/composables/useTaskDeadline'
 import type { Task, Tag, TaskSuggestion } from '@/types'
 import CreateTaskDialog from '@/components/CreateTaskDialog.vue'
+import TaskCard from '@/components/TaskCard.vue'
 import ViewTaskDialog from '@/components/ViewTaskDialog.vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -73,50 +70,31 @@ const IconMap: Record<string, Component> = {
   AlignLeft,
 }
 
-function getTaskColors(task: TaskWithDeadline) {
-  if (task.deadlineStatus === 'expired') {
-    return {
-      bg: 'bg-red-900/20',
-      border: 'border-red-500/40',
-      text: 'text-red-400',
-    }
-  }
-  const priorityColors: Record<string, { bg: string; border: string; text: string }> = {
-    HIGH: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-500' },
-    MEDIUM: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-500' },
-    LOW: { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-500' },
-  }
-  return (
-    priorityColors[task.priority] || {
-      bg: 'bg-primary/10',
-      border: 'border-primary/30',
-      text: 'text-primary',
-    }
-  )
-}
-
-function getDeadlineClass(task: TaskWithDeadline): string {
-  if (task.deadlineStatus === 'expired') return 'opacity-60'
-  if (task.deadlineStatus === 'dueSoon')
-    return 'shadow-[0_0_15px_rgba(239,68,68,0.4)] border-red-500/50'
-  return ''
-}
+const dfDay = new Intl.DateTimeFormat('es-ES', { weekday: 'long' })
 
 const authStore = useAuthStore()
-const { showReward } = useGamification()
 const router = useRouter()
 
-const tasks = ref<Task[]>([])
+const {
+  tasks,
+  loading,
+  showCreateModal,
+  showViewModal,
+  showEditModal,
+  selectedTask,
+  editingTask,
+  openTask,
+  editTask,
+  onTaskCreated: baseOnTaskCreated,
+  onTaskUpdated,
+  toggleTaskStatus,
+  deleteTask,
+} = useTaskManager()
+
 const tags = ref<Tag[]>([])
-const loading = ref(true)
-const showCreateModal = ref(false)
-const showViewModal = ref(false)
-const showEditModal = ref(false)
-const selectedTask = ref<Task | null>(null)
-const editingTask = ref<Task | null>(null)
 const showTrash = ref(false)
 const trashedTasks = ref<Task[]>([])
-const filterStatus = ref<'ALL' | 'PENDING' | 'COMPLETED'>('ALL')
+const filterStatus = ref<'ALL' | 'PENDING' | 'COMPLETED' | 'FAILED'>('ALL')
 const filterPriority = ref<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL')
 const filterType = ref<'ALL' | 'TASK' | 'MEETING' | 'EVENT'>('ALL')
 const selectedTagIds = ref<Set<string>>(new Set())
@@ -161,6 +139,7 @@ const filteredTasks = computed(() => {
 
 const pendingCount = computed(() => tasks.value.filter((t) => t.status === 'PENDING').length)
 const completedCount = computed(() => tasks.value.filter((t) => t.status === 'COMPLETED').length)
+const failedCount = computed(() => tasks.value.filter((t) => t.status === 'FAILED').length)
 
 onMounted(async () => {
   if (!authStore.token) {
@@ -169,6 +148,11 @@ onMounted(async () => {
   }
   await Promise.all([fetchTasks(), fetchTags()])
   startWatching()
+  window.addEventListener('altoke:refresh-tasks', fetchTasks)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('altoke:refresh-tasks', fetchTasks)
 })
 
 async function fetchTasks() {
@@ -241,85 +225,19 @@ async function acceptSuggestion(s: TaskSuggestion) {
       estimatedTime: 30,
       dueDate: s.suggestedTime,
     })
-    tasks.value.unshift(created)
+    baseOnTaskCreated(created, () => totalActiveTasks.value++)
     aiSuggestions.value = aiSuggestions.value.filter((x) => x.id !== s.id)
   } catch (e) {
     console.error(e)
   }
 }
 
-async function toggleStatus(task: TaskWithDeadline) {
-  if (task.deadlineStatus === 'expired') {
-    toast.error('No se puede completar', { description: 'Esta tarea ya venció' })
-    return
-  }
-  try {
-    const newStatus = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-    let updated: Task
-    if (newStatus === 'COMPLETED') {
-      const result = await taskService.completeTask(task.id)
-      updated = { ...task, ...result }
-      if (result.xpAwarded > 0) {
-        authStore.addXP(result.xpAwarded, result.newLevel, result.newStreak)
-        showReward(
-          result.xpAwarded,
-          task.title,
-          result.leveledUp ?? false,
-          result.newLevel,
-          result.unlockedAchievements,
-        )
-      }
-    } else {
-      const result = await taskService.updateTask(task.id, { status: newStatus })
-      updated = { ...task, ...result }
-    }
-    const index = tasks.value.findIndex((t) => t.id === task.id)
-    if (index !== -1) tasks.value[index] = updated
-  } catch (e: any) {
-    console.error(e)
-    toast.error('Error al completar la tarea', { description: e?.message })
-  }
-}
-
-async function deleteTask(id: string) {
-  if (!confirm('¿Seguro que deseas enviar esta tarea a la papelera?')) return
-  try {
-    await taskService.deleteTask(id)
-    tasks.value = tasks.value.filter((t) => t.id !== id)
-    toast.success('Tarea enviada a la papelera')
-  } catch (e: any) {
-    console.error(e)
-    toast.error('Error al eliminar tarea', { description: e?.message })
-  }
-}
-
-function openTask(task: Task) {
-  selectedTask.value = task
-  showViewModal.value = true
-}
-
-function editTask(task: Task) {
-  editingTask.value = task
-  showEditModal.value = true
-}
-
-function onTaskUpdated(updated: Task) {
-  const index = tasks.value.findIndex((t) => t.id === updated.id)
-  if (index !== -1) tasks.value[index] = updated
+function toggleStatus(task: TaskWithDeadline) {
+  toggleTaskStatus(task as any, task.deadlineStatus === 'expired')
 }
 
 function onTaskCreated(created: Task) {
-  tasks.value.unshift(created)
-  totalActiveTasks.value++
-  if (created.unlockedAchievements?.length) {
-    unlockedAchievementsQueue.value.push(...created.unlockedAchievements)
-    processAchievementsQueue()
-  }
-}
-
-function formatTime(val: string | Date) {
-  const d = new Date(val)
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  baseOnTaskCreated(created, () => totalActiveTasks.value++)
 }
 </script>
 
@@ -485,6 +403,20 @@ function formatTime(val: string | Date) {
             Completadas ({{ completedCount }})
           </div>
         </button>
+        <button
+          class="px-5 py-2.5 rounded-xl font-bold transition-all duration-200"
+          :class="
+            filterStatus === 'FAILED'
+              ? 'bg-destructive/20 text-destructive shadow-lg border border-destructive/30'
+              : 'bg-card text-muted-foreground hover:bg-card/80 border border-border'
+          "
+          @click="filterStatus = 'FAILED'"
+        >
+          <div class="flex items-center gap-2">
+            <XCircle class="w-4 h-4" />
+            Fallidas ({{ failedCount }})
+          </div>
+        </button>
       </div>
 
       <div class="flex items-center gap-3 flex-wrap">
@@ -640,102 +572,15 @@ function formatTime(val: string | Date) {
 
       <Card v-else class="border-border bg-card/60 backdrop-blur-xl shadow-2xl">
         <CardContent class="grid gap-3 p-6">
-          <div
+          <TaskCard
             v-for="task in filteredTasks"
             :key="task.id"
+            :task="(task as any)"
             :data-cy="`task-row-${task.id}`"
-            class="flex items-center justify-between p-4 rounded-xl border transition-all min-w-0"
-            :class="[
-              getTaskColors(task).bg,
-              getTaskColors(task).border,
-              getDeadlineClass(task),
-              task.status === 'COMPLETED'
-                ? 'opacity-50'
-                : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md',
-            ]"
             @click="openTask(task)"
-          >
-            <div class="flex items-center gap-4 w-full min-w-0">
-              <button
-                v-if="task.deadlineStatus !== 'expired'"
-                :data-cy="`task-toggle-${task.id}`"
-                @click.stop="toggleStatus(task)"
-                class="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors shrink-0"
-              >
-                <CheckCircle2 v-if="task.status === 'COMPLETED'" class="w-6 h-6 text-green-500" />
-                <Circle v-else class="w-6 h-6 text-muted-foreground" />
-              </button>
-              <div v-else class="p-1 shrink-0">
-                <XCircle class="w-6 h-6 text-red-500" />
-              </div>
-
-              <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center bg-background shadow-sm shrink-0"
-                :class="getTaskColors(task).text"
-              >
-                <component
-                  :is="
-                    IconMap[task.tags && task.tags.length > 0 ? task.tags[0]?.icon || 'Tag' : 'Tag']
-                  "
-                  class="w-6 h-6"
-                />
-              </div>
-
-              <div class="flex flex-col flex-1 min-w-0">
-                <span
-                  class="font-bold text-lg leading-tight truncate"
-                  :class="{
-                    'line-through text-muted-foreground': task.status === 'COMPLETED',
-                    'text-red-400': task.deadlineStatus === 'expired',
-                  }"
-                >
-                  {{ task.title }}
-                </span>
-                <div
-                  class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground font-medium mt-1"
-                >
-                  <span class="flex items-center gap-1.5" v-if="task.dueDate">
-                    <Clock class="w-4 h-4" />
-                    {{ formatTime(task.dueDate) }}
-                  </span>
-                  <span
-                    v-if="task.deadlineStatus === 'dueSoon'"
-                    class="text-red-400 font-bold text-xs"
-                  >
-                    ¡Vence pronto!
-                  </span>
-                  <span
-                    v-if="task.deadlineStatus === 'expired'"
-                    class="text-red-500 font-bold text-xs"
-                  >
-                    Vencido
-                  </span>
-                  <span v-if="task.estimatedTime" class="flex items-center gap-1.5">
-                    • {{ task.estimatedTime }} min
-                  </span>
-                  <span v-if="task.dueDate" class="flex items-center gap-1.5">
-                    •
-                    {{
-                      new Date(task.dueDate).toLocaleDateString([], {
-                        day: 'numeric',
-                        month: 'short',
-                      })
-                    }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2 pl-2">
-              <button
-                :data-cy="`task-delete-${task.id}`"
-                class="p-2 rounded-lg hover:bg-destructive/10 text-destructive/50 hover:text-destructive transition-colors shrink-0"
-                @click.stop="deleteTask(task.id)"
-              >
-                <Trash2 class="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+            @toggle-status="toggleStatus"
+            @delete-task="deleteTask"
+          />
 
           <div v-if="filteredTasks.length === 0" class="text-center py-16 text-muted-foreground">
             <ListTodo class="w-12 h-12 mx-auto text-muted-foreground/50 mb-4"></ListTodo>

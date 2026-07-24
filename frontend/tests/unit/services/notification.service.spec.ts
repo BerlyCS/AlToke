@@ -37,7 +37,13 @@ describe('notificationService', () => {
 
   it('getSettings returns notification settings', async () => {
     const { notificationService } = await import('@/services/notification.service')
-    const settings = { userId: '1', emailEnabled: true, pushEnabled: false, isMuted: false, updatedAt: new Date().toISOString() }
+    const settings = {
+      userId: '1',
+      emailEnabled: true,
+      pushEnabled: false,
+      isMuted: false,
+      updatedAt: new Date().toISOString(),
+    }
     mockApiResult.mockResolvedValue({ data: settings, error: null, status: 200 })
     const result = await notificationService.getSettings()
     expect(result).toEqual(settings)
@@ -45,7 +51,13 @@ describe('notificationService', () => {
 
   it('updateSettings returns updated settings', async () => {
     const { notificationService } = await import('@/services/notification.service')
-    const settings = { userId: '1', emailEnabled: true, pushEnabled: true, isMuted: false, updatedAt: new Date().toISOString() }
+    const settings = {
+      userId: '1',
+      emailEnabled: true,
+      pushEnabled: true,
+      isMuted: false,
+      updatedAt: new Date().toISOString(),
+    }
     mockApiResult.mockResolvedValue({ data: settings, error: null, status: 200 })
     const result = await notificationService.updateSettings({ pushEnabled: true })
     expect(result).toEqual(settings)
